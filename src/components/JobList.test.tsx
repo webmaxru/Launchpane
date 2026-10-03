@@ -174,7 +174,7 @@ describe("JobList", () => {
     )
   })
 
-  it("renders explicit Enable, Disable, and Remove buttons for every job", () => {
+  it("renders only the action that can change the current enabled state", () => {
     render(
       <JobList
         jobs={mockJobs}
@@ -191,8 +191,8 @@ describe("JobList", () => {
       />
     )
 
-    expect(screen.getAllByRole("button", { name: "Enable" })).toHaveLength(2)
-    expect(screen.getAllByRole("button", { name: "Disable" })).toHaveLength(2)
+    expect(screen.getAllByRole("button", { name: "Enable" })).toHaveLength(1)
+    expect(screen.getAllByRole("button", { name: "Disable" })).toHaveLength(1)
     expect(screen.getAllByRole("button", { name: "Remove" })).toHaveLength(2)
   })
 
@@ -216,18 +216,70 @@ describe("JobList", () => {
       />
     )
 
-    const enableButtons = screen.getAllByRole("button", { name: "Enable" })
-    const disableButtons = screen.getAllByRole("button", { name: "Disable" })
+    const enableButton = screen.getByRole("button", { name: "Enable" })
+    const disableButton = screen.getByRole("button", { name: "Disable" })
     const removeButtons = screen.getAllByRole("button", { name: "Remove" })
 
-    expect(enableButtons[0]).toBeDisabled()
-    expect(disableButtons[1]).toBeDisabled()
-    enableButtons[1].click()
-    disableButtons[0].click()
+    enableButton.click()
+    disableButton.click()
     removeButtons[0].click()
 
     expect(onEnable).toHaveBeenCalledWith(mockJobs[1])
     expect(onDisable).toHaveBeenCalledWith(mockJobs[0])
     expect(onDelete).toHaveBeenCalledWith(mockJobs[0])
+  })
+
+  it("always displays an enabled-state badge", () => {
+    render(
+      <JobList
+        jobs={[{ ...mockJobs[0], enabled: null }]}
+        loading={false}
+        onStart={noop}
+        onStop={noop}
+        onRestart={noop}
+        onKickstart={noop}
+        onEnable={noop}
+        onDisable={noop}
+        onDelete={noop}
+        onSelect={noop}
+        onRevealInFinder={noop}
+      />
+    )
+
+    expect(screen.getByText("Unknown")).toBeInTheDocument()
+    expect(screen.queryByRole("button", { name: "Enable" })).not.toBeInTheDocument()
+    expect(screen.queryByRole("button", { name: "Disable" })).not.toBeInTheDocument()
+  })
+
+  it("allows system toggles only in administrator mode", () => {
+    const onDisable = vi.fn()
+    const systemJob: JobListEntry = {
+      ...mockJobs[0],
+      label: "com.example.daemon",
+      plist_path: "/Library/LaunchDaemons/com.example.daemon.plist",
+      source: "SystemDaemon",
+    }
+    const props = {
+      jobs: [systemJob],
+      loading: false,
+      onStart: noop,
+      onStop: noop,
+      onRestart: noop,
+      onKickstart: noop,
+      onEnable: noop,
+      onDisable,
+      onDelete: noop,
+      onSelect: noop,
+      onRevealInFinder: noop,
+    }
+    const { rerender } = render(
+      <JobList {...props} isAdministrator={false} />
+    )
+
+    expect(screen.getByRole("button", { name: "Disable" })).toBeDisabled()
+
+    rerender(<JobList {...props} isAdministrator={true} />)
+    screen.getByRole("button", { name: "Disable" }).click()
+    expect(onDisable).toHaveBeenCalledWith(systemJob)
   })
 })

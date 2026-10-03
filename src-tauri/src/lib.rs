@@ -16,6 +16,8 @@ pub fn run() {
             commands::kickstart_job,
             commands::enable_job,
             commands::disable_job,
+            commands::get_runtime_info,
+            commands::restart_as_administrator,
             commands::save_job,
             commands::save_raw_plist,
             commands::create_job,

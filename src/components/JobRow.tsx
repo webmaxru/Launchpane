@@ -36,6 +36,7 @@ function formatRelativeTime(epochMillis: string): string {
 
 type JobRowProps = {
   job: JobListEntry
+  isAdministrator: boolean
   onStart: (job: JobListEntry) => void
   onStop: (job: JobListEntry) => void
   onRestart: (job: JobListEntry) => void
@@ -87,21 +88,26 @@ function SourceBadge({ source }: { source: JobListEntry["source"] }) {
   }
 }
 
-function EnabledBadge({ enabled }: { enabled: boolean }) {
-  return enabled ? (
-    <Badge
-      variant="outline"
-      className="border-emerald-300 text-emerald-700 dark:border-emerald-500 dark:text-emerald-300"
-    >
-      Enabled
-    </Badge>
-  ) : (
-    <Badge variant="destructive">Disabled</Badge>
-  )
+function EnabledBadge({ enabled }: { enabled: boolean | null | undefined }) {
+  if (enabled === true) {
+    return (
+      <Badge
+        variant="outline"
+        className="border-emerald-300 text-emerald-700 dark:border-emerald-500 dark:text-emerald-300"
+      >
+        Enabled
+      </Badge>
+    )
+  }
+  if (enabled === false) {
+    return <Badge variant="destructive">Disabled</Badge>
+  }
+  return <Badge variant="outline">Unknown</Badge>
 }
 
 export function JobRow({
   job,
+  isAdministrator,
   onStart,
   onStop,
   onRestart,
@@ -113,6 +119,7 @@ export function JobRow({
   onRevealInFinder,
 }: JobRowProps) {
   const isUserAgent = job.source === "UserAgent"
+  const canToggle = isUserAgent || isAdministrator
 
   return (
     <TableRow
@@ -196,45 +203,38 @@ export function JobRow({
               <Zap className="h-4 w-4" />
             </Button>
           )}
-          <Button
-            variant="outline"
-            size="xs"
-            onClick={() => onEnable(job)}
-            disabled={!isUserAgent || job.enabled}
-            title={
-              !isUserAgent
-                ? "Cannot enable system agents"
-                : job.enabled
-                  ? "Already enabled"
-                  : "Enable"
-            }
-          >
-            Enable
-          </Button>
-          <Button
-            variant="outline"
-            size="xs"
-            onClick={() => onDisable(job)}
-            disabled={!isUserAgent || !job.enabled}
-            title={
-              !isUserAgent
-                ? "Cannot disable system agents"
-                : job.enabled
-                  ? "Disable"
-                  : "Already disabled"
-            }
-          >
-            Disable
-          </Button>
-          <Button
-            variant="destructive"
-            size="xs"
-            onClick={() => onDelete(job)}
-            disabled={!isUserAgent}
-            title={isUserAgent ? "Remove" : "Cannot remove system agents"}
-          >
-            Remove
-          </Button>
+          {job.enabled === false && (
+            <Button
+              variant="outline"
+              size="xs"
+              onClick={() => onEnable(job)}
+              disabled={!canToggle}
+              title={canToggle ? "Enable" : "Administrator mode required"}
+            >
+              Enable
+            </Button>
+          )}
+          {job.enabled === true && (
+            <Button
+              variant="outline"
+              size="xs"
+              onClick={() => onDisable(job)}
+              disabled={!canToggle}
+              title={canToggle ? "Disable" : "Administrator mode required"}
+            >
+              Disable
+            </Button>
+          )}
+          {isUserAgent && (
+            <Button
+              variant="destructive"
+              size="xs"
+              onClick={() => onDelete(job)}
+              title="Remove"
+            >
+              Remove
+            </Button>
+          )}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="icon" className="h-8 w-8">

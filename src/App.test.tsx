@@ -49,4 +49,17 @@ describe("App action feedback", () => {
       )
     })
   })
+
+  it("shows feedback after starting administrator mode", async () => {
+    const user = userEvent.setup()
+    render(<App />)
+
+    await user.click(
+      await screen.findByRole("button", { name: "Start as Administrator" })
+    )
+
+    expect(await screen.findByRole("status")).toHaveTextContent(
+      "Administrator window started."
+    )
+  })
 })

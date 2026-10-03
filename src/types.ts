@@ -12,7 +12,7 @@ export type JobListEntry = {
   plist_path: string
   source: JobSource
   status: JobStatus
-  enabled: boolean
+  enabled: boolean | null
   last_run_at: string | null
   is_home_agent: boolean
 }

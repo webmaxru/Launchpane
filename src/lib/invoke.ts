@@ -18,11 +18,26 @@ export const restartJob = (plistPath: string) =>
 export const kickstartJob = (label: string, plistPath: string) =>
   invoke<void>("kickstart_job", { label, plistPath })
 
-export const enableJob = (label: string, plistPath: string) =>
-  invoke<void>("enable_job", { label, plistPath })
+export const enableJob = (
+  label: string,
+  plistPath: string,
+  source: JobListEntry["source"]
+) => invoke<void>("enable_job", { label, plistPath, source })
 
-export const disableJob = (label: string, plistPath: string) =>
-  invoke<void>("disable_job", { label, plistPath })
+export const disableJob = (
+  label: string,
+  plistPath: string,
+  source: JobListEntry["source"]
+) => invoke<void>("disable_job", { label, plistPath, source })
+
+export type RuntimeInfo = {
+  is_administrator: boolean
+}
+
+export const getRuntimeInfo = () => invoke<RuntimeInfo>("get_runtime_info")
+
+export const restartAsAdministrator = () =>
+  invoke<void>("restart_as_administrator")
 
 export const saveJob = (plistPath: string, config: PlistConfig) =>
   invoke<void>("save_job", { plistPath, config })

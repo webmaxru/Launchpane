@@ -11,6 +11,7 @@ import type { JobListEntry } from "@/types"
 type JobListProps = {
   jobs: JobListEntry[]
   loading: boolean
+  isAdministrator?: boolean
   onStart: (job: JobListEntry) => void
   onStop: (job: JobListEntry) => void
   onRestart: (job: JobListEntry) => void
@@ -25,6 +26,7 @@ type JobListProps = {
 export function JobList({
   jobs,
   loading,
+  isAdministrator = false,
   onStart,
   onStop,
   onRestart,
@@ -61,7 +63,7 @@ export function JobList({
           <TableHead className="w-24">Enabled</TableHead>
           <TableHead className="w-16">PID</TableHead>
           <TableHead className="w-24">Last Run</TableHead>
-          <TableHead className="w-[28rem]">Actions</TableHead>
+          <TableHead className="w-80">Actions</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -69,6 +71,7 @@ export function JobList({
           <JobRow
             key={job.plist_path}
             job={job}
+            isAdministrator={isAdministrator}
             onStart={onStart}
             onStop={onStop}
             onRestart={onRestart}

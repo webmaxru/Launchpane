@@ -83,13 +83,52 @@ fn is_home_agent(source: &JobSource, config: &PlistConfig) -> bool {
 fn ensure_user_agent(plist_path: &str) -> Result<(), AppError> {
     let home = dirs::home_dir().unwrap_or_default();
     let user_agents = home.join("Library/LaunchAgents");
-    if !plist_path.starts_with(user_agents.to_str().unwrap_or("")) {
+    if !std::path::Path::new(plist_path).starts_with(&user_agents) {
         return Err(AppError::Launchctl(
             "Cannot start/stop system agents or daemons. Only user agents (~/Library/LaunchAgents) can be managed."
                 .to_string(),
         ));
     }
     Ok(())
+}
+
+fn source_for_path(plist_path: &str) -> Option<JobSource> {
+    let home = dirs::home_dir().unwrap_or_default();
+    let user_agents = home.join("Library/LaunchAgents");
+    let path = std::path::Path::new(plist_path);
+    if path.starts_with(user_agents) {
+        Some(JobSource::UserAgent)
+    } else if path.starts_with("/Library/LaunchAgents") {
+        Some(JobSource::SystemAgent)
+    } else if path.starts_with("/Library/LaunchDaemons") {
+        Some(JobSource::SystemDaemon)
+    } else {
+        None
+    }
+}
+
+fn ensure_toggle_allowed(plist_path: &str, source: &JobSource) -> Result<(), AppError> {
+    let actual_source = source_for_path(plist_path).ok_or_else(|| {
+        AppError::Launchctl("Cannot manage a plist outside known launchd directories.".to_string())
+    })?;
+    if &actual_source != source {
+        return Err(AppError::Launchctl(
+            "Job source does not match its plist path.".to_string(),
+        ));
+    }
+    if actual_source != JobSource::UserAgent && !launchctl::is_administrator() {
+        return Err(AppError::Launchctl(
+            "Administrator mode is required to manage system jobs.".to_string(),
+        ));
+    }
+    Ok(())
+}
+
+fn domain_for_source(source: &JobSource) -> String {
+    match source {
+        JobSource::SystemDaemon => "system".to_string(),
+        JobSource::UserAgent | JobSource::SystemAgent => launchctl::gui_domain(),
+    }
 }
 
 #[tauri::command]
@@ -223,15 +262,80 @@ pub async fn kickstart_job(label: String, plist_path: String) -> Result<(), AppE
 }
 
 #[tauri::command]
-pub async fn enable_job(label: String, plist_path: String) -> Result<(), AppError> {
-    ensure_user_agent(&plist_path)?;
-    launchctl::enable(&label)
+pub async fn enable_job(
+    label: String,
+    plist_path: String,
+    source: JobSource,
+) -> Result<(), AppError> {
+    ensure_toggle_allowed(&plist_path, &source)?;
+    launchctl::enable(&domain_for_source(&source), &label)
 }
 
 #[tauri::command]
-pub async fn disable_job(label: String, plist_path: String) -> Result<(), AppError> {
-    ensure_user_agent(&plist_path)?;
-    launchctl::disable(&label)
+pub async fn disable_job(
+    label: String,
+    plist_path: String,
+    source: JobSource,
+) -> Result<(), AppError> {
+    ensure_toggle_allowed(&plist_path, &source)?;
+    launchctl::disable(&domain_for_source(&source), &label)
+}
+
+#[derive(serde::Serialize)]
+pub struct RuntimeInfo {
+    is_administrator: bool,
+}
+
+#[tauri::command]
+pub async fn get_runtime_info() -> RuntimeInfo {
+    RuntimeInfo {
+        is_administrator: launchctl::is_administrator(),
+    }
+}
+
+fn shell_quote(value: &str) -> String {
+    format!("'{}'", value.replace('\'', "'\\''"))
+}
+
+#[tauri::command]
+pub async fn restart_as_administrator(app: tauri::AppHandle) -> Result<(), AppError> {
+    if launchctl::is_administrator() {
+        return Ok(());
+    }
+
+    let executable = std::env::current_exe()?;
+    let home = dirs::home_dir()
+        .ok_or_else(|| AppError::Launchctl("could not determine home directory".to_string()))?;
+    let command = format!(
+        "env HOME={} LAUNCHD_UI_USER_UID={} nohup {} >/tmp/launchd-ui-admin.log 2>&1 &",
+        shell_quote(&home.to_string_lossy()),
+        launchctl::effective_uid(),
+        shell_quote(&executable.to_string_lossy())
+    );
+    let output = std::process::Command::new("osascript")
+        .args([
+            "-e",
+            "on run argv",
+            "-e",
+            "do shell script (item 1 of argv) with administrator privileges",
+            "-e",
+            "end run",
+            "--",
+        ])
+        .arg(command)
+        .output()?;
+
+    if !output.status.success() {
+        return Err(AppError::Launchctl(format!(
+            "administrator relaunch failed: {}",
+            String::from_utf8_lossy(&output.stderr)
+        )));
+    }
+
+    if !cfg!(debug_assertions) {
+        app.exit(0);
+    }
+    Ok(())
 }
 
 #[tauri::command]
@@ -273,7 +377,7 @@ pub async fn save_raw_plist(plist_path: String, xml: String) -> Result<(), AppEr
 #[tauri::command]
 pub async fn delete_job(plist_path: String, label: String) -> Result<(), AppError> {
     let _ = launchctl::bootout(&plist_path);
-    let _ = launchctl::disable(&label);
+    let _ = launchctl::disable(&launchctl::gui_domain(), &label);
     if std::path::Path::new(&plist_path).exists() {
         std::fs::remove_file(&plist_path)?;
     }
@@ -446,5 +550,18 @@ mod tests {
 
         // Home script but classified as a system agent -> excluded (Home is a User subset).
         assert!(!is_home_agent(&JobSource::SystemAgent, &instagent));
+    }
+
+    #[test]
+    fn test_domain_for_source() {
+        assert_eq!(domain_for_source(&JobSource::SystemDaemon), "system");
+        assert!(domain_for_source(&JobSource::UserAgent).starts_with("gui/"));
+        assert!(domain_for_source(&JobSource::SystemAgent).starts_with("gui/"));
+    }
+
+    #[test]
+    fn test_shell_quote() {
+        assert_eq!(shell_quote("/tmp/launchd-ui"), "'/tmp/launchd-ui'");
+        assert_eq!(shell_quote("/tmp/user's app"), "'/tmp/user'\\''s app'");
     }
 }

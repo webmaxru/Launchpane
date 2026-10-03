@@ -2,7 +2,7 @@ use crate::error::AppError;
 use std::collections::HashMap;
 use std::process::Command;
 
-fn get_uid() -> u32 {
+pub fn effective_uid() -> u32 {
     // Use getuid() via libc-free approach
     let output = Command::new("id")
         .arg("-u")
@@ -14,12 +14,23 @@ fn get_uid() -> u32 {
         .expect("failed to parse uid")
 }
 
-pub fn gui_domain() -> String {
-    format!("gui/{}", get_uid())
+pub fn is_administrator() -> bool {
+    effective_uid() == 0
 }
 
-fn service_target(label: &str) -> String {
-    format!("{}/{}", gui_domain(), label)
+fn user_uid() -> u32 {
+    std::env::var("LAUNCHD_UI_USER_UID")
+        .ok()
+        .and_then(|value| value.parse().ok())
+        .unwrap_or_else(effective_uid)
+}
+
+pub fn gui_domain() -> String {
+    format!("gui/{}", user_uid())
+}
+
+fn service_target(domain: &str, label: &str) -> String {
+    format!("{domain}/{label}")
 }
 
 #[derive(Debug)]
@@ -150,8 +161,9 @@ pub fn bootout(plist_path: &str) -> Result<(), AppError> {
 }
 
 pub fn kickstart(label: &str) -> Result<(), AppError> {
+    let domain = gui_domain();
     let output = Command::new("launchctl")
-        .args(["kickstart", "-k", &service_target(label)])
+        .args(["kickstart", "-k", &service_target(&domain, label)])
         .output()
         .map_err(|e| AppError::Launchctl(format!("failed to run launchctl kickstart: {e}")))?;
 
@@ -164,9 +176,9 @@ pub fn kickstart(label: &str) -> Result<(), AppError> {
     Ok(())
 }
 
-pub fn enable(label: &str) -> Result<(), AppError> {
+pub fn enable(domain: &str, label: &str) -> Result<(), AppError> {
     let output = Command::new("launchctl")
-        .args(["enable", &service_target(label)])
+        .args(["enable", &service_target(domain, label)])
         .output()
         .map_err(|e| AppError::Launchctl(format!("failed to run launchctl enable: {e}")))?;
 
@@ -179,9 +191,9 @@ pub fn enable(label: &str) -> Result<(), AppError> {
     Ok(())
 }
 
-pub fn disable(label: &str) -> Result<(), AppError> {
+pub fn disable(domain: &str, label: &str) -> Result<(), AppError> {
     let output = Command::new("launchctl")
-        .args(["disable", &service_target(label)])
+        .args(["disable", &service_target(domain, label)])
         .output()
         .map_err(|e| AppError::Launchctl(format!("failed to run launchctl disable: {e}")))?;
 

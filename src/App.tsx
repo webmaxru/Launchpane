@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react"
+import { useState, useCallback, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { SearchBar } from "@/components/SearchBar"
 import { JobList } from "@/components/JobList"
@@ -16,6 +16,8 @@ import {
   saveJob,
   createJob,
   revealInFinder,
+  getRuntimeInfo,
+  restartAsAdministrator,
 } from "@/lib/invoke"
 import type { JobListEntry, LaunchdJob, PlistConfig } from "@/types"
 import {
@@ -25,7 +27,15 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog"
-import { Monitor, Moon, Plus, RefreshCw, Sun } from "lucide-react"
+import {
+  Monitor,
+  Moon,
+  Plus,
+  RefreshCw,
+  Shield,
+  ShieldCheck,
+  Sun,
+} from "lucide-react"
 import { useTheme } from "@/hooks/useTheme"
 
 function App() {
@@ -48,6 +58,14 @@ function App() {
   const [deleteTarget, setDeleteTarget] = useState<JobListEntry | null>(null)
   const [actionError, setActionError] = useState<string | null>(null)
   const [actionSuccess, setActionSuccess] = useState<string | null>(null)
+  const [isAdministrator, setIsAdministrator] = useState(false)
+  const [adminLaunching, setAdminLaunching] = useState(false)
+
+  useEffect(() => {
+    getRuntimeInfo()
+      .then((info) => setIsAdministrator(info.is_administrator))
+      .catch((e) => setActionError(`Failed to read runtime privileges: ${String(e)}`))
+  }, [])
 
   const handleAction = useCallback(
     async (
@@ -109,6 +127,20 @@ function App() {
   const { theme, cycle } = useTheme()
   const ThemeIcon = theme === "dark" ? Moon : theme === "light" ? Sun : Monitor
 
+  const handleRestartAsAdministrator = async () => {
+    setActionError(null)
+    setActionSuccess(null)
+    setAdminLaunching(true)
+    try {
+      await restartAsAdministrator()
+      setActionSuccess("Administrator window started.")
+      setAdminLaunching(false)
+    } catch (e) {
+      setActionError(`Failed to start administrator mode: ${String(e)}`)
+      setAdminLaunching(false)
+    }
+  }
+
   return (
     <div className="min-h-screen bg-background text-foreground">
       <header className="border-b px-4 py-3">
@@ -127,6 +159,22 @@ function App() {
             <h1 className="text-lg font-semibold">launchd-ui</h1>
           </div>
           <div className="flex items-center gap-2">
+            {isAdministrator ? (
+              <div className="flex items-center gap-1.5 rounded-md border border-emerald-500/50 px-2.5 py-1.5 text-xs font-medium text-emerald-700 dark:text-emerald-300">
+                <ShieldCheck className="h-4 w-4" />
+                Administrator
+              </div>
+            ) : (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => void handleRestartAsAdministrator()}
+                disabled={adminLaunching}
+              >
+                <Shield className="h-4 w-4 mr-1" />
+                {adminLaunching ? "Starting..." : "Start as Administrator"}
+              </Button>
+            )}
             <Button variant="outline" size="sm" onClick={refresh}>
               <RefreshCw className="h-4 w-4 mr-1" />
               Refresh
@@ -182,6 +230,7 @@ function App() {
           <JobList
             jobs={filteredJobs}
             loading={loading}
+            isAdministrator={isAdministrator}
             onStart={(job) =>
               handleAction("load", "loaded", job, () =>
                 startJob(job.plist_path)
@@ -204,12 +253,12 @@ function App() {
             }
             onEnable={(job) =>
               handleAction("enable", "enabled", job, () =>
-                enableJob(job.label, job.plist_path)
+                enableJob(job.label, job.plist_path, job.source)
               )
             }
             onDisable={(job) =>
               handleAction("disable", "disabled", job, () =>
-                disableJob(job.label, job.plist_path)
+                disableJob(job.label, job.plist_path, job.source)
               )
             }
             onDelete={(job) => setDeleteTarget(job)}
