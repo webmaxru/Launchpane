@@ -58,6 +58,7 @@ export function JobList({
           <TableHead>Label</TableHead>
           <TableHead className="w-24">Source</TableHead>
           <TableHead className="w-24">Status</TableHead>
+          <TableHead className="w-24">Enabled</TableHead>
           <TableHead className="w-16">PID</TableHead>
           <TableHead className="w-24">Last Run</TableHead>
           <TableHead className="w-[28rem]">Actions</TableHead>

@@ -11,6 +11,7 @@ const mockJobs: JobListEntry[] = [
     plist_path: "/Users/test/Library/LaunchAgents/com.example.running.plist",
     source: "UserAgent",
     status: "Running",
+    enabled: true,
     last_run_at: String(Date.now()),
     is_home_agent: true,
   },
@@ -21,6 +22,7 @@ const mockJobs: JobListEntry[] = [
     plist_path: "/Users/test/Library/LaunchAgents/com.example.stopped.plist",
     source: "UserAgent",
     status: "Unloaded",
+    enabled: false,
     last_run_at: null,
     is_home_agent: false,
   },
@@ -105,6 +107,8 @@ describe("JobList", () => {
     )
     expect(screen.getByText("Running")).toBeInTheDocument()
     expect(screen.getByText("Unloaded")).toBeInTheDocument()
+    expect(screen.getAllByText("Enabled")).toHaveLength(2)
+    expect(screen.getByText("Disabled")).toBeInTheDocument()
   })
 
   it("renders PID for running job", () => {
@@ -198,7 +202,7 @@ describe("JobList", () => {
     const onDelete = vi.fn()
     render(
       <JobList
-        jobs={[mockJobs[0]]}
+        jobs={mockJobs}
         loading={false}
         onStart={noop}
         onStop={noop}
@@ -212,11 +216,17 @@ describe("JobList", () => {
       />
     )
 
-    screen.getByRole("button", { name: "Enable" }).click()
-    screen.getByRole("button", { name: "Disable" }).click()
-    screen.getByRole("button", { name: "Remove" }).click()
+    const enableButtons = screen.getAllByRole("button", { name: "Enable" })
+    const disableButtons = screen.getAllByRole("button", { name: "Disable" })
+    const removeButtons = screen.getAllByRole("button", { name: "Remove" })
 
-    expect(onEnable).toHaveBeenCalledWith(mockJobs[0])
+    expect(enableButtons[0]).toBeDisabled()
+    expect(disableButtons[1]).toBeDisabled()
+    enableButtons[1].click()
+    disableButtons[0].click()
+    removeButtons[0].click()
+
+    expect(onEnable).toHaveBeenCalledWith(mockJobs[1])
     expect(onDisable).toHaveBeenCalledWith(mockJobs[0])
     expect(onDelete).toHaveBeenCalledWith(mockJobs[0])
   })

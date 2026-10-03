@@ -96,6 +96,9 @@ fn ensure_user_agent(plist_path: &str) -> Result<(), AppError> {
 pub async fn list_jobs() -> Result<Vec<JobListEntry>, AppError> {
     let plist_files = plist_util::scan_plist_files();
     let loaded = launchctl::list_loaded().unwrap_or_default();
+    let gui_domain = launchctl::gui_domain();
+    let gui_disabled = launchctl::list_disabled(&gui_domain).unwrap_or_default();
+    let system_disabled = launchctl::list_disabled("system").unwrap_or_default();
 
     let loaded_map: HashMap<String, &launchctl::LoadedService> =
         loaded.iter().map(|s| (s.label.clone(), s)).collect();
@@ -120,6 +123,12 @@ pub async fn list_jobs() -> Result<Vec<JobListEntry>, AppError> {
 
         let last_run_at = get_last_run_at(&config);
         let home_agent = is_home_agent(&source, &config);
+        let disabled = match &source {
+            JobSource::SystemDaemon => system_disabled.get(&config.label),
+            JobSource::UserAgent | JobSource::SystemAgent => gui_disabled.get(&config.label),
+        }
+        .copied()
+        .unwrap_or(config.disabled.unwrap_or(false));
         entries.push(JobListEntry {
             label: config.label,
             pid,
@@ -127,6 +136,7 @@ pub async fn list_jobs() -> Result<Vec<JobListEntry>, AppError> {
             plist_path: path,
             source,
             status,
+            enabled: !disabled,
             last_run_at,
             is_home_agent: home_agent,
         });
@@ -213,12 +223,14 @@ pub async fn kickstart_job(label: String, plist_path: String) -> Result<(), AppE
 }
 
 #[tauri::command]
-pub async fn enable_job(label: String) -> Result<(), AppError> {
+pub async fn enable_job(label: String, plist_path: String) -> Result<(), AppError> {
+    ensure_user_agent(&plist_path)?;
     launchctl::enable(&label)
 }
 
 #[tauri::command]
-pub async fn disable_job(label: String) -> Result<(), AppError> {
+pub async fn disable_job(label: String, plist_path: String) -> Result<(), AppError> {
+    ensure_user_agent(&plist_path)?;
     launchctl::disable(&label)
 }
 

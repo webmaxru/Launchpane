@@ -47,15 +47,25 @@ function App() {
   const [editingJob, setEditingJob] = useState<LaunchdJob | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<JobListEntry | null>(null)
   const [actionError, setActionError] = useState<string | null>(null)
+  const [actionSuccess, setActionSuccess] = useState<string | null>(null)
 
   const handleAction = useCallback(
-    async (action: () => Promise<void>) => {
+    async (
+      verb: string,
+      pastTense: string,
+      job: JobListEntry,
+      action: () => Promise<void>
+    ) => {
       setActionError(null)
+      setActionSuccess(null)
       try {
         await action()
         await refresh()
+        setActionSuccess(`${job.label} ${pastTense} successfully.`)
+        return true
       } catch (e) {
-        setActionError(String(e))
+        setActionError(`Failed to ${verb} ${job.label}: ${String(e)}`)
+        return false
       }
     },
     [refresh]
@@ -87,10 +97,13 @@ function App() {
 
   const handleDelete = useCallback(async () => {
     if (!deleteTarget) return
-    await handleAction(() =>
-      deleteJob(deleteTarget.plist_path, deleteTarget.label)
+    const removed = await handleAction(
+      "remove",
+      "removed",
+      deleteTarget,
+      () => deleteJob(deleteTarget.plist_path, deleteTarget.label)
     )
-    setDeleteTarget(null)
+    if (removed) setDeleteTarget(null)
   }, [deleteTarget, handleAction])
 
   const { theme, cycle } = useTheme()
@@ -148,8 +161,20 @@ function App() {
         )}
 
         {actionError && (
-          <div className="rounded-md border border-destructive/50 bg-destructive/10 p-3 text-sm text-destructive">
+          <div
+            role="alert"
+            className="rounded-md border border-destructive/50 bg-destructive/10 p-3 text-sm text-destructive"
+          >
             {actionError}
+          </div>
+        )}
+
+        {actionSuccess && (
+          <div
+            role="status"
+            className="rounded-md border border-emerald-500/50 bg-emerald-500/10 p-3 text-sm text-emerald-700 dark:text-emerald-300"
+          >
+            {actionSuccess}
           </div>
         )}
 
@@ -157,12 +182,36 @@ function App() {
           <JobList
             jobs={filteredJobs}
             loading={loading}
-            onStart={(job) => handleAction(() => startJob(job.plist_path))}
-            onStop={(job) => handleAction(() => stopJob(job.plist_path))}
-            onRestart={(job) => handleAction(() => restartJob(job.plist_path))}
-            onKickstart={(job) => handleAction(() => kickstartJob(job.label, job.plist_path))}
-            onEnable={(job) => handleAction(() => enableJob(job.label))}
-            onDisable={(job) => handleAction(() => disableJob(job.label))}
+            onStart={(job) =>
+              handleAction("load", "loaded", job, () =>
+                startJob(job.plist_path)
+              )
+            }
+            onStop={(job) =>
+              handleAction("unload", "unloaded", job, () =>
+                stopJob(job.plist_path)
+              )
+            }
+            onRestart={(job) =>
+              handleAction("restart", "restarted", job, () =>
+                restartJob(job.plist_path)
+              )
+            }
+            onKickstart={(job) =>
+              handleAction("start", "started", job, () =>
+                kickstartJob(job.label, job.plist_path)
+              )
+            }
+            onEnable={(job) =>
+              handleAction("enable", "enabled", job, () =>
+                enableJob(job.label, job.plist_path)
+              )
+            }
+            onDisable={(job) =>
+              handleAction("disable", "disabled", job, () =>
+                disableJob(job.label, job.plist_path)
+              )
+            }
             onDelete={(job) => setDeleteTarget(job)}
             onSelect={handleSelect}
             onRevealInFinder={(job) => revealInFinder(job.plist_path)}

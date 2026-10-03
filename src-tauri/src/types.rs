@@ -24,6 +24,7 @@ pub struct JobListEntry {
     pub plist_path: String,
     pub source: JobSource,
     pub status: JobStatus,
+    pub enabled: bool,
     pub last_run_at: Option<String>,
     /// True when this looks like a user-authored automation (a script under the home
     /// directory), as opposed to a vendor-installed app. Drives the "Home" filter.
@@ -99,6 +100,7 @@ mod tests {
             plist_path: "/Users/test/Library/LaunchAgents/com.example.test.plist".to_string(),
             source: JobSource::UserAgent,
             status: JobStatus::Running,
+            enabled: true,
             last_run_at: None,
             is_home_agent: false,
         };

@@ -1,4 +1,5 @@
 use crate::error::AppError;
+use std::collections::HashMap;
 use std::process::Command;
 
 fn get_uid() -> u32 {
@@ -13,12 +14,12 @@ fn get_uid() -> u32 {
         .expect("failed to parse uid")
 }
 
-fn gui_target() -> String {
+pub fn gui_domain() -> String {
     format!("gui/{}", get_uid())
 }
 
 fn service_target(label: &str) -> String {
-    format!("{}/{}", gui_target(), label)
+    format!("{}/{}", gui_domain(), label)
 }
 
 #[derive(Debug)]
@@ -68,9 +69,43 @@ pub fn list_loaded() -> Result<Vec<LoadedService>, AppError> {
     Ok(parse_list_output(&stdout))
 }
 
+pub fn parse_disabled_output(output: &str) -> HashMap<String, bool> {
+    output
+        .lines()
+        .filter_map(|line| {
+            let (label, value) = line.trim().split_once("=>")?;
+            let label = label.trim().strip_prefix('"')?.strip_suffix('"')?;
+            let disabled = match value.trim().trim_end_matches(',') {
+                "true" => true,
+                "false" => false,
+                _ => return None,
+            };
+            Some((label.to_string(), disabled))
+        })
+        .collect()
+}
+
+pub fn list_disabled(domain: &str) -> Result<HashMap<String, bool>, AppError> {
+    let output = Command::new("launchctl")
+        .args(["print-disabled", domain])
+        .output()
+        .map_err(|e| AppError::Launchctl(format!("failed to run launchctl print-disabled: {e}")))?;
+
+    if !output.status.success() {
+        return Err(AppError::Launchctl(format!(
+            "launchctl print-disabled failed: {}",
+            String::from_utf8_lossy(&output.stderr)
+        )));
+    }
+
+    Ok(parse_disabled_output(&String::from_utf8_lossy(
+        &output.stdout,
+    )))
+}
+
 pub fn bootstrap(plist_path: &str) -> Result<(), AppError> {
     let output = Command::new("launchctl")
-        .args(["bootstrap", &gui_target(), plist_path])
+        .args(["bootstrap", &gui_domain(), plist_path])
         .output()
         .map_err(|e| AppError::Launchctl(format!("failed to run launchctl bootstrap: {e}")))?;
 
@@ -94,7 +129,7 @@ pub fn bootstrap(plist_path: &str) -> Result<(), AppError> {
 
 pub fn bootout(plist_path: &str) -> Result<(), AppError> {
     let output = Command::new("launchctl")
-        .args(["bootout", &gui_target(), plist_path])
+        .args(["bootout", &gui_domain(), plist_path])
         .output()
         .map_err(|e| AppError::Launchctl(format!("failed to run launchctl bootout: {e}")))?;
 
@@ -178,6 +213,22 @@ mod tests {
         assert_eq!(result[1].label, "com.example.stopped");
         assert_eq!(result[1].pid, None);
         assert_eq!(result[1].last_exit_code, Some(78));
+    }
+
+    #[test]
+    fn test_parse_disabled_output() {
+        let output = r#"disabled services = {
+    "com.example.disabled" => true
+    "com.example.enabled" => false
+}
+login item associations = {
+    "com.example.enabled" => "com.example.app"
+}"#;
+        let result = parse_disabled_output(output);
+
+        assert_eq!(result.get("com.example.disabled"), Some(&true));
+        assert_eq!(result.get("com.example.enabled"), Some(&false));
+        assert_eq!(result.len(), 2);
     }
 
     #[test]

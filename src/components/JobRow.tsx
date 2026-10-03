@@ -87,6 +87,19 @@ function SourceBadge({ source }: { source: JobListEntry["source"] }) {
   }
 }
 
+function EnabledBadge({ enabled }: { enabled: boolean }) {
+  return enabled ? (
+    <Badge
+      variant="outline"
+      className="border-emerald-300 text-emerald-700 dark:border-emerald-500 dark:text-emerald-300"
+    >
+      Enabled
+    </Badge>
+  ) : (
+    <Badge variant="destructive">Disabled</Badge>
+  )
+}
+
 export function JobRow({
   job,
   onStart,
@@ -112,6 +125,9 @@ export function JobRow({
       </TableCell>
       <TableCell>
         <StatusBadge status={job.status} />
+      </TableCell>
+      <TableCell>
+        <EnabledBadge enabled={job.enabled} />
       </TableCell>
       <TableCell className="text-muted-foreground tabular-nums">
         {job.pid ?? "—"}
@@ -184,8 +200,14 @@ export function JobRow({
             variant="outline"
             size="xs"
             onClick={() => onEnable(job)}
-            disabled={!isUserAgent}
-            title={isUserAgent ? "Enable" : "Cannot enable system agents"}
+            disabled={!isUserAgent || job.enabled}
+            title={
+              !isUserAgent
+                ? "Cannot enable system agents"
+                : job.enabled
+                  ? "Already enabled"
+                  : "Enable"
+            }
           >
             Enable
           </Button>
@@ -193,8 +215,14 @@ export function JobRow({
             variant="outline"
             size="xs"
             onClick={() => onDisable(job)}
-            disabled={!isUserAgent}
-            title={isUserAgent ? "Disable" : "Cannot disable system agents"}
+            disabled={!isUserAgent || !job.enabled}
+            title={
+              !isUserAgent
+                ? "Cannot disable system agents"
+                : job.enabled
+                  ? "Disable"
+                  : "Already disabled"
+            }
           >
             Disable
           </Button>

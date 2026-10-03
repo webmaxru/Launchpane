@@ -18,11 +18,11 @@ export const restartJob = (plistPath: string) =>
 export const kickstartJob = (label: string, plistPath: string) =>
   invoke<void>("kickstart_job", { label, plistPath })
 
-export const enableJob = (label: string) =>
-  invoke<void>("enable_job", { label })
+export const enableJob = (label: string, plistPath: string) =>
+  invoke<void>("enable_job", { label, plistPath })
 
-export const disableJob = (label: string) =>
-  invoke<void>("disable_job", { label })
+export const disableJob = (label: string, plistPath: string) =>
+  invoke<void>("disable_job", { label, plistPath })
 
 export const saveJob = (plistPath: string, config: PlistConfig) =>
   invoke<void>("save_job", { plistPath, config })
