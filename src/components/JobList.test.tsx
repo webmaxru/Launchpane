@@ -38,6 +38,8 @@ describe("JobList", () => {
         onStop={noop}
         onRestart={noop}
         onKickstart={noop}
+        onEnable={noop}
+        onDisable={noop}
         onDelete={noop}
         onSelect={noop}
         onRevealInFinder={noop}
@@ -55,6 +57,8 @@ describe("JobList", () => {
         onStop={noop}
         onRestart={noop}
         onKickstart={noop}
+        onEnable={noop}
+        onDisable={noop}
         onDelete={noop}
         onSelect={noop}
         onRevealInFinder={noop}
@@ -72,6 +76,8 @@ describe("JobList", () => {
         onStop={noop}
         onRestart={noop}
         onKickstart={noop}
+        onEnable={noop}
+        onDisable={noop}
         onDelete={noop}
         onSelect={noop}
         onRevealInFinder={noop}
@@ -90,6 +96,8 @@ describe("JobList", () => {
         onStop={noop}
         onRestart={noop}
         onKickstart={noop}
+        onEnable={noop}
+        onDisable={noop}
         onDelete={noop}
         onSelect={noop}
         onRevealInFinder={noop}
@@ -108,6 +116,8 @@ describe("JobList", () => {
         onStop={noop}
         onRestart={noop}
         onKickstart={noop}
+        onEnable={noop}
+        onDisable={noop}
         onDelete={noop}
         onSelect={noop}
         onRevealInFinder={noop}
@@ -125,6 +135,8 @@ describe("JobList", () => {
         onStop={noop}
         onRestart={noop}
         onKickstart={noop}
+        onEnable={noop}
+        onDisable={noop}
         onDelete={noop}
         onSelect={noop}
         onRevealInFinder={noop}
@@ -145,6 +157,8 @@ describe("JobList", () => {
         onStop={noop}
         onRestart={noop}
         onKickstart={onKickstart}
+        onEnable={noop}
+        onDisable={noop}
         onDelete={noop}
         onSelect={noop}
         onRevealInFinder={noop}
@@ -154,5 +168,56 @@ describe("JobList", () => {
     expect(onKickstart).toHaveBeenCalledWith(
       expect.objectContaining({ label: "com.example.running" })
     )
+  })
+
+  it("renders explicit Enable, Disable, and Remove buttons for every job", () => {
+    render(
+      <JobList
+        jobs={mockJobs}
+        loading={false}
+        onStart={noop}
+        onStop={noop}
+        onRestart={noop}
+        onKickstart={noop}
+        onEnable={noop}
+        onDisable={noop}
+        onDelete={noop}
+        onSelect={noop}
+        onRevealInFinder={noop}
+      />
+    )
+
+    expect(screen.getAllByRole("button", { name: "Enable" })).toHaveLength(2)
+    expect(screen.getAllByRole("button", { name: "Disable" })).toHaveLength(2)
+    expect(screen.getAllByRole("button", { name: "Remove" })).toHaveLength(2)
+  })
+
+  it("calls the row action handlers from the explicit buttons", () => {
+    const onEnable = vi.fn()
+    const onDisable = vi.fn()
+    const onDelete = vi.fn()
+    render(
+      <JobList
+        jobs={[mockJobs[0]]}
+        loading={false}
+        onStart={noop}
+        onStop={noop}
+        onRestart={noop}
+        onKickstart={noop}
+        onEnable={onEnable}
+        onDisable={onDisable}
+        onDelete={onDelete}
+        onSelect={noop}
+        onRevealInFinder={noop}
+      />
+    )
+
+    screen.getByRole("button", { name: "Enable" }).click()
+    screen.getByRole("button", { name: "Disable" }).click()
+    screen.getByRole("button", { name: "Remove" }).click()
+
+    expect(onEnable).toHaveBeenCalledWith(mockJobs[0])
+    expect(onDisable).toHaveBeenCalledWith(mockJobs[0])
+    expect(onDelete).toHaveBeenCalledWith(mockJobs[0])
   })
 })

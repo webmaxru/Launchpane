@@ -15,6 +15,8 @@ type JobListProps = {
   onStop: (job: JobListEntry) => void
   onRestart: (job: JobListEntry) => void
   onKickstart: (job: JobListEntry) => void
+  onEnable: (job: JobListEntry) => void
+  onDisable: (job: JobListEntry) => void
   onDelete: (job: JobListEntry) => void
   onSelect: (job: JobListEntry) => void
   onRevealInFinder: (job: JobListEntry) => void
@@ -27,6 +29,8 @@ export function JobList({
   onStop,
   onRestart,
   onKickstart,
+  onEnable,
+  onDisable,
   onDelete,
   onSelect,
   onRevealInFinder,
@@ -56,7 +60,7 @@ export function JobList({
           <TableHead className="w-24">Status</TableHead>
           <TableHead className="w-16">PID</TableHead>
           <TableHead className="w-24">Last Run</TableHead>
-          <TableHead className="w-28">Actions</TableHead>
+          <TableHead className="w-[28rem]">Actions</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -68,6 +72,8 @@ export function JobList({
             onStop={onStop}
             onRestart={onRestart}
             onKickstart={onKickstart}
+            onEnable={onEnable}
+            onDisable={onDisable}
             onDelete={onDelete}
             onSelect={onSelect}
             onRevealInFinder={onRevealInFinder}

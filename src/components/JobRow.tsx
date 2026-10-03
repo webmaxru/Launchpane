@@ -4,7 +4,6 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { TableCell, TableRow } from "@/components/ui/table"
@@ -14,7 +13,6 @@ import {
   Square,
   RotateCw,
   MoreHorizontal,
-  Trash2,
   FileText,
   FolderOpen,
   Zap,
@@ -42,6 +40,8 @@ type JobRowProps = {
   onStop: (job: JobListEntry) => void
   onRestart: (job: JobListEntry) => void
   onKickstart: (job: JobListEntry) => void
+  onEnable: (job: JobListEntry) => void
+  onDisable: (job: JobListEntry) => void
   onDelete: (job: JobListEntry) => void
   onSelect: (job: JobListEntry) => void
   onRevealInFinder: (job: JobListEntry) => void
@@ -93,6 +93,8 @@ export function JobRow({
   onStop,
   onRestart,
   onKickstart,
+  onEnable,
+  onDisable,
   onDelete,
   onSelect,
   onRevealInFinder,
@@ -178,6 +180,33 @@ export function JobRow({
               <Zap className="h-4 w-4" />
             </Button>
           )}
+          <Button
+            variant="outline"
+            size="xs"
+            onClick={() => onEnable(job)}
+            disabled={!isUserAgent}
+            title={isUserAgent ? "Enable" : "Cannot enable system agents"}
+          >
+            Enable
+          </Button>
+          <Button
+            variant="outline"
+            size="xs"
+            onClick={() => onDisable(job)}
+            disabled={!isUserAgent}
+            title={isUserAgent ? "Disable" : "Cannot disable system agents"}
+          >
+            Disable
+          </Button>
+          <Button
+            variant="destructive"
+            size="xs"
+            onClick={() => onDelete(job)}
+            disabled={!isUserAgent}
+            title={isUserAgent ? "Remove" : "Cannot remove system agents"}
+          >
+            Remove
+          </Button>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="icon" className="h-8 w-8">
@@ -197,18 +226,6 @@ export function JobRow({
                 <FolderOpen className="mr-2 h-4 w-4" />
                 Reveal in Finder
               </DropdownMenuItem>
-              {isUserAgent && (
-                <>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem
-                    className="text-destructive"
-                    onClick={() => onDelete(job)}
-                  >
-                    <Trash2 className="mr-2 h-4 w-4" />
-                    Delete
-                  </DropdownMenuItem>
-                </>
-              )}
             </DropdownMenuContent>
           </DropdownMenu>
         </div>

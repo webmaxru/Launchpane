@@ -10,6 +10,8 @@ import {
   stopJob,
   restartJob,
   kickstartJob,
+  enableJob,
+  disableJob,
   deleteJob,
   saveJob,
   createJob,
@@ -159,6 +161,8 @@ function App() {
             onStop={(job) => handleAction(() => stopJob(job.plist_path))}
             onRestart={(job) => handleAction(() => restartJob(job.plist_path))}
             onKickstart={(job) => handleAction(() => kickstartJob(job.label, job.plist_path))}
+            onEnable={(job) => handleAction(() => enableJob(job.label))}
+            onDisable={(job) => handleAction(() => disableJob(job.label))}
             onDelete={(job) => setDeleteTarget(job)}
             onSelect={handleSelect}
             onRevealInFinder={(job) => revealInFinder(job.plist_path)}
@@ -190,10 +194,10 @@ function App() {
       >
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Delete Agent</DialogTitle>
+            <DialogTitle>Remove Agent</DialogTitle>
           </DialogHeader>
           <p className="text-sm text-muted-foreground">
-            Are you sure you want to delete{" "}
+            Are you sure you want to remove{" "}
             <span className="font-mono font-medium text-foreground">
               {deleteTarget?.label}
             </span>
@@ -204,7 +208,7 @@ function App() {
               Cancel
             </Button>
             <Button variant="destructive" onClick={handleDelete}>
-              Delete
+              Remove
             </Button>
           </DialogFooter>
         </DialogContent>
