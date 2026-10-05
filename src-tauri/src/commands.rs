@@ -1,9 +1,12 @@
 use crate::error::AppError;
 use crate::launchctl;
+use crate::login_items;
 use crate::plist_util;
 use crate::types::PlistConfig;
 use crate::types::{JobListEntry, JobSource, JobStatus, LaunchdJob};
 use std::collections::HashMap;
+use std::time::Duration;
+use tauri::Manager;
 
 fn get_last_run_at(config: &PlistConfig) -> Option<String> {
     let paths = [&config.standard_out_path, &config.standard_error_path];
@@ -80,7 +83,19 @@ fn is_home_agent(source: &JobSource, config: &PlistConfig) -> bool {
     strings.iter().any(|s| references_home_path(s, &home))
 }
 
+/// Login items are owned by their parent application. The app may only flip their
+/// launchd enable override; load/unload/run/remove would corrupt another app's bundle.
+fn ensure_not_login_item(plist_path: &str, action: &str) -> Result<(), AppError> {
+    if login_items::is_login_item_path(plist_path) {
+        return Err(AppError::Launchctl(format!(
+            "Login items cannot be {action}. They are managed by their parent app; use Enable or Disable instead."
+        )));
+    }
+    Ok(())
+}
+
 fn ensure_user_agent(plist_path: &str) -> Result<(), AppError> {
+    ensure_not_login_item(plist_path, "controlled directly")?;
     let home = dirs::home_dir().unwrap_or_default();
     let user_agents = home.join("Library/LaunchAgents");
     if !std::path::Path::new(plist_path).starts_with(&user_agents) {
@@ -93,6 +108,9 @@ fn ensure_user_agent(plist_path: &str) -> Result<(), AppError> {
 }
 
 fn source_for_path(plist_path: &str) -> Option<JobSource> {
+    if login_items::is_login_item_path(plist_path) {
+        return Some(JobSource::LoginItem);
+    }
     let home = dirs::home_dir().unwrap_or_default();
     let user_agents = home.join("Library/LaunchAgents");
     let path = std::path::Path::new(plist_path);
@@ -116,7 +134,9 @@ fn ensure_toggle_allowed(plist_path: &str, source: &JobSource) -> Result<(), App
             "Job source does not match its plist path.".to_string(),
         ));
     }
-    if actual_source != JobSource::UserAgent && !launchctl::is_administrator() {
+    // User agents and login items both live in the user's own GUI domain.
+    let user_owned = matches!(actual_source, JobSource::UserAgent | JobSource::LoginItem);
+    if !user_owned && !launchctl::is_administrator() {
         return Err(AppError::Launchctl(
             "Administrator mode is required to manage system jobs.".to_string(),
         ));
@@ -127,8 +147,47 @@ fn ensure_toggle_allowed(plist_path: &str, source: &JobSource) -> Result<(), App
 fn domain_for_source(source: &JobSource) -> String {
     match source {
         JobSource::SystemDaemon => "system".to_string(),
-        JobSource::UserAgent | JobSource::SystemAgent => launchctl::gui_domain(),
+        JobSource::UserAgent | JobSource::SystemAgent | JobSource::LoginItem => {
+            launchctl::gui_domain()
+        }
     }
+}
+
+fn effective_enabled(
+    disabled_overrides: &HashMap<String, bool>,
+    label: &str,
+    plist_disabled: Option<bool>,
+) -> bool {
+    !disabled_overrides
+        .get(label)
+        .copied()
+        .unwrap_or(plist_disabled.unwrap_or(false))
+}
+
+fn disabled_overrides_for_source(source: &JobSource) -> Result<HashMap<String, bool>, AppError> {
+    let domain = domain_for_source(source);
+    launchctl::list_disabled(&domain)
+}
+
+fn verified_enabled_state(
+    source: &JobSource,
+    label: &str,
+    plist_path: &str,
+) -> Result<bool, AppError> {
+    let disabled_overrides = disabled_overrides_for_source(source)?;
+    // Login items have no plist, so only the launchctl override decides.
+    let plist_disabled = if *source == JobSource::LoginItem {
+        None
+    } else {
+        plist_util::parse_plist(plist_path)
+            .ok()
+            .and_then(|config| config.disabled)
+    };
+    Ok(effective_enabled(
+        &disabled_overrides,
+        label,
+        plist_disabled,
+    ))
 }
 
 #[tauri::command]
@@ -162,12 +221,16 @@ pub async fn list_jobs() -> Result<Vec<JobListEntry>, AppError> {
 
         let last_run_at = get_last_run_at(&config);
         let home_agent = is_home_agent(&source, &config);
-        let disabled = match &source {
-            JobSource::SystemDaemon => system_disabled.get(&config.label),
-            JobSource::UserAgent | JobSource::SystemAgent => gui_disabled.get(&config.label),
-        }
-        .copied()
-        .unwrap_or(config.disabled.unwrap_or(false));
+        let enabled = effective_enabled(
+            match &source {
+                JobSource::SystemDaemon => &system_disabled,
+                JobSource::UserAgent | JobSource::SystemAgent | JobSource::LoginItem => {
+                    &gui_disabled
+                }
+            },
+            &config.label,
+            config.disabled,
+        );
         entries.push(JobListEntry {
             label: config.label,
             pid,
@@ -175,20 +238,115 @@ pub async fn list_jobs() -> Result<Vec<JobListEntry>, AppError> {
             plist_path: path,
             source,
             status,
-            enabled: !disabled,
+            enabled,
             last_run_at,
             is_home_agent: home_agent,
         });
     }
 
+    let extras = login_item_entries(&loaded_map, &gui_disabled, &entries);
+    entries.extend(extras);
+
     entries.sort_by(|a, b| a.label.cmp(&b.label));
     Ok(entries)
+}
+
+/// Builds list entries for ServiceManagement login items that launchd actually knows
+/// about. Helper bundles that are installed but never registered are skipped: they do not
+/// autostart and cannot be managed meaningfully.
+fn login_item_entries(
+    loaded_map: &HashMap<String, &launchctl::LoadedService>,
+    gui_disabled: &HashMap<String, bool>,
+    existing: &[JobListEntry],
+) -> Vec<JobListEntry> {
+    let known_labels: std::collections::HashSet<&str> =
+        existing.iter().map(|e| e.label.as_str()).collect();
+
+    login_items::scan_login_items()
+        .into_iter()
+        .filter(|item| !known_labels.contains(item.label.as_str()))
+        .filter_map(|item| {
+            let service = loaded_map.get(&item.label);
+            let override_state = gui_disabled.get(&item.label).copied();
+            if service.is_none() && override_state.is_none() {
+                return None;
+            }
+
+            let (status, pid, last_exit_code) = match service {
+                Some(svc) if svc.pid.is_some() => (JobStatus::Running, svc.pid, svc.last_exit_code),
+                Some(svc) => (JobStatus::Loaded, None, svc.last_exit_code),
+                None => (JobStatus::Unloaded, None, None),
+            };
+
+            Some(JobListEntry {
+                label: item.label,
+                pid,
+                last_exit_code,
+                plist_path: item.bundle_path,
+                source: JobSource::LoginItem,
+                status,
+                enabled: !override_state.unwrap_or(false),
+                // Login items have no plist-declared log files, so there is nothing to
+                // derive a last-run timestamp from.
+                last_run_at: None,
+                is_home_agent: false,
+            })
+        })
+        .collect()
+}
+
+/// Builds detail for a login item. There is no plist to parse, so the config carries only
+/// what the helper bundle itself declares; every plist-only field stays empty.
+fn login_item_detail(bundle_path: String) -> Result<LaunchdJob, AppError> {
+    let label = login_items::scan_login_items()
+        .into_iter()
+        .find(|item| item.bundle_path == bundle_path)
+        .map(|item| item.label)
+        .ok_or_else(|| AppError::NotFound(bundle_path.clone()))?;
+
+    let loaded = launchctl::list_loaded().unwrap_or_default();
+    let svc = loaded.iter().find(|s| s.label == label);
+    let (status, pid, exit_code) = match svc {
+        Some(s) if s.pid.is_some() => (JobStatus::Running, s.pid, s.last_exit_code),
+        Some(s) => (JobStatus::Loaded, None, s.last_exit_code),
+        None => (JobStatus::Unloaded, None, None),
+    };
+
+    Ok(LaunchdJob {
+        label: label.clone(),
+        plist_path: bundle_path.clone(),
+        source: JobSource::LoginItem,
+        status,
+        pid,
+        last_exit_code: exit_code,
+        plist: PlistConfig {
+            label,
+            program: login_items::bundle_executable(&bundle_path),
+            program_arguments: None,
+            run_at_load: None,
+            keep_alive: None,
+            start_interval: None,
+            start_calendar_interval: None,
+            standard_out_path: None,
+            standard_error_path: None,
+            working_directory: None,
+            environment_variables: None,
+            disabled: None,
+            wake_system: None,
+            raw_xml: String::new(),
+        },
+        last_run_at: None,
+    })
 }
 
 #[tauri::command]
 pub async fn get_job_detail(plist_path: String) -> Result<LaunchdJob, AppError> {
     if !std::path::Path::new(&plist_path).exists() {
         return Err(AppError::NotFound(plist_path));
+    }
+
+    if login_items::is_login_item_path(&plist_path) {
+        return login_item_detail(plist_path);
     }
 
     let plist = plist_util::parse_plist(&plist_path)?;
@@ -266,9 +424,16 @@ pub async fn enable_job(
     label: String,
     plist_path: String,
     source: JobSource,
-) -> Result<(), AppError> {
+) -> Result<bool, AppError> {
     ensure_toggle_allowed(&plist_path, &source)?;
-    launchctl::enable(&domain_for_source(&source), &label)
+    launchctl::enable(&domain_for_source(&source), &label)?;
+    let enabled = verified_enabled_state(&source, &label, &plist_path)?;
+    if !enabled {
+        return Err(AppError::Launchctl(format!(
+            "launchctl enable succeeded, but '{label}' is still disabled. The plist's Disabled key may be overriding the launchctl override."
+        )));
+    }
+    Ok(enabled)
 }
 
 #[tauri::command]
@@ -276,9 +441,16 @@ pub async fn disable_job(
     label: String,
     plist_path: String,
     source: JobSource,
-) -> Result<(), AppError> {
+) -> Result<bool, AppError> {
     ensure_toggle_allowed(&plist_path, &source)?;
-    launchctl::disable(&domain_for_source(&source), &label)
+    launchctl::disable(&domain_for_source(&source), &label)?;
+    let enabled = verified_enabled_state(&source, &label, &plist_path)?;
+    if enabled {
+        return Err(AppError::Launchctl(format!(
+            "launchctl disable succeeded, but '{label}' is still enabled. The plist's Disabled key may be overriding the launchctl override."
+        )));
+    }
+    Ok(enabled)
 }
 
 #[derive(serde::Serialize)]
@@ -297,6 +469,30 @@ fn shell_quote(value: &str) -> String {
     format!("'{}'", value.replace('\'', "'\\''"))
 }
 
+fn administrator_launch_command(
+    executable: &std::path::Path,
+    home: &std::path::Path,
+    user_uid: u32,
+) -> String {
+    format!(
+        "env HOME={} LAUNCHPANE_USER_UID={} {} </dev/null >/tmp/launchpane-admin.log 2>&1 & echo $!",
+        shell_quote(&home.to_string_lossy()),
+        user_uid,
+        shell_quote(&executable.to_string_lossy())
+    )
+}
+
+fn process_effective_uid(pid: u32) -> Option<u32> {
+    let output = std::process::Command::new("ps")
+        .args(["-p", &pid.to_string(), "-o", "uid="])
+        .output()
+        .ok()?;
+    if !output.status.success() {
+        return None;
+    }
+    String::from_utf8_lossy(&output.stdout).trim().parse().ok()
+}
+
 #[tauri::command]
 pub async fn restart_as_administrator(app: tauri::AppHandle) -> Result<(), AppError> {
     if launchctl::is_administrator() {
@@ -306,12 +502,7 @@ pub async fn restart_as_administrator(app: tauri::AppHandle) -> Result<(), AppEr
     let executable = std::env::current_exe()?;
     let home = dirs::home_dir()
         .ok_or_else(|| AppError::Launchctl("could not determine home directory".to_string()))?;
-    let command = format!(
-        "env HOME={} LAUNCHD_UI_USER_UID={} nohup {} >/tmp/launchd-ui-admin.log 2>&1 &",
-        shell_quote(&home.to_string_lossy()),
-        launchctl::effective_uid(),
-        shell_quote(&executable.to_string_lossy())
-    );
+    let command = administrator_launch_command(&executable, &home, launchctl::effective_uid());
     let output = std::process::Command::new("osascript")
         .args([
             "-e",
@@ -332,14 +523,66 @@ pub async fn restart_as_administrator(app: tauri::AppHandle) -> Result<(), AppEr
         )));
     }
 
+    let pid = String::from_utf8_lossy(&output.stdout)
+        .trim()
+        .parse::<u32>()
+        .map_err(|_| {
+            AppError::Launchctl(format!(
+                "administrator relaunch returned an invalid process id: {}",
+                String::from_utf8_lossy(&output.stdout).trim()
+            ))
+        })?;
+
+    let mut administrator_ready = false;
+    for _ in 0..30 {
+        if process_effective_uid(pid) == Some(0) {
+            administrator_ready = true;
+            break;
+        }
+        std::thread::sleep(Duration::from_millis(100));
+    }
+    if !administrator_ready {
+        let log = std::fs::read_to_string("/tmp/launchpane-admin.log").unwrap_or_default();
+        return Err(AppError::Launchctl(format!(
+            "administrator process did not start{}",
+            if log.trim().is_empty() {
+                String::new()
+            } else {
+                format!(": {}", log.trim())
+            }
+        )));
+    }
+
+    let activation_script = format!(
+        "tell application \"System Events\" to set frontmost of first process whose unix id is {pid} to true"
+    );
+    for _ in 0..30 {
+        if std::process::Command::new("osascript")
+            .args(["-e", &activation_script])
+            .status()
+            .is_ok_and(|status| status.success())
+        {
+            break;
+        }
+        std::thread::sleep(Duration::from_millis(100));
+    }
+
     if !cfg!(debug_assertions) {
         app.exit(0);
+    } else {
+        std::thread::spawn(move || {
+            std::thread::sleep(Duration::from_millis(250));
+            if let Some(window) = app.get_webview_window("main") {
+                let _ = window.hide();
+            }
+        });
     }
     Ok(())
 }
 
 #[tauri::command]
 pub async fn save_job(plist_path: String, config: PlistConfig) -> Result<(), AppError> {
+    ensure_not_login_item(&plist_path, "edited")?;
     plist_util::write_plist(&plist_path, &config)
 }
 
@@ -371,11 +614,13 @@ pub async fn create_job(label: String, config: PlistConfig) -> Result<String, Ap
 
 #[tauri::command]
 pub async fn save_raw_plist(plist_path: String, xml: String) -> Result<(), AppError> {
+    ensure_not_login_item(&plist_path, "edited")?;
     plist_util::write_raw_plist(&plist_path, &xml)
 }
 
 #[tauri::command]
 pub async fn delete_job(plist_path: String, label: String) -> Result<(), AppError> {
+    ensure_not_login_item(&plist_path, "removed")?;
     let _ = launchctl::bootout(&plist_path);
     let _ = launchctl::disable(&launchctl::gui_domain(), &label);
     if std::path::Path::new(&plist_path).exists() {
@@ -557,11 +802,90 @@ mod tests {
         assert_eq!(domain_for_source(&JobSource::SystemDaemon), "system");
         assert!(domain_for_source(&JobSource::UserAgent).starts_with("gui/"));
         assert!(domain_for_source(&JobSource::SystemAgent).starts_with("gui/"));
+        assert!(domain_for_source(&JobSource::LoginItem).starts_with("gui/"));
+    }
+
+    const LOGIN_ITEM_PATH: &str =
+        "/Applications/Spotify.app/Contents/Library/LoginItems/StartUpHelper.app";
+
+    #[test]
+    fn test_source_for_path_classifies_login_items() {
+        assert_eq!(source_for_path(LOGIN_ITEM_PATH), Some(JobSource::LoginItem));
+        assert_eq!(
+            source_for_path("/Library/LaunchDaemons/com.example.plist"),
+            Some(JobSource::SystemDaemon)
+        );
+    }
+
+    #[test]
+    fn test_login_items_are_toggleable_without_administrator() {
+        // Login items live in the user's own GUI domain, so no admin escalation is needed.
+        assert!(ensure_toggle_allowed(LOGIN_ITEM_PATH, &JobSource::LoginItem).is_ok());
+    }
+
+    #[test]
+    fn test_login_items_reject_plist_only_actions() {
+        assert!(ensure_not_login_item(LOGIN_ITEM_PATH, "removed").is_err());
+        assert!(ensure_user_agent(LOGIN_ITEM_PATH).is_err());
+        assert!(ensure_not_login_item("/Users/me/Library/LaunchAgents/a.plist", "removed").is_ok());
+    }
+
+    #[test]
+    fn test_effective_enabled_disabled_override_wins_over_enabled_plist() {
+        let mut overrides = HashMap::new();
+        overrides.insert("test".to_string(), true);
+
+        assert!(!effective_enabled(&overrides, "test", Some(false)));
+    }
+
+    #[test]
+    fn test_effective_enabled_enabled_override_wins_over_disabled_plist() {
+        let mut overrides = HashMap::new();
+        overrides.insert("test".to_string(), false);
+
+        assert!(effective_enabled(&overrides, "test", Some(true)));
+    }
+
+    #[test]
+    fn test_effective_enabled_falls_back_to_disabled_plist() {
+        let overrides = HashMap::new();
+
+        assert!(!effective_enabled(&overrides, "test", Some(true)));
+    }
+
+    #[test]
+    fn test_effective_enabled_defaults_to_enabled_without_override_or_plist_key() {
+        let overrides = HashMap::new();
+
+        assert!(effective_enabled(&overrides, "test", None));
     }
 
     #[test]
     fn test_shell_quote() {
-        assert_eq!(shell_quote("/tmp/launchd-ui"), "'/tmp/launchd-ui'");
+        assert_eq!(shell_quote("/tmp/launchpane"), "'/tmp/launchpane'");
         assert_eq!(shell_quote("/tmp/user's app"), "'/tmp/user'\\''s app'");
+    }
+
+    #[test]
+    fn test_administrator_launch_command_detaches_without_nohup() {
+        let command = administrator_launch_command(
+            std::path::Path::new("/tmp/launchpane"),
+            std::path::Path::new("/Users/test user"),
+            501,
+        );
+
+        assert_eq!(
+            command,
+            "env HOME='/Users/test user' LAUNCHPANE_USER_UID=501 '/tmp/launchpane' </dev/null >/tmp/launchpane-admin.log 2>&1 & echo $!"
+        );
+        assert!(!command.contains("nohup"));
+    }
+
+    #[test]
+    fn test_process_effective_uid_reads_current_process() {
+        assert_eq!(
+            process_effective_uid(std::process::id()),
+            Some(launchctl::effective_uid())
+        );
     }
 }

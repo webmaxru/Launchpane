@@ -72,14 +72,14 @@ describe("useTheme", () => {
     const { result } = renderHook(() => useTheme())
 
     act(() => result.current.setTheme("dark"))
-    expect(localStorage.getItem("launchd-ui-theme")).toBe("dark")
+    expect(localStorage.getItem("launchpane-theme")).toBe("dark")
 
     act(() => result.current.setTheme("system"))
-    expect(localStorage.getItem("launchd-ui-theme")).toBeNull()
+    expect(localStorage.getItem("launchpane-theme")).toBeNull()
   })
 
   it("restores theme from localStorage on mount", () => {
-    localStorage.setItem("launchd-ui-theme", "light")
+    localStorage.setItem("launchpane-theme", "light")
     const { result } = renderHook(() => useTheme())
     expect(result.current.theme).toBe("light")
     expect(document.documentElement.classList.contains("dark")).toBe(false)

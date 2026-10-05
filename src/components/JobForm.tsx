@@ -2,6 +2,7 @@ import { useEffect, useState } from "react"
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogFooter,
@@ -191,14 +192,19 @@ export function JobForm({ open, onClose, onSave, editingJob }: JobFormProps) {
 
   return (
     <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
-      <DialogContent className="sm:max-w-[500px] max-h-[85vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>
+      <DialogContent className="max-h-[calc(100vh-2rem)] min-h-0 gap-0 border-zinc-200 bg-white p-0 text-zinc-950 sm:max-w-[620px] dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-50">
+        <DialogHeader className="w-full shrink-0 border-b border-zinc-200 bg-white px-6 py-5 pr-14 dark:border-zinc-800 dark:bg-zinc-950">
+          <DialogTitle className="text-base">
             {isEditing ? "Edit Agent" : "New Agent"}
           </DialogTitle>
+          <DialogDescription>
+            {isEditing
+              ? "Update this agent’s command, schedule, and output settings."
+              : "Create a user LaunchAgent in your Library folder."}
+          </DialogDescription>
         </DialogHeader>
 
-        <div className="grid gap-4 py-4">
+        <div className="grid min-h-0 w-full flex-1 gap-6 overflow-y-auto bg-white px-6 py-5 dark:bg-zinc-950">
           <div className="grid gap-1.5">
             <Label htmlFor="label">
               Label <span className="text-destructive">*</span>
@@ -211,7 +217,7 @@ export function JobForm({ open, onClose, onSave, editingJob }: JobFormProps) {
                 const label = e.target.value.replace(/\s/g, "")
                 const updates: Partial<PlistConfig> = { label }
                 if (!isEditing && homeDir && label.trim()) {
-                  const logDir = `${homeDir}/Library/Logs/launchd-ui`
+                  const logDir = `${homeDir}/Library/Logs/Launchpane`
                   updates.standard_out_path = `${logDir}/${label}.stdout.log`
                   updates.standard_error_path = `${logDir}/${label}.stderr.log`
                 }
@@ -243,7 +249,7 @@ export function JobForm({ open, onClose, onSave, editingJob }: JobFormProps) {
             </p>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-4 rounded-xl border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-800 dark:bg-zinc-900/70">
             <div className="grid gap-1.5">
               <Label htmlFor="run-at-load">Run at Load</Label>
               <Select
@@ -597,11 +603,15 @@ export function JobForm({ open, onClose, onSave, editingJob }: JobFormProps) {
           {error && <div className="text-sm text-destructive">{error}</div>}
         </div>
 
-        <DialogFooter>
+        <DialogFooter className="w-full shrink-0 border-t border-zinc-200 bg-zinc-50 px-6 py-4 dark:border-zinc-800 dark:bg-zinc-900">
           <Button variant="outline" onClick={onClose}>
             Cancel
           </Button>
-          <Button onClick={handleSave} disabled={saving}>
+          <Button
+            onClick={handleSave}
+            disabled={saving}
+            className="bg-blue-600 text-white hover:bg-blue-500 dark:bg-blue-500 dark:hover:bg-blue-400"
+          >
             {saving ? "Saving..." : isEditing ? "Save" : "Create"}
           </Button>
         </DialogFooter>

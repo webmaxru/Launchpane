@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <defs>
+    <linearGradient id="plate" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#5B8DEF"/>
+      <stop offset="55%" stop-color="#3A63D8"/>
+      <stop offset="100%" stop-color="#2A3FB0"/>
+    </linearGradient>
+    <linearGradient id="gloss" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.34"/>
+      <stop offset="45%" stop-color="#FFFFFF" stop-opacity="0.06"/>
+      <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="spark" x1="0" y1="1" x2="0" y2="0">
+      <stop offset="0%" stop-color="#FFD36B"/>
+      <stop offset="100%" stop-color="#FFF4D2"/>
+    </linearGradient>
+    <filter id="drop" x="-25%" y="-25%" width="150%" height="150%">
+      <feDropShadow dx="0" dy="18" stdDeviation="22" flood-color="#0B1030" flood-opacity="0.32"/>
+    </filter>
+  </defs>
+
+  <g filter="url(#drop)">
+    <rect x="100" y="92" width="824" height="824" rx="185" ry="185" fill="url(#plate)"/>
+    <rect x="100" y="92" width="824" height="824" rx="185" ry="185" fill="url(#gloss)"/>
+    <rect x="103.5" y="95.5" width="817" height="817" rx="181.5" ry="181.5" fill="none" stroke="#FFFFFF" stroke-opacity="0.28" stroke-width="7"/>
+  </g>
+
+  <g transform="translate(0,16)">
+    <rect x="252" y="286" width="520" height="420" rx="54" ry="54" fill="#FFFFFF" fill-opacity="0.97"/>
+    <path d="M252 340 h520 v312 a54 54 0 0 1 -54 54 h-412 a54 54 0 0 1 -54 -54 Z" fill="#FFFFFF" fill-opacity="0"/>
+    <path d="M306 286 h412 a54 54 0 0 1 54 54 v50 h-520 v-50 a54 54 0 0 1 54 -54 Z" fill="#DCE6FB"/>
+    <circle cx="312" cy="338" r="17" fill="#8FA6D8"/>
+    <circle cx="368" cy="338" r="17" fill="#8FA6D8"/>
+    <circle cx="424" cy="338" r="17" fill="#8FA6D8"/>
+
+    <rect x="306" y="452" width="196" height="34" rx="17" fill="#B9C6E4"/>
+    <rect x="306" y="534" width="224" height="34" rx="17" fill="#B9C6E4"/>
+    <rect x="306" y="616" width="156" height="34" rx="17" fill="#B9C6E4"/>
+
+    <path d="M660 418 L754 524 L704 524 L704 654 Q704 668 690 668 L630 668 Q616 668 616 654 L616 524 L566 524 Z" fill="url(#spark)"/>
+  </g>
+</svg>

@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react"
 
 type Theme = "system" | "light" | "dark"
 
-const STORAGE_KEY = "launchd-ui-theme"
+const STORAGE_KEY = "launchpane-theme"
 const query = "(prefers-color-scheme: dark)"
 
 function getSystemDark(): boolean {

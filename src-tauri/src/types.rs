@@ -6,6 +6,9 @@ pub enum JobSource {
     UserAgent,
     SystemAgent,
     SystemDaemon,
+    /// A ServiceManagement login item: an app-embedded helper bundle registered with
+    /// launchd by its parent application. It has no plist file of its own.
+    LoginItem,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]

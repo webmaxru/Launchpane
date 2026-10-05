@@ -19,7 +19,7 @@ pub fn is_administrator() -> bool {
 }
 
 fn user_uid() -> u32 {
-    std::env::var("LAUNCHD_UI_USER_UID")
+    std::env::var("LAUNCHPANE_USER_UID")
         .ok()
         .and_then(|value| value.parse().ok())
         .unwrap_or_else(effective_uid)

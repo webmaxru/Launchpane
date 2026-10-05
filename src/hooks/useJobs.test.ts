@@ -89,4 +89,43 @@ describe("useJobs", () => {
     expect(result.current.error).toContain("Connection failed")
     expect(result.current.jobs.length).toBe(0)
   })
+  it("filters login items into their own group", async () => {
+    setFakeHandler("list_jobs", () => [
+      {
+        label: "com.example.agent",
+        pid: null,
+        last_exit_code: null,
+        plist_path: "/Users/test/Library/LaunchAgents/com.example.agent.plist",
+        source: "UserAgent",
+        status: "Unloaded",
+        enabled: true,
+        last_run_at: null,
+        is_home_agent: false,
+      },
+      {
+        label: "com.coppertino.VOXAgent",
+        pid: 575,
+        last_exit_code: 0,
+        plist_path: "/Applications/VOX.app/Contents/Library/LoginItems/VOXAgent.app",
+        source: "LoginItem",
+        status: "Running",
+        enabled: true,
+        last_run_at: null,
+        is_home_agent: false,
+      },
+    ])
+
+    const { result } = renderHook(() => useJobs())
+    await waitFor(() => expect(result.current.loading).toBe(false))
+
+    act(() => {
+      result.current.setSourceFilter("LoginItem")
+    })
+
+    await waitFor(() => {
+      expect(result.current.filteredJobs.map((job) => job.label)).toEqual([
+        "com.coppertino.VOXAgent",
+      ])
+    })
+  })
 })

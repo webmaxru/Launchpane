@@ -105,4 +105,21 @@ describe("CommandPanel command builders", () => {
       "sudo rm /Library/LaunchDaemons/com.example.agent.plist",
     ])
   })
+  it("offers only override and inspection commands for login items", () => {
+    const commands = buildCommands(
+      job({
+        label: "com.spotify.client.startuphelper",
+        source: "LoginItem",
+        plist_path:
+          "/Applications/Spotify.app/Contents/Library/LoginItems/StartUpHelper.app",
+      })
+    )
+
+    expect(commands.map((item) => item.command)).toEqual([
+      "launchctl enable gui/$(id -u)/com.spotify.client.startuphelper",
+      "launchctl disable gui/$(id -u)/com.spotify.client.startuphelper",
+      "launchctl print gui/$(id -u)/com.spotify.client.startuphelper",
+    ])
+    expect(commands.some((item) => item.destructive)).toBe(false)
+  })
 })

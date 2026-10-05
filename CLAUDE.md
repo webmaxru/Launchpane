@@ -1,6 +1,6 @@
-# launchd-ui
+# Launchpane
 
-macOS launchd エージェント/デーモン管理GUI（Tauri v2）
+A native macOS app for managing launch agents, daemons and login items (Tauri v2)
 
 ## Tech Stack
 
@@ -14,6 +14,11 @@ macOS launchd エージェント/デーモン管理GUI（Tauri v2）
 
 - `pnpm tauri:dev` — Tauri dev (launches app with hot reload)
 - `pnpm tauri:build` — Tauri production build (DMG)
+- `pnpm app:build` — Build the release `.app` bundle once (`src-tauri/target/release/bundle/macos/Launchpane.app`)
+- `pnpm app:watch` — Rebuild the release `.app` on every source change (do not run alongside `pnpm tauri:dev`; they share the cargo target lock)
+- `pnpm app:open` — Open the most recent release `.app` bundle
+- `pnpm store:icons` — Regenerate `src-tauri/icons/` from `branding/launchpane-icon-1024.png`
+- `pnpm store:screenshots` — Render Mac App Store screenshot sizes from `branding/screenshots/source/`
 - `pnpm dev` — Vite dev server only (frontend)
 - `pnpm build` — TypeScript check + Vite build
 - `pnpm lint` — oxlint
@@ -49,4 +54,5 @@ Note: `cargo tauri` is not available. Use `pnpm tauri` or `pnpm exec tauri` inst
 - TypeScript: use `type` not `interface`
 - User agents directory: `~/Library/LaunchAgents/`
 - System agents/daemons are read-only in the UI
+- Login items (`<App>.app/Contents/Library/LoginItems/<Helper>.app`) are discovered in `src-tauri/src/login_items.rs`; they have no plist, so only Enable/Disable is supported
 - Project language is English (README, commit messages, code comments)

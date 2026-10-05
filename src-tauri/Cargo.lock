@@ -1586,7 +1586,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "launchd-ui"
+name = "launchpane"
 version = "1.2.0"
 dependencies = [
  "dirs",

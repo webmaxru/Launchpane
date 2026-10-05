@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1600" viewBox="0 0 1600 1600">
+  <defs>
+    <linearGradient id="plate" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#5B8DEF"/>
+      <stop offset="55%" stop-color="#3A63D8"/>
+      <stop offset="100%" stop-color="#2A3FB0"/>
+    </linearGradient>
+    <linearGradient id="spark" x1="0" y1="1" x2="0" y2="0">
+      <stop offset="0%" stop-color="#FFD36B"/>
+      <stop offset="100%" stop-color="#FFF4D2"/>
+    </linearGradient>
+  </defs>
+  <rect width="1600" height="1600" fill="#FFFFFF"/>
+  <g transform="translate(0,600)">
+  <g transform="translate(120,56) scale(0.28)">
+    <rect x="100" y="92" width="824" height="824" rx="185" ry="185" fill="url(#plate)"/>
+    <rect x="252" y="302" width="520" height="420" rx="54" ry="54" fill="#FFFFFF"/>
+    <path d="M306 302 h412 a54 54 0 0 1 54 54 v50 h-520 v-50 a54 54 0 0 1 54 -54 Z" fill="#DCE6FB"/>
+    <circle cx="312" cy="354" r="17" fill="#8FA6D8"/>
+    <circle cx="368" cy="354" r="17" fill="#8FA6D8"/>
+    <circle cx="424" cy="354" r="17" fill="#8FA6D8"/>
+    <rect x="306" y="468" width="196" height="34" rx="17" fill="#B9C6E4"/>
+    <rect x="306" y="550" width="224" height="34" rx="17" fill="#B9C6E4"/>
+    <rect x="306" y="632" width="156" height="34" rx="17" fill="#B9C6E4"/>
+    <path d="M660 434 L754 540 L704 540 L704 670 Q704 684 690 684 L630 684 Q616 684 616 670 L616 540 L566 540 Z" fill="url(#spark)"/>
+  </g>
+  <text x="430" y="212" font-family="SF Pro Display, Helvetica Neue, Helvetica, Arial, sans-serif" font-size="132" font-weight="600" fill="#1B2559" letter-spacing="-3">Launchpane</text>
+  <text x="434" y="286" font-family="SF Pro Text, Helvetica Neue, Helvetica, Arial, sans-serif" font-size="42" font-weight="400" fill="#6B7699" letter-spacing="0.5">Launch agents, daemons and login items</text>
+</g>
+</svg>

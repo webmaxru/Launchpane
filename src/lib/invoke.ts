@@ -1,7 +1,21 @@
 import { invoke } from "@tauri-apps/api/core"
 import type { JobListEntry, LaunchdJob, PlistConfig } from "@/types"
 
-export const listJobs = () => invoke<JobListEntry[]>("list_jobs")
+type JobListEntryPayload = Omit<JobListEntry, "enabled"> & {
+  enabled?: unknown
+}
+
+export function normalizeEnabledState(enabled: unknown): boolean | null {
+  return enabled === true || enabled === false ? enabled : null
+}
+
+export const listJobs = async (): Promise<JobListEntry[]> => {
+  const jobs = await invoke<JobListEntryPayload[]>("list_jobs")
+  return jobs.map((job) => ({
+    ...job,
+    enabled: normalizeEnabledState(job.enabled),
+  }))
+}
 
 export const getJobDetail = (plistPath: string) =>
   invoke<LaunchdJob>("get_job_detail", { plistPath })
@@ -22,13 +36,13 @@ export const enableJob = (
   label: string,
   plistPath: string,
   source: JobListEntry["source"]
-) => invoke<void>("enable_job", { label, plistPath, source })
+) => invoke<boolean>("enable_job", { label, plistPath, source })
 
 export const disableJob = (
   label: string,
   plistPath: string,
   source: JobListEntry["source"]
-) => invoke<void>("disable_job", { label, plistPath, source })
+) => invoke<boolean>("disable_job", { label, plistPath, source })
 
 export type RuntimeInfo = {
   is_administrator: boolean

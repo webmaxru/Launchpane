@@ -1,4 +1,8 @@
-export type JobSource = "UserAgent" | "SystemAgent" | "SystemDaemon"
+export type JobSource =
+  | "UserAgent"
+  | "SystemAgent"
+  | "SystemDaemon"
+  | "LoginItem"
 export type JobStatus = "Running" | "Loaded" | "Unloaded" | "Unknown"
 
 // Filter values for the source toolbar. "Home" is a virtual filter (a subset of
@@ -15,6 +19,20 @@ export type JobListEntry = {
   enabled: boolean | null
   last_run_at: string | null
   is_home_agent: boolean
+}
+
+export type JobActionKind =
+  | "start"
+  | "stop"
+  | "restart"
+  | "kickstart"
+  | "enable"
+  | "disable"
+  | "delete"
+
+export type PendingAction = {
+  plistPath: string
+  kind: JobActionKind
 }
 
 export type CalendarInterval = {

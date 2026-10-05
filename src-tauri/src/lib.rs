@@ -1,6 +1,7 @@
 mod commands;
 mod error;
 mod launchctl;
+mod login_items;
 mod plist_util;
 mod types;
 
