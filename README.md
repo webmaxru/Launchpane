@@ -125,7 +125,10 @@ submission checklist.
 ```bash
 pnpm store:icons        # regenerate src-tauri/icons from the master artwork
 pnpm store:screenshots  # render App Store screenshot sizes from raw captures
+pnpm appstore:prepare   # assemble the App Store package under release/appstore/
 ```
+
+The App Store metadata and submission text are in [`appstore/`](appstore/) and are ready to be uploaded to App Store Connect after the release bundle is built.
 
 ## License
 

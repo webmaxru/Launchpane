@@ -1,0 +1,48 @@
+name: App Store release prep
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  prepare-appstore-package:
+    runs-on: macos-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Regenerate app icon and screenshot assets
+        run: |
+          pnpm store:icons
+          pnpm store:screenshots
+
+      - name: Build release app bundle
+        run: pnpm app:build
+
+      - name: Prepare App Store package
+        run: pnpm appstore:prepare
+
+      - name: Upload App Store package archive
+        uses: actions/upload-artifact@v4
+        with:
+          name: launchpane-appstore-package
+          path: release/appstore/
+          if-no-files-found: error

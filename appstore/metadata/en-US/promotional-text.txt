@@ -1,0 +1,1 @@
+Launchpane keeps your macOS launch agents, daemons, and login items in one clean, native workspace.

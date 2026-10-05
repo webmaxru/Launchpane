@@ -4,6 +4,8 @@ node_modules/
 # Build output
 dist/
 dist-ssr/
+release/
+branding/screenshots/source/.tmp-render/
 
 # Rust
 src-tauri/target/

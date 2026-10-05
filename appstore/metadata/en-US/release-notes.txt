@@ -1,0 +1,7 @@
+Launchpane 1.2.1
+
+- Rebrand to Launchpane with a refreshed macOS-native interface
+- Manage launch agents, daemons, and login items from one app
+- Search, filter, inspect, and edit plist files with confidence
+- Faster status feedback and better action confirmation flows
+- Improved App Store release assets and submission-ready branding
