@@ -166,6 +166,7 @@ function App() {
   const editOpenTimerRef = useRef<number | null>(null)
   const feedbackIdRef = useRef(0)
   const [isAdministrator, setIsAdministrator] = useState(false)
+  const [canStartAdministrator, setCanStartAdministrator] = useState(false)
   const [adminLaunching, setAdminLaunching] = useState(false)
 
   const showActionFeedback = useCallback(
@@ -178,7 +179,10 @@ function App() {
 
   useEffect(() => {
     getRuntimeInfo()
-      .then((info) => setIsAdministrator(info.is_administrator))
+      .then((info) => {
+        setIsAdministrator(info.is_administrator)
+        setCanStartAdministrator(info.can_restart_as_administrator)
+      })
       .catch((e) =>
         showActionFeedback(
           "error",
@@ -417,7 +421,7 @@ function App() {
                 <ShieldCheck className="h-4 w-4" />
                 Administrator
               </div>
-            ) : (
+            ) : canStartAdministrator ? (
               <Hint
                 label="Start an administrator window"
                 description={
@@ -438,7 +442,7 @@ function App() {
                   {adminLaunching ? "Starting..." : "Start as Administrator"}
                 </Button>
               </Hint>
-            )}
+            ) : null}
             <Hint
               label="Refresh agent list"
               description="Read the latest launchd state and plist metadata from disk without changing any jobs."

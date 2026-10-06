@@ -124,11 +124,16 @@ submission checklist.
 
 ```bash
 pnpm store:icons        # regenerate src-tauri/icons from the master artwork
-pnpm store:screenshots  # render App Store screenshot sizes from raw captures
-pnpm appstore:prepare   # assemble the App Store package under release/appstore/
+pnpm store:screenshots  # render all accepted Mac App Store screenshot sizes
+pnpm appstore:verify    # validate copy, versions, icons, and screenshots
+pnpm appstore:prepare   # assemble Fastlane metadata and graphics
 ```
 
-The App Store metadata and submission text are in [`appstore/`](appstore/) and are ready to be uploaded to App Store Connect after the release bundle is built.
+The complete credential-driven publishing flow is documented in
+[`appstore/README.md`](appstore/README.md). The **Publish to Mac App Store**
+workflow builds a universal binary, embeds the provisioning profile, signs the
+app and installer, validates them with Apple, uploads all metadata and
+screenshots, and can submit the version for review.
 
 ## License
 

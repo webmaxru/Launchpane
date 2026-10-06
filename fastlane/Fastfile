@@ -1,0 +1,49 @@
+require "json"
+
+default_platform(:mac)
+
+platform :mac do
+  desc "Upload the signed package, metadata, and screenshots to App Store Connect"
+  lane :app_store do
+    package = JSON.parse(File.read(File.join(__dir__, "..", "package.json")))
+    api_key = app_store_connect_api_key(
+      key_id: ENV.fetch("APP_STORE_CONNECT_API_KEY_ID"),
+      issuer_id: ENV.fetch("APP_STORE_CONNECT_API_ISSUER_ID"),
+      key_filepath: ENV.fetch("APP_STORE_CONNECT_API_KEY_PATH"),
+      duration: 1200,
+      in_house: false
+    )
+
+    upload_to_app_store(
+      api_key: api_key,
+      app_identifier: "com.webmaxru.launchpane",
+      app_version: package.fetch("version"),
+      platform: "osx",
+      pkg: File.join(__dir__, "..", "release", "appstore", "Launchpane.pkg"),
+      app_icon: File.join(__dir__, "..", "release", "appstore", "appstore-icon-1024.png"),
+      app_rating_config_path: File.join(__dir__, "..", "appstore", "age-rating.json"),
+      metadata_path: File.join(__dir__, "..", "release", "appstore", "fastlane", "metadata"),
+      screenshots_path: File.join(__dir__, "..", "release", "appstore", "fastlane", "screenshots"),
+      force: true,
+      overwrite_screenshots: true,
+      primary_category: "Utilities",
+      copyright: "2026 Launchpane contributors",
+      app_review_information: {
+        first_name: ENV.fetch("APP_REVIEW_FIRST_NAME"),
+        last_name: ENV.fetch("APP_REVIEW_LAST_NAME"),
+        phone_number: ENV.fetch("APP_REVIEW_PHONE"),
+        email_address: ENV.fetch("APP_REVIEW_EMAIL"),
+        demo_user: "",
+        demo_password: "",
+        notes: File.read(File.join(__dir__, "..", "release", "appstore", "review-notes.txt"))
+      },
+      submit_for_review: ENV["SUBMIT_FOR_REVIEW"] == "true",
+      automatic_release: ENV["AUTOMATIC_RELEASE"] == "true",
+      precheck_include_in_app_purchases: false,
+      submission_information: {
+        export_compliance_uses_encryption: false,
+        content_rights_contains_third_party_content: false
+      }
+    )
+  end
+end

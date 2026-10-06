@@ -1,0 +1,12 @@
+{
+  "bundle": {
+    "active": true,
+    "targets": ["app"],
+    "category": "Utility",
+    "copyright": "Copyright © 2026 Launchpane contributors",
+    "macOS": {
+      "entitlements": "entitlements/app-store.plist",
+      "minimumSystemVersion": "12.0"
+    }
+  }
+}

@@ -1,0 +1,12 @@
+Launchpane manages macOS launch agents, launch daemons, and application login-item helpers.
+
+Review path:
+1. Launch the app. No account or sign-in is required.
+2. Use the segmented filters to inspect User, Home, System, Daemon, and Login Items.
+3. Select a user agent to inspect its configuration and logs.
+4. Create or edit a user agent to exercise write access to ~/Library/LaunchAgents.
+5. System agents and daemons are read-only in the Mac App Store build.
+
+The app does not collect analytics, identifiers, diagnostics, or user content. All service and plist information remains on the Mac.
+
+Temporary sandbox exceptions and their assessment steps are documented in appstore/sandbox-exceptions.md. A Feedback Assistant ID must be supplied in App Store Connect if Apple requests one.

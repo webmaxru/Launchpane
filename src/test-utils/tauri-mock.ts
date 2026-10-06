@@ -90,7 +90,10 @@ const handlers: Record<string, CommandHandler> = {
   kickstart_job: () => undefined,
   enable_job: () => undefined,
   disable_job: () => undefined,
-  get_runtime_info: () => ({ is_administrator: false }),
+  get_runtime_info: () => ({
+    is_administrator: false,
+    can_restart_as_administrator: true,
+  }),
   restart_as_administrator: () => undefined,
   save_job: () => undefined,
   create_job: () => "/Users/test/Library/LaunchAgents/new-job.plist",

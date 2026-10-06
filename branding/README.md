@@ -40,7 +40,7 @@ or Apple-owned assets are included.
 # Rebuild every bundle icon from the master PNG (writes src-tauri/icons/)
 pnpm store:icons
 
-# Convert raw captures into every App Store Connect macOS screenshot size
+# Render the marketing screenshot sources at every accepted macOS size
 pnpm store:screenshots
 ```
 
@@ -49,13 +49,13 @@ Launchpane is a macOS-only app, so those folders are removed from the repository
 
 ## Screenshots
 
-1. Capture the running app (`pnpm app:open`) at a 16:10 window size.
-2. Save the captures as PNG into `branding/screenshots/source/`.
-3. Run `pnpm store:screenshots`.
+The editable SVG compositions in `branding/screenshots/source/` accurately
+represent the Launchpane interface with non-personal sample data. Update those
+sources when the UI changes, then run `pnpm store:screenshots`.
 
 Output is written to `branding/store/screenshots/` at every size App Store Connect
-accepts for macOS: `1280x800`, `1440x900`, `2560x1600` and `2880x1800`. Captures that
-are not exactly 16:10 are scaled to fit and padded with `#F5F6FA`.
+accepts for macOS: `1280x800`, `1440x900`, `2560x1600` and `2880x1800`.
+Generated PNGs are opaque and contain no alpha channel.
 
 ## Submission checklist
 

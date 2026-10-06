@@ -54,16 +54,3 @@ jobs:
           releaseDraft: false
           prerelease: false
           args: ${{ matrix.args }}
-
-      - name: Prepare App Store release package
-        run: |
-          pnpm store:icons
-          pnpm store:screenshots
-          pnpm appstore:prepare
-
-      - name: Upload App Store package artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: launchpane-appstore-${{ matrix.platform }}
-          path: release/appstore/
-          if-no-files-found: error

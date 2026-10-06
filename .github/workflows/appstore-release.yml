@@ -1,16 +1,44 @@
-name: App Store release prep
+name: Publish to Mac App Store
 
 on:
   workflow_dispatch:
+    inputs:
+      submit_for_review:
+        description: Submit the uploaded build for App Review
+        type: boolean
+        default: false
+      automatic_release:
+        description: Release automatically after approval
+        type: boolean
+        default: false
   push:
     tags:
       - "v*"
 
+concurrency:
+  group: mac-app-store-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
 jobs:
-  prepare-appstore-package:
+  publish:
+    name: Sign, validate, and upload
     runs-on: macos-latest
-    permissions:
-      contents: write
+    environment: mac-app-store
+    timeout-minutes: 60
+    env:
+      APP_BUILD_NUMBER: ${{ github.run_number }}
+      APP_STORE_CONNECT_API_KEY_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}
+      APP_STORE_CONNECT_API_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_API_ISSUER_ID }}
+      APP_REVIEW_FIRST_NAME: ${{ secrets.APP_REVIEW_FIRST_NAME }}
+      APP_REVIEW_LAST_NAME: ${{ secrets.APP_REVIEW_LAST_NAME }}
+      APP_REVIEW_PHONE: ${{ secrets.APP_REVIEW_PHONE }}
+      APP_REVIEW_EMAIL: ${{ secrets.APP_REVIEW_EMAIL }}
+      SUBMIT_FOR_REVIEW: ${{ inputs.submit_for_review || 'false' }}
+      AUTOMATIC_RELEASE: ${{ inputs.automatic_release || 'false' }}
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -22,27 +50,99 @@ jobs:
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
+        with:
+          version: "10.28.2"
 
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-darwin,x86_64-apple-darwin
 
-      - name: Install dependencies
+      - name: Cache Rust build
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: "./src-tauri -> target"
+
+      - name: Setup Ruby and Fastlane
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.3"
+          bundler-cache: true
+
+      - name: Install JavaScript dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Regenerate app icon and screenshot assets
+      - name: Import App Store signing credentials
+        env:
+          APPLICATION_CERTIFICATE_BASE64: ${{ secrets.MACOS_APPLICATION_CERTIFICATE_BASE64 }}
+          APPLICATION_CERTIFICATE_PASSWORD: ${{ secrets.MACOS_APPLICATION_CERTIFICATE_PASSWORD }}
+          INSTALLER_CERTIFICATE_BASE64: ${{ secrets.MACOS_INSTALLER_CERTIFICATE_BASE64 }}
+          INSTALLER_CERTIFICATE_PASSWORD: ${{ secrets.MACOS_INSTALLER_CERTIFICATE_PASSWORD }}
+          PROVISIONING_PROFILE_BASE64: ${{ secrets.MACOS_PROVISIONING_PROFILE_BASE64 }}
+          API_PRIVATE_KEY_BASE64: ${{ secrets.APP_STORE_CONNECT_API_PRIVATE_KEY_BASE64 }}
         run: |
-          pnpm store:icons
+          set -euo pipefail
+          for name in APPLICATION_CERTIFICATE_BASE64 APPLICATION_CERTIFICATE_PASSWORD INSTALLER_CERTIFICATE_BASE64 INSTALLER_CERTIFICATE_PASSWORD PROVISIONING_PROFILE_BASE64 API_PRIVATE_KEY_BASE64 APP_STORE_CONNECT_API_KEY_ID APP_STORE_CONNECT_API_ISSUER_ID APP_REVIEW_FIRST_NAME APP_REVIEW_LAST_NAME APP_REVIEW_PHONE APP_REVIEW_EMAIL; do
+            test -n "${!name:-}" || { echo "::error::$name is not configured"; exit 1; }
+          done
+
+          KEYCHAIN_PATH="$RUNNER_TEMP/launchpane-signing.keychain-db"
+          KEYCHAIN_PASSWORD="$(openssl rand -hex 24)"
+          APPLICATION_P12="$RUNNER_TEMP/application.p12"
+          INSTALLER_P12="$RUNNER_TEMP/installer.p12"
+          PROFILE_PATH="$RUNNER_TEMP/Launchpane.provisionprofile"
+          API_KEY_DIR="$HOME/.appstoreconnect/private_keys"
+          API_KEY_PATH="$API_KEY_DIR/AuthKey_${APP_STORE_CONNECT_API_KEY_ID}.p8"
+
+          echo "$APPLICATION_CERTIFICATE_BASE64" | base64 --decode > "$APPLICATION_P12"
+          echo "$INSTALLER_CERTIFICATE_BASE64" | base64 --decode > "$INSTALLER_P12"
+          echo "$PROVISIONING_PROFILE_BASE64" | base64 --decode > "$PROFILE_PATH"
+          mkdir -p "$API_KEY_DIR"
+          echo "$API_PRIVATE_KEY_BASE64" | base64 --decode > "$API_KEY_PATH"
+          chmod 600 "$API_KEY_PATH"
+
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security import "$APPLICATION_P12" -P "$APPLICATION_CERTIFICATE_PASSWORD" -A -t cert -f pkcs12 -k "$KEYCHAIN_PATH"
+          security import "$INSTALLER_P12" -P "$INSTALLER_CERTIFICATE_PASSWORD" -A -t cert -f pkcs12 -k "$KEYCHAIN_PATH"
+          security set-key-partition-list -S apple-tool:,apple: -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security list-keychains -d user -s "$KEYCHAIN_PATH" login.keychain-db
+
+          {
+            echo "MACOS_PROVISIONING_PROFILE_PATH=$PROFILE_PATH"
+            echo "APP_STORE_CONNECT_API_KEY_PATH=$API_KEY_PATH"
+            echo "SIGNING_KEYCHAIN_PATH=$KEYCHAIN_PATH"
+          } >> "$GITHUB_ENV"
+
+      - name: Generate and verify store assets
+        run: |
           pnpm store:screenshots
+          pnpm appstore:verify
+          pnpm appstore:prepare
 
-      - name: Build release app bundle
-        run: pnpm app:build
+      - name: Build, sign, and package universal app
+        run: pnpm appstore:build
 
-      - name: Prepare App Store package
-        run: pnpm appstore:prepare
+      - name: Validate package with App Store Connect
+        run: pnpm appstore:validate
 
-      - name: Upload App Store package archive
+      - name: Upload package, metadata, and screenshots
+        run: pnpm appstore:upload
+
+      - name: Archive submission package
+        if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: launchpane-appstore-package
-          path: release/appstore/
+          name: Launchpane-${{ github.run_number }}-app-store
+          path: |
+            release/appstore/
           if-no-files-found: error
+          retention-days: 30
+
+      - name: Remove temporary signing keychain
+        if: always()
+        run: |
+          if [[ -n "${SIGNING_KEYCHAIN_PATH:-}" ]]; then
+            security delete-keychain "$SIGNING_KEYCHAIN_PATH" || true
+          fi

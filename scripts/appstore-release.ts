@@ -1,86 +1,92 @@
-import { cpSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs"
+import {
+  copyFileSync,
+  cpSync,
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs"
 import { join } from "node:path"
 
 const ROOT = process.cwd()
-const APP_BUNDLE = join(ROOT, "src-tauri", "target", "release", "bundle", "macos", "Launchpane.app")
 const OUTPUT_DIR = join(ROOT, "release", "appstore")
-const APPSTORE_META_DIR = join(ROOT, "appstore", "metadata")
+const SOURCE_METADATA = join(ROOT, "appstore", "metadata", "en-US")
+const SCREENSHOTS = join(ROOT, "branding", "store", "screenshots", "2880x1800")
+
+const metadataFiles: Record<string, string> = {
+  "description.txt": "description.txt",
+  "keywords.txt": "keywords.txt",
+  "marketing-url.txt": "marketing_url.txt",
+  "name.txt": "name.txt",
+  "privacy-policy-url.txt": "privacy_url.txt",
+  "promotional-text.txt": "promotional_text.txt",
+  "release-notes.txt": "release_notes.txt",
+  "subtitle.txt": "subtitle.txt",
+  "support-url.txt": "support_url.txt",
+}
 
 function readJson<T>(path: string): T {
   return JSON.parse(readFileSync(path, "utf8")) as T
 }
 
-function ensureBundle(): void {
-  if (!existsSync(APP_BUNDLE)) {
-    throw new Error(`App bundle not found at ${APP_BUNDLE}. Run: pnpm app:build`)
-  }
-}
-
-function copyDirectory(source: string, target: string): void {
-  mkdirSync(target, { recursive: true })
-  for (const entry of readdirSync(source, { withFileTypes: true })) {
-    const src = join(source, entry.name)
-    const dst = join(target, entry.name)
-    if (entry.isDirectory()) {
-      copyDirectory(src, dst)
-    } else {
-      cpSync(src, dst)
-    }
+function required(path: string): void {
+  if (!existsSync(path)) {
+    throw new Error(`Required App Store artifact is missing: ${path}`)
   }
 }
 
 function main(): void {
-  ensureBundle()
-
-  rmSync(OUTPUT_DIR, { recursive: true, force: true })
-  mkdirSync(OUTPUT_DIR, { recursive: true })
-
-  const appPath = join(OUTPUT_DIR, "Launchpane.app")
-  cpSync(APP_BUNDLE, appPath, { recursive: true })
-
   const packageJson = readJson<{ name: string; version: string }>(join(ROOT, "package.json"))
-  const metadataTarget = join(OUTPUT_DIR, "metadata")
-  copyDirectory(APPSTORE_META_DIR, metadataTarget)
+  const tauriConfig = readJson<{ version: string; identifier: string; productName: string }>(
+    join(ROOT, "src-tauri", "tauri.conf.json"),
+  )
 
-  const brandDir = join(ROOT, "branding", "store")
-  if (existsSync(brandDir)) {
-    copyDirectory(brandDir, join(OUTPUT_DIR, "branding"))
+  if (packageJson.version !== tauriConfig.version) {
+    throw new Error(
+      `Version mismatch: package.json=${packageJson.version}, tauri.conf.json=${tauriConfig.version}`,
+    )
   }
 
+  rmSync(OUTPUT_DIR, { recursive: true, force: true })
+  const metadataTarget = join(OUTPUT_DIR, "fastlane", "metadata", "en-US")
+  const screenshotsTarget = join(OUTPUT_DIR, "fastlane", "screenshots", "en-US")
+  mkdirSync(metadataTarget, { recursive: true })
+  mkdirSync(screenshotsTarget, { recursive: true })
+
+  for (const [sourceName, targetName] of Object.entries(metadataFiles)) {
+    const source = join(SOURCE_METADATA, sourceName)
+    required(source)
+    copyFileSync(source, join(metadataTarget, targetName))
+  }
+
+  for (const name of ["overview.png", "detail.png", "login-items.png", "logs.png"]) {
+    const source = join(SCREENSHOTS, name)
+    required(source)
+    copyFileSync(source, join(screenshotsTarget, name))
+  }
+
+  cpSync(join(ROOT, "branding", "store", "appstore-icon-1024.png"), join(OUTPUT_DIR, "appstore-icon-1024.png"))
+  cpSync(join(ROOT, "appstore", "sandbox-exceptions.md"), join(OUTPUT_DIR, "sandbox-exceptions.md"))
+  cpSync(join(SOURCE_METADATA, "review-notes.txt"), join(OUTPUT_DIR, "review-notes.txt"))
+  cpSync(join(ROOT, "appstore", "age-rating.json"), join(OUTPUT_DIR, "age-rating.json"))
+  cpSync(join(ROOT, "appstore", "app-privacy.json"), join(OUTPUT_DIR, "app-privacy.json"))
+
   const manifest = {
-    name: packageJson.name,
+    appName: tauriConfig.productName,
+    packageName: packageJson.name,
     version: packageJson.version,
-    bundleIdentifier: "com.webmaxru.launchpane",
-    appName: "Launchpane",
-    bundlePath: "Launchpane.app",
-    generatedAt: new Date().toISOString(),
+    bundleIdentifier: tauriConfig.identifier,
+    buildNumber: process.env.APP_BUILD_NUMBER ?? "set-by-release-workflow",
     platform: "macOS",
-    notes: [
-      "Prepared for App Store Connect review.",
-      "Includes the build, metadata, and graphics pack for manual upload.",
-      "Review the files in metadata/en-US before submission."
-    ],
+    package: "Launchpane.pkg",
+    metadata: "fastlane/metadata",
+    screenshots: "fastlane/screenshots",
+    generatedAt: new Date().toISOString(),
   }
 
   writeFileSync(join(OUTPUT_DIR, "manifest.json"), `${JSON.stringify(manifest, null, 2)}\n`)
-  writeFileSync(
-    join(OUTPUT_DIR, "README.txt"),
-    [
-      "Launchpane App Store release package",
-      "",
-      `App bundle: ${manifest.bundlePath}`,
-      `Bundle ID: ${manifest.bundleIdentifier}`,
-      `Version: ${manifest.version}`,
-      "",
-      "Submission checklist:",
-      "1. Review metadata/en-US before uploading.",
-      "2. Verify the screenshots match the accepted App Store dimensions.",
-      "3. Upload the Launchpane.app and metadata to App Store Connect.",
-      "4. Submit for review with the release notes."
-    ].join("\n") + "\n"
-  )
-
-  console.log(`Prepared App Store package at ${OUTPUT_DIR}`)
+  console.log(`Prepared App Store Connect assets at ${OUTPUT_DIR}`)
 }
 
 main()

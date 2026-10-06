@@ -5,13 +5,13 @@ Built for developers, power users, and anyone who wants more control over startu
 FEATURES
 • Browse user, system, and login item services in one organized view
 • Search and filter by label, source, or status
-• Toggle services with explicit confirmation and clear feedback
+• Toggle user services and login items with explicit confirmation and clear feedback
 • Inspect plist details, logs, and next-run information
 • Create, edit, and remove user launch agents with a guided workflow
 • See important service state changes without leaving the app
 
 Launchpane is built for macOS and follows Apple-style interface patterns: fast, clear, and focused on the task at hand.
 
-Whether you are debugging a startup issue, managing background helpers, or keeping your Mac's launch services under control, Launchpane gives you the visibility and tools you need in one place.
+Whether you are debugging a startup issue, managing background helpers, or keeping your Mac's launch services under control, Launchpane gives you the visibility and tools you need in one place. System agents and daemons are displayed read-only in the Mac App Store edition.
 
 For App Store submission, the app is designed around the macOS workflow of viewing launchd-managed entries, verifying service state, and making safe, reviewable changes.

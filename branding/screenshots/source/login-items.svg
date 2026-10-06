@@ -1,41 +1,27 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="800" viewBox="0 0 1280 800">
-  <defs>
-    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="#f5f8ff"/>
-      <stop offset="100%" stop-color="#edf9ff"/>
-    </linearGradient>
-    <linearGradient id="orange" x1="0" y1="0" x2="1" y2="0">
-      <stop offset="0%" stop-color="#ffbe69"/>
-      <stop offset="100%" stop-color="#f79c54"/>
-    </linearGradient>
-  </defs>
-  <rect width="1280" height="800" fill="url(#bg)"/>
-  <rect x="90" y="70" width="1100" height="660" rx="28" fill="#ffffff" stroke="#e1e8ff"/>
-  <rect x="90" y="70" width="1100" height="80" rx="28" fill="#f5f7ff"/>
-  <circle cx="124" cy="110" r="8" fill="#f3b4b7"/>
-  <circle cx="152" cy="110" r="8" fill="#f8d98b"/>
-  <circle cx="180" cy="110" r="8" fill="#a9d7a0"/>
-  <rect x="118" y="180" width="180" height="46" rx="14" fill="#e4edff"/>
-  <rect x="118" y="252" width="230" height="18" rx="9" fill="#dfe9ff"/>
-  <rect x="118" y="286" width="246" height="18" rx="9" fill="#dfe9ff"/>
-  <rect x="420" y="180" width="700" height="470" rx="22" fill="#f8faff" stroke="#dfe7ff"/>
-  <rect x="450" y="210" width="240" height="52" rx="14" fill="#e9efff"/>
-  <rect x="720" y="210" width="182" height="52" rx="14" fill="#e9efff"/>
-  <rect x="930" y="210" width="140" height="52" rx="14" fill="#e9efff"/>
-  <rect x="456" y="304" width="642" height="84" rx="18" fill="#ffffff" stroke="#dfe7ff"/>
-  <rect x="484" y="332" width="200" height="18" rx="9" fill="#cbd8ff"/>
-  <rect x="714" y="330" width="102" height="18" rx="9" fill="#dfe9ff"/>
-  <rect x="840" y="330" width="130" height="18" rx="9" fill="#dfe9ff"/>
-  <rect x="1000" y="330" width="76" height="18" rx="9" fill="#dfe9ff"/>
-  <rect x="456" y="420" width="642" height="86" rx="18" fill="#ffffff" stroke="#dfe7ff"/>
-  <rect x="484" y="450" width="214" height="18" rx="9" fill="#cbd8ff"/>
-  <rect x="726" y="448" width="122" height="18" rx="9" fill="#dfe9ff"/>
-  <rect x="872" y="448" width="118" height="18" rx="9" fill="#dfe9ff"/>
-  <rect x="1014" y="448" width="62" height="18" rx="9" fill="#dfe9ff"/>
-  <rect x="456" y="526" width="642" height="88" rx="18" fill="#ffffff" stroke="#dfe7ff"/>
-  <rect x="484" y="556" width="206" height="18" rx="9" fill="#cbd8ff"/>
-  <rect x="716" y="554" width="112" height="18" rx="9" fill="#dfe9ff"/>
-  <rect x="854" y="554" width="146" height="18" rx="9" fill="#dfe9ff"/>
-  <rect x="1016" y="554" width="64" height="18" rx="9" fill="#dfe9ff"/>
-  <rect x="1000" y="210" width="92" height="52" rx="14" fill="url(#orange)"/>
+<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 1440 900">
+  <defs><linearGradient id="bg" x2="1" y2="1"><stop stop-color="#fff5e8"/><stop offset="1" stop-color="#f8faff"/></linearGradient><filter id="s"><feDropShadow dy="18" stdDeviation="24" flood-color="#704619" flood-opacity=".16"/></filter></defs>
+  <rect width="1440" height="900" fill="url(#bg)"/>
+  <text x="720" y="78" text-anchor="middle" font-family="-apple-system,sans-serif" font-size="42" font-weight="700" fill="#43280f">Take control of hidden login helpers.</text>
+  <text x="720" y="118" text-anchor="middle" font-family="-apple-system,sans-serif" font-size="20" fill="#816647">See the background items bundled inside your applications.</text>
+  <g filter="url(#s)">
+    <rect x="100" y="160" width="1240" height="670" rx="22" fill="#f7f7f9" stroke="#ddd9d2"/>
+    <path d="M122 160h1196a22 22 0 0 1 22 22v48H100v-48a22 22 0 0 1 22-22z" fill="#ececf0"/>
+    <circle cx="135" cy="195" r="8" fill="#ff5f57"/><circle cx="162" cy="195" r="8" fill="#febc2e"/><circle cx="189" cy="195" r="8" fill="#28c840"/>
+    <rect x="112" y="244" width="1216" height="66" fill="#f4f4f6"/>
+    <rect x="134" y="261" width="34" height="34" rx="9" fill="#4169df"/><path d="M151 286v-16m-7 7 7-7 7 7" fill="none" stroke="white" stroke-width="3"/>
+    <text x="181" y="279" font-family="-apple-system,sans-serif" font-size="17" font-weight="650" fill="#202124">Launchpane</text><text x="181" y="298" font-family="-apple-system,sans-serif" font-size="12" fill="#7a7d88">3 login items</text>
+    <rect x="132" y="326" width="680" height="38" rx="9" fill="#e5e5e9"/><rect x="574" y="330" width="132" height="30" rx="7" fill="white"/>
+    <g font-family="-apple-system,sans-serif" font-size="13" font-weight="600" fill="#70727b"><text x="169" y="350" text-anchor="middle">All</text><text x="239" y="350" text-anchor="middle">User</text><text x="318" y="350" text-anchor="middle">Home</text><text x="407" y="350" text-anchor="middle">System</text><text x="505" y="350" text-anchor="middle">Daemons</text><text x="640" y="350" text-anchor="middle" fill="#26272b">Login Items</text></g>
+    <rect x="112" y="378" width="1216" height="38" fill="#ededf0"/>
+    <g font-family="-apple-system,sans-serif" font-size="11" font-weight="650" fill="#777983"><text x="145" y="402">HELPER</text><text x="690" y="402">PARENT APP</text><text x="900" y="402">ENABLED</text><text x="1120" y="402">ACTION</text></g>
+    <g font-family="-apple-system,sans-serif">
+      <rect x="112" y="416" width="1216" height="94" fill="white"/><rect x="137" y="437" width="52" height="52" rx="12" fill="#1f9d69"/><text x="163" y="472" text-anchor="middle" font-size="26" font-weight="700" fill="white">S</text>
+      <text x="208" y="452" font-size="14" font-weight="650" fill="#25262a">StartUpHelper</text><text x="208" y="475" font-size="12" fill="#82848e">com.spotify.client.StartupHelper</text><text x="690" y="464" font-size="13" fill="#35373e">Spotify</text><text x="917" y="464" font-size="13" fill="#35373e">Yes</text><rect x="1097" y="443" width="82" height="34" rx="9" fill="#4169df"/><text x="1138" y="465" text-anchor="middle" font-size="12" font-weight="600" fill="white">Disable</text>
+      <line x1="112" y1="510" x2="1328" y2="510" stroke="#e2e3e8"/><rect x="137" y="531" width="52" height="52" rx="12" fill="#f06642"/><text x="163" y="566" text-anchor="middle" font-size="27" font-weight="700" fill="white">V</text>
+      <text x="208" y="546" font-size="14" font-weight="650" fill="#25262a">VOXAgent</text><text x="208" y="569" font-size="12" fill="#82848e">com.coppertino.VOXAgent</text><text x="690" y="558" font-size="13" fill="#35373e">VOX</text><text x="917" y="558" font-size="13" fill="#35373e">Yes</text><rect x="1097" y="537" width="82" height="34" rx="9" fill="#4169df"/><text x="1138" y="559" text-anchor="middle" font-size="12" font-weight="600" fill="white">Disable</text>
+      <line x1="112" y1="604" x2="1328" y2="604" stroke="#e2e3e8"/><rect x="137" y="625" width="52" height="52" rx="12" fill="#2f73d9"/><text x="163" y="660" text-anchor="middle" font-size="25" font-weight="700" fill="white">D</text>
+      <text x="208" y="640" font-size="14" font-weight="650" fill="#25262a">DropboxMacUpdate</text><text x="208" y="663" font-size="12" fill="#82848e">com.dropbox.DropboxMacUpdate.agent</text><text x="690" y="652" font-size="13" fill="#35373e">Dropbox</text><text x="917" y="652" font-size="13" fill="#35373e">No</text><rect x="1097" y="631" width="82" height="34" rx="9" fill="white" stroke="#cfd1d8"/><text x="1138" y="653" text-anchor="middle" font-size="12" font-weight="600" fill="#34363e">Enable</text>
+    </g>
+    <rect x="132" y="720" width="1176" height="60" rx="12" fill="#fff6e8" stroke="#f1d5ad"/><text x="158" y="746" font-family="-apple-system,sans-serif" font-size="13" font-weight="650" fill="#8a581c">Login items stay inside their parent applications.</text><text x="158" y="766" font-family="-apple-system,sans-serif" font-size="12" fill="#9c764a">Launchpane enables or disables them without modifying the app bundle.</text>
+  </g>
 </svg>

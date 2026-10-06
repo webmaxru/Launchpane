@@ -1,1 +1,1 @@
-launchd, macOS, launch agents, daemons, login items, plist, system services, developer tools, utilities
+launchd,agents,daemons,login items,plist,services,startup,developer,utilities

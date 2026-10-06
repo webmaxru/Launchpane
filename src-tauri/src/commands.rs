@@ -5,7 +5,9 @@ use crate::plist_util;
 use crate::types::PlistConfig;
 use crate::types::{JobListEntry, JobSource, JobStatus, LaunchdJob};
 use std::collections::HashMap;
+#[cfg(not(feature = "app-store"))]
 use std::time::Duration;
+#[cfg(not(feature = "app-store"))]
 use tauri::Manager;
 
 fn get_last_run_at(config: &PlistConfig) -> Option<String> {
@@ -456,19 +458,23 @@ pub async fn disable_job(
 #[derive(serde::Serialize)]
 pub struct RuntimeInfo {
     is_administrator: bool,
+    can_restart_as_administrator: bool,
 }
 
 #[tauri::command]
 pub async fn get_runtime_info() -> RuntimeInfo {
     RuntimeInfo {
         is_administrator: launchctl::is_administrator(),
+        can_restart_as_administrator: !cfg!(feature = "app-store"),
     }
 }
 
+#[cfg(any(not(feature = "app-store"), test))]
 fn shell_quote(value: &str) -> String {
     format!("'{}'", value.replace('\'', "'\\''"))
 }
 
+#[cfg(any(not(feature = "app-store"), test))]
 fn administrator_launch_command(
     executable: &std::path::Path,
     home: &std::path::Path,
@@ -482,6 +488,7 @@ fn administrator_launch_command(
     )
 }
 
+#[cfg(any(not(feature = "app-store"), test))]
 fn process_effective_uid(pid: u32) -> Option<u32> {
     let output = std::process::Command::new("ps")
         .args(["-p", &pid.to_string(), "-o", "uid="])
@@ -494,6 +501,15 @@ fn process_effective_uid(pid: u32) -> Option<u32> {
 }
 
 #[tauri::command]
+#[cfg(feature = "app-store")]
+pub async fn restart_as_administrator(_app: tauri::AppHandle) -> Result<(), AppError> {
+    Err(AppError::Launchctl(
+        "Administrator mode is not available in the Mac App Store build.".to_string(),
+    ))
+}
+
+#[tauri::command]
+#[cfg(not(feature = "app-store"))]
 pub async fn restart_as_administrator(app: tauri::AppHandle) -> Result<(), AppError> {
     if launchctl::is_administrator() {
         return Ok(());

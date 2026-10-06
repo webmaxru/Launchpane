@@ -4,9 +4,11 @@
  * App Store Connect accepts these canvas sizes for macOS screenshots:
  * 1280x800, 1440x900, 2560x1600, 2880x1800.
  */
-import { execFileSync } from "node:child_process"
-import { mkdirSync, readdirSync, existsSync, writeFileSync } from "node:fs"
-import { basename, join, parse } from "node:path"
+import { execFileSync, spawn } from "node:child_process"
+import { mkdirSync, mkdtempSync, readdirSync, existsSync, rmSync, statSync, writeFileSync } from "node:fs"
+import { tmpdir } from "node:os"
+import { join, parse } from "node:path"
+import { pathToFileURL } from "node:url"
 
 const SOURCE_DIR = join(process.cwd(), "branding", "screenshots", "source")
 const OUTPUT_DIR = join(process.cwd(), "branding", "store", "screenshots")
@@ -47,36 +49,101 @@ function ensureSources(): string[] {
   return defaults
 }
 
-function renderSvgToPng(sourcePath: string, targetPath: string, maxDimension: number): void {
-  const outputDir = join(SOURCE_DIR, ".tmp-render")
-  mkdirSync(outputDir, { recursive: true })
-  execFileSync("/usr/bin/qlmanage", ["-t", "-s", String(maxDimension), "-o", outputDir, sourcePath], {
-    stdio: "ignore",
-  })
-  const base = basename(sourcePath, ".svg")
-  const generated = join(outputDir, `${base}.svg.png`)
-  sips(["-s", "format", "png", generated, "--out", targetPath])
+function browserPath(): string {
+  const candidates = [
+    "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+    "/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge",
+  ]
+  const browser = candidates.find(existsSync)
+  if (!browser) {
+    throw new Error("Google Chrome or Microsoft Edge is required to render App Store screenshots")
+  }
+  return browser
 }
 
-function main(): void {
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms))
+}
+
+async function renderSvgToPng(
+  sourcePath: string,
+  targetPath: string,
+  width: number,
+  height: number,
+): Promise<void> {
+  rmSync(targetPath, { force: true })
+  const profile = mkdtempSync(join(tmpdir(), "launchpane-screenshot-"))
+  const child = spawn(
+    browserPath(),
+    [
+      "--headless=new",
+      "--disable-background-networking",
+      "--disable-component-update",
+      "--disable-extensions",
+      "--disable-gpu",
+      "--disable-sync",
+      "--hide-scrollbars",
+      "--metrics-recording-only",
+      "--no-first-run",
+      "--no-default-browser-check",
+      `--user-data-dir=${profile}`,
+      "--force-device-scale-factor=1",
+      `--window-size=${width},${height}`,
+      `--screenshot=${targetPath}`,
+      pathToFileURL(sourcePath).href,
+    ],
+    { stdio: "ignore", detached: true },
+  )
+
+  try {
+    for (let attempt = 0; attempt < 600; attempt += 1) {
+      if (existsSync(targetPath) && statSync(targetPath).size > 0) return
+      if (child.exitCode !== null) {
+        throw new Error(`Screenshot browser exited with code ${child.exitCode}`)
+      }
+      await sleep(100)
+    }
+    throw new Error(`Timed out rendering ${sourcePath}`)
+  } finally {
+    if (child.pid) {
+      try {
+        process.kill(-child.pid, "SIGTERM")
+      } catch {
+        // The renderer already exited.
+      }
+    }
+    await sleep(250)
+    rmSync(profile, { recursive: true, force: true, maxRetries: 3, retryDelay: 100 })
+  }
+}
+
+async function main(): Promise<void> {
   const sourceFiles = ensureSources()
+  rmSync(join(SOURCE_DIR, ".tmp-render"), { recursive: true, force: true })
+  mkdirSync(join(SOURCE_DIR, ".tmp-render"), { recursive: true })
   mkdirSync(OUTPUT_DIR, { recursive: true })
 
-  for (const { width, height } of SIZES) {
-    const sizeDir = join(OUTPUT_DIR, `${width}x${height}`)
-    mkdirSync(sizeDir, { recursive: true })
+  for (const file of sourceFiles) {
+    const parsed = parse(file)
+    const sourcePath = join(SOURCE_DIR, file)
+    const renderTarget = join(SOURCE_DIR, ".tmp-render", `${parsed.name}-master.png`)
+    await renderSvgToPng(sourcePath, renderTarget, 2880, 1800)
 
-    for (const file of sourceFiles) {
-      const parsed = parse(file)
-      const sourcePath = join(SOURCE_DIR, file)
+    for (const { width, height } of SIZES) {
+      const sizeDir = join(OUTPUT_DIR, `${width}x${height}`)
       const out = join(sizeDir, `${parsed.name}.png`)
-      const renderTarget = join(SOURCE_DIR, ".tmp-render", `${parsed.name}.png`)
-      renderSvgToPng(sourcePath, renderTarget, Math.max(width, height))
-      sips(["-z", String(height), String(width), renderTarget, "--out", out])
+      const resizedTarget = join(SOURCE_DIR, ".tmp-render", `${parsed.name}-${width}.png`)
+      const opaqueTarget = join(SOURCE_DIR, ".tmp-render", `${parsed.name}-${width}.jpg`)
+      mkdirSync(sizeDir, { recursive: true })
+      sips(["-z", String(height), String(width), renderTarget, "--out", resizedTarget])
+      sips(["-s", "format", "jpeg", "-s", "formatOptions", "100", resizedTarget, "--out", opaqueTarget])
+      sips(["-s", "format", "png", opaqueTarget, "--out", out])
     }
+  }
 
+  for (const { width, height } of SIZES) {
     console.log(`Wrote ${sourceFiles.length} screenshot(s) at ${width}x${height}`)
   }
 }
 
-main()
+await main()
