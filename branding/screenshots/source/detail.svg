@@ -8,8 +8,7 @@
     <path d="M117 160h1206a22 22 0 0 1 22 22v48H95v-48a22 22 0 0 1 22-22z" fill="#ececf0"/>
     <circle cx="130" cy="195" r="8" fill="#ff5f57"/><circle cx="157" cy="195" r="8" fill="#febc2e"/><circle cx="184" cy="195" r="8" fill="#28c840"/>
     <rect x="107" y="244" width="825" height="574" fill="white"/>
-    <rect x="126" y="263" width="34" height="34" rx="9" fill="#4169df"/><path d="M143 288v-16m-7 7 7-7 7 7" fill="none" stroke="white" stroke-width="3"/>
-    <text x="173" y="282" font-family="-apple-system,sans-serif" font-size="17" font-weight="650" fill="#24252a">Launchpane</text>
+    <text x="126" y="282" font-family="-apple-system,sans-serif" font-size="17" font-weight="650" fill="#24252a">Launchpane</text>
     <rect x="126" y="321" width="760" height="38" rx="9" fill="#e5e5e9"/>
     <rect x="130" y="325" width="67" height="30" rx="7" fill="white"/><text x="163" y="345" text-anchor="middle" font-family="-apple-system,sans-serif" font-size="13" font-weight="600" fill="#26272b">All</text>
     <g font-family="-apple-system,sans-serif"><text x="137" y="399" font-size="14" font-weight="600" fill="#24252a">com.example.backup</text><text x="137" y="421" font-size="12" fill="#858791">~/Library/LaunchAgents/com.example.backup.plist</text>

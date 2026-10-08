@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <title>Concept 2 — Ignition Switch (free-form, no plate)</title>
+  <defs>
+    <linearGradient id="c2track" x1="0" y1="1" x2="0" y2="0">
+      <stop offset="0%" stop-color="#1C2A4A"/>
+      <stop offset="45%" stop-color="#17795F"/>
+      <stop offset="100%" stop-color="#2BD39C"/>
+    </linearGradient>
+    <linearGradient id="c2knob" x1="0" y1="0" x2="0.3" y2="1">
+      <stop offset="0%" stop-color="#FFFFFF"/>
+      <stop offset="100%" stop-color="#D8E6F5"/>
+    </linearGradient>
+    <linearGradient id="c2flame" x1="0" y1="1" x2="0" y2="0">
+      <stop offset="0%" stop-color="#2BD39C" stop-opacity="0"/>
+      <stop offset="100%" stop-color="#7DF9D0" stop-opacity="0.9"/>
+    </linearGradient>
+    <linearGradient id="c2sheen" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.30"/>
+      <stop offset="40%" stop-color="#FFFFFF" stop-opacity="0.05"/>
+      <stop offset="100%" stop-color="#000000" stop-opacity="0.16"/>
+    </linearGradient>
+    <filter id="c2glow" x="-70%" y="-70%" width="240%" height="240%">
+      <feGaussianBlur stdDeviation="30" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="c2shadow" x="-40%" y="-40%" width="180%" height="180%">
+      <feDropShadow dx="0" dy="22" stdDeviation="26" flood-color="#06121F" flood-opacity="0.38"/>
+    </filter>
+  </defs>
+
+  <g filter="url(#c2shadow)">
+    <rect x="320" y="112" width="384" height="800" rx="192" fill="url(#c2track)"/>
+    <rect x="320" y="112" width="384" height="800" rx="192" fill="url(#c2sheen)"/>
+    <rect x="324.5" y="116.5" width="375" height="791" rx="187.5" fill="none" stroke="#FFFFFF" stroke-opacity="0.34" stroke-width="9"/>
+  </g>
+
+  <g filter="url(#c2glow)">
+    <circle cx="512" cy="304" r="150" fill="url(#c2knob)"/>
+    <circle cx="512" cy="304" r="150" fill="none" stroke="#9FB6CE" stroke-opacity="0.45" stroke-width="5"/>
+    <path d="M575 229 A98 98 0 1 1 449 229" fill="none" stroke="#11795E" stroke-width="40" stroke-linecap="round"/>
+    <path d="M512 186 V 306" fill="none" stroke="#11795E" stroke-width="40" stroke-linecap="round"/>
+  </g>
+</svg>

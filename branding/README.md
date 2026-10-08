@@ -7,20 +7,48 @@ or Apple-owned assets are included.
 
 | File | Purpose |
 | --- | --- |
-| `launchpane-icon.svg` | Master app icon (vector, 1024 × 1024 canvas) |
-| `launchpane-icon-1024.png` | Rasterised master icon with alpha — input for icon generation |
-| `launchpane-wordmark.svg` | Horizontal lockup (icon + wordmark + tagline) |
+| `concepts/*.svg` | The five icon directions (vector, 1024 × 1024 canvas) |
+| `concepts/concepts.json` | Titles and rationale shown in the preview sheet |
+| `concepts/preview.html` | Side-by-side comparison at 160/128/64/32 px, light and dark |
+| `icon-concept.json` | Records which concept is currently shipping |
+| `launchpane-icon.svg` | Master app icon — a copy of the selected concept |
+| `launchpane-icon-1024.png` | Rasterised master icon **with alpha** — input for icon generation |
+| `launchpane-wordmark.svg` | Horizontal lockup (icon + wordmark + tagline), rebuilt from the selection |
+
+Every icon concept has a fully transparent background. Nothing in the pipeline
+flattens the app icon onto a solid colour; the single exception is the App Store
+marketing icon, which Apple requires to be opaque.
+
+### Choosing an icon
+
+```bash
+pnpm icons:preview            # render all concepts + open-able preview sheet
+open branding/concepts/preview.html
+pnpm icons 02-ignition-switch # promote a concept and rebuild every artefact
+```
+
+`pnpm icons` with no argument reuses the concept recorded in `icon-concept.json`.
+
+| Concept | Idea |
+| --- | --- |
+| `01-launch-pane` | Graphite squircle of agent tiles, one lifting clear and glowing mint **(in use)** |
+| `02-ignition-switch` | Free-form vertical toggle in the ON position with a power-symbol knob |
+| `03-cutout-pane` | Indigo squircle with a launch arrow knocked out of a white pane |
+| `04-daemon-pulse` | Free-form pane frame with a heartbeat running straight through it |
+| `05-pane-stack` | Free-form 3D stack of tilted panes, front pane active |
 
 ### Palette
 
 | Token | Hex | Use |
 | --- | --- | --- |
-| Launch Blue (light) | `#5B8DEF` | Icon plate gradient start |
-| Launch Blue (mid) | `#3A63D8` | Icon plate gradient middle |
-| Launch Blue (deep) | `#2A3FB0` | Icon plate gradient end |
-| Pane White | `#FFFFFF` | Pane surface |
-| Pane Chrome | `#DCE6FB` | Pane title bar |
-| Signal Gold | `#FFD36B` → `#FFF4D2` | Launch arrow |
+| Graphite (light) | `#2B3566` | Icon plate gradient start |
+| Graphite (mid) | `#1B2040` | Icon plate gradient middle |
+| Graphite (deep) | `#0E1226` | Icon plate gradient end |
+| Pane Glass | `#FFFFFF` @ 7–22 % | Inactive agent tiles |
+| Signal Mint (light) | `#7DF9D0` | Active tile highlight |
+| Signal Mint (mid) | `#35D6A4` | Active tile body |
+| Signal Mint (deep) | `#17A98A` | Active tile shade |
+| Launch Ink | `#0E2E27` | Arrow glyph on the active tile |
 | Ink | `#1B2559` | Wordmark |
 | Ink Muted | `#6B7699` | Tagline |
 
@@ -37,14 +65,15 @@ or Apple-owned assets are included.
 ## Regenerating
 
 ```bash
-# Rebuild every bundle icon from the master PNG (writes src-tauri/icons/)
-pnpm store:icons
+# Rebuild every icon artefact from the selected concept (writes src-tauri/icons/
+# and branding/store/)
+pnpm icons
 
 # Render the marketing screenshot sources at every accepted macOS size
 pnpm store:screenshots
 ```
 
-`pnpm store:icons` also emits `src-tauri/icons/ios` and `src-tauri/icons/android`;
+`pnpm icons` also emits `src-tauri/icons/ios` and `src-tauri/icons/android`;
 Launchpane is a macOS-only app, so those folders are removed from the repository.
 
 ## Screenshots

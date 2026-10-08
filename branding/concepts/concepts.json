@@ -1,0 +1,27 @@
+[
+  {
+    "id": "01-launch-pane",
+    "title": "1 — Launch Pane",
+    "description": "Graphite squircle holding a grid of agent tiles; one tile lifts clear of the grid and glows mint. Literal metaphor for a pane of background jobs with one launching."
+  },
+  {
+    "id": "02-ignition-switch",
+    "title": "2 — Ignition Switch",
+    "description": "Free-form, no plate. A vertical toggle in the ON position with a power-symbol knob. Boldest silhouette at tiny sizes; instantly reads as enable/disable."
+  },
+  {
+    "id": "03-cutout-pane",
+    "title": "3 — Cut-Out Launch Pane",
+    "description": "Indigo squircle with a launch arrow knocked out of a white pane so the gradient shows through. The most Apple-native option and the cleanest at 16 px."
+  },
+  {
+    "id": "04-daemon-pulse",
+    "title": "4 — Daemon Pulse",
+    "description": "Free-form pane frame with a live heartbeat running straight through and past it. Says \"watch what runs in the background\"; most distinctive outline."
+  },
+  {
+    "id": "05-pane-stack",
+    "title": "5 — Pane Stack",
+    "description": "Free-form 3D stack of tilted panes, front pane active with a green launch arrow. Richest and most premium, but the busiest at 16 px."
+  }
+]

@@ -21,7 +21,7 @@
     "app:watch:release": "pnpm app:watch",
     "app:watch:debug": "node scripts/watch-app.ts --debug",
     "app:open": "open src-tauri/target/release/bundle/macos/Launchpane.app",
-    "store:icons": "tauri icon branding/launchpane-icon-1024.png",
+    "store:icons": "node scripts/make-icons.ts",
     "store:screenshots": "node scripts/make-store-screenshots.ts",
     "appstore:prepare": "node scripts/appstore-release.ts",
     "appstore:verify": "node scripts/verify-appstore.ts",
@@ -32,7 +32,9 @@
     "preview": "vite preview",
     "version:patch": "node scripts/bump-version.ts patch && git add package.json src-tauri/tauri.conf.json src-tauri/Cargo.toml src-tauri/Cargo.lock && git commit -m \"chore: bump version to $(node -p \"require('./package.json').version\")\" && git tag v$(node -p \"require('./package.json').version\")",
     "version:minor": "node scripts/bump-version.ts minor && git add package.json src-tauri/tauri.conf.json src-tauri/Cargo.toml src-tauri/Cargo.lock && git commit -m \"chore: bump version to $(node -p \"require('./package.json').version\")\" && git tag v$(node -p \"require('./package.json').version\")",
-    "version:major": "node scripts/bump-version.ts major && git add package.json src-tauri/tauri.conf.json src-tauri/Cargo.toml src-tauri/Cargo.lock && git commit -m \"chore: bump version to $(node -p \"require('./package.json').version\")\" && git tag v$(node -p \"require('./package.json').version\")"
+    "version:major": "node scripts/bump-version.ts major && git add package.json src-tauri/tauri.conf.json src-tauri/Cargo.toml src-tauri/Cargo.lock && git commit -m \"chore: bump version to $(node -p \"require('./package.json').version\")\" && git tag v$(node -p \"require('./package.json').version\")",
+    "icons": "node scripts/make-icons.ts",
+    "icons:preview": "node scripts/make-icon-previews.ts"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.1.18",

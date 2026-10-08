@@ -11,10 +11,9 @@
     <path d="M122 160h1196a22 22 0 0 1 22 22v48H100v-48a22 22 0 0 1 22-22z" fill="#ececf0"/>
     <circle cx="135" cy="195" r="8" fill="#ff5f57"/><circle cx="162" cy="195" r="8" fill="#febc2e"/><circle cx="189" cy="195" r="8" fill="#28c840"/>
     <rect x="112" y="244" width="1216" height="66" fill="#f4f4f6"/>
-    <rect x="134" y="261" width="34" height="34" rx="9" fill="#4169df"/>
-    <path d="M151 286v-16m-7 7 7-7 7 7" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-    <text x="181" y="279" font-family="-apple-system,BlinkMacSystemFont,sans-serif" font-size="17" font-weight="650" fill="#202124">Launchpane</text>
-    <text x="181" y="298" font-family="-apple-system,BlinkMacSystemFont,sans-serif" font-size="12" fill="#7a7d88">42 agents</text>
+    
+    <text x="134" y="279" font-family="-apple-system,BlinkMacSystemFont,sans-serif" font-size="17" font-weight="650" fill="#202124">Launchpane</text>
+    <text x="134" y="298" font-family="-apple-system,BlinkMacSystemFont,sans-serif" font-size="12" fill="#7a7d88">42 agents</text>
     <rect x="871" y="260" width="270" height="36" rx="9" fill="white" stroke="#d8d9df"/>
     <text x="889" y="284" font-family="-apple-system,BlinkMacSystemFont,sans-serif" font-size="13" fill="#898c96">Search agents…</text>
     <rect x="1155" y="260" width="76" height="36" rx="9" fill="#4169df"/><text x="1193" y="283" text-anchor="middle" font-family="-apple-system,sans-serif" font-size="13" font-weight="600" fill="white">New</text>

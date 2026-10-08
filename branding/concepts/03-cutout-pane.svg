@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <title>Concept 3 — Cut-Out Launch Pane</title>
+  <defs>
+    <linearGradient id="c3plate" x1="0.05" y1="0" x2="0.95" y2="1">
+      <stop offset="0%" stop-color="#5E7BFF"/>
+      <stop offset="42%" stop-color="#3B54E8"/>
+      <stop offset="100%" stop-color="#1B1F8C"/>
+    </linearGradient>
+    <linearGradient id="c3rim" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.40"/>
+      <stop offset="55%" stop-color="#FFFFFF" stop-opacity="0.03"/>
+      <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0.12"/>
+    </linearGradient>
+    <linearGradient id="c3panel" x1="0" y1="0" x2="0.4" y2="1">
+      <stop offset="0%" stop-color="#FFFFFF"/>
+      <stop offset="100%" stop-color="#E4ECFF"/>
+    </linearGradient>
+    <mask id="c3cut">
+      <rect x="0" y="0" width="1024" height="1024" fill="#000"/>
+      <rect x="236" y="236" width="552" height="552" rx="124" fill="#fff"/>
+      <g fill="#000">
+        <path d="M512 318 L700 512 h-84 v118 a36 36 0 0 1 -36 36 h-136 a36 36 0 0 1 -36 -36 V512 h-84 Z"/>
+        <rect x="380" y="700" width="264" height="56" rx="28"/>
+      </g>
+    </mask>
+  </defs>
+
+  <path d="M512 72h0c168 0 252 0 302 50s50 134 50 302v176c0 168 0 252-50 302s-134 50-302 50h0c-168 0-252 0-302-50s-50-134-50-302V424c0-168 0-252 50-302s134-50 302-50z" fill="url(#c3plate)"/>
+  <path d="M512 72h0c168 0 252 0 302 50s50 134 50 302v176c0 168 0 252-50 302s-134 50-302 50h0c-168 0-252 0-302-50s-50-134-50-302V424c0-168 0-252 50-302s134-50 302-50z" fill="url(#c3rim)"/>
+  <path d="M512 72h0c168 0 252 0 302 50s50 134 50 302v176c0 168 0 252-50 302s-134 50-302 50h0c-168 0-252 0-302-50s-50-134-50-302V424c0-168 0-252 50-302s134-50 302-50z" fill="none" stroke="#FFFFFF" stroke-opacity="0.26" stroke-width="6"/>
+
+  <rect x="236" y="236" width="552" height="552" rx="124" fill="url(#c3panel)" mask="url(#c3cut)"/>
+</svg>
