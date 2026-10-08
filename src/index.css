@@ -141,7 +141,7 @@
   }
   body {
     @apply bg-background text-foreground;
-    min-width: 760px;
+    min-width: 560px;
     min-height: 100vh;
     letter-spacing: -0.006em;
     -webkit-font-smoothing: antialiased;

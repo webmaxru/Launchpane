@@ -29,14 +29,16 @@ export function useJobs(): UseJobsReturn {
       const result = await listJobs()
       setJobs(result)
     } catch (e) {
-      setError(`Couldn’t load background services. ${errorMessage(e)}`)
+      const detail = errorMessage(e)
+      setError(detail)
+      throw e
     } finally {
       setLoading(false)
     }
   }, [])
 
   useEffect(() => {
-    refresh()
+    void refresh().catch(() => undefined)
   }, [refresh])
 
   const filteredJobs = jobs.filter((job) => {

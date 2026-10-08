@@ -62,6 +62,7 @@ type ActionFeedback = {
   id: number
   kind: "loading" | "success" | "error"
   message: string
+  detail?: string
 }
 
 type ConfirmKind = "enable" | "disable" | "delete"
@@ -144,6 +145,7 @@ function actionProgressText(verb: string, label: string) {
 
 function App() {
   const {
+    jobs,
     filteredJobs,
     loading,
     error,
@@ -161,7 +163,6 @@ function App() {
   const [editingJob, setEditingJob] = useState<LaunchdJob | null>(null)
   const [confirmRequest, setConfirmRequest] = useState<ConfirmRequest | null>(null)
   const [actionFeedback, setActionFeedback] = useState<ActionFeedback | null>(null)
-  const [visibleListError, setVisibleListError] = useState<string | null>(null)
   const [pendingAction, setPendingAction] = useState<PendingAction | null>(null)
   const pendingActionRef = useRef<PendingAction | null>(null)
   const editOpenTimerRef = useRef<number | null>(null)
@@ -171,9 +172,9 @@ function App() {
   const [adminLaunching, setAdminLaunching] = useState(false)
 
   const showActionFeedback = useCallback(
-    (kind: ActionFeedback["kind"], message: string) => {
+    (kind: ActionFeedback["kind"], message: string, detail?: string) => {
       feedbackIdRef.current += 1
-      setActionFeedback({ id: feedbackIdRef.current, kind, message })
+      setActionFeedback({ id: feedbackIdRef.current, kind, message, detail })
     },
     []
   )
@@ -187,13 +188,14 @@ function App() {
       .catch((e) =>
         showActionFeedback(
           "error",
-          `Couldn’t read administrator status. ${errorMessage(e)}`
+          "Couldn’t read administrator status.",
+          errorMessage(e)
         )
       )
   }, [showActionFeedback])
 
   useEffect(() => {
-    if (!actionFeedback || actionFeedback.kind === "loading") return undefined
+    if (!actionFeedback || actionFeedback.kind !== "success") return undefined
 
     const timeoutId = window.setTimeout(() => {
       setActionFeedback((current) =>
@@ -203,20 +205,6 @@ function App() {
 
     return () => window.clearTimeout(timeoutId)
   }, [actionFeedback])
-
-  useEffect(() => {
-    if (!error) {
-      setVisibleListError(null)
-      return undefined
-    }
-
-    setVisibleListError(error)
-    const timeoutId = window.setTimeout(() => {
-      setVisibleListError((current) => (current === error ? null : current))
-    }, FEEDBACK_DISMISS_MS)
-
-    return () => window.clearTimeout(timeoutId)
-  }, [error])
 
   const handleAction = useCallback(
     async (
@@ -252,8 +240,8 @@ function App() {
 
         try {
           await refresh()
-        } catch (e) {
-          successMessage = `${successMessage} The list may be out of date because refresh failed. ${errorMessage(e)}`
+        } catch {
+          successMessage = `${successMessage} The list may be out of date because refresh failed.`
         }
 
         showActionFeedback("success", successMessage)
@@ -261,7 +249,8 @@ function App() {
       } catch (e) {
         showActionFeedback(
           "error",
-          `Couldn’t ${verb} ${job.label}. ${errorMessage(e)}`
+          `Couldn’t ${verb} ${job.label}.`,
+          errorMessage(e)
         )
         return false
       } finally {
@@ -338,6 +327,41 @@ function App() {
   const themeLabel =
     theme === "system" ? "System appearance" : `${theme[0].toUpperCase()}${theme.slice(1)} appearance`
   const hasActiveFilters = search.trim().length > 0 || sourceFilter !== "All"
+  const openCreateForm = useCallback(() => {
+    setEditingJob(null)
+    setFormKey((key) => key + 1)
+    setFormOpen(true)
+  }, [])
+  const retryList = useCallback(() => {
+    void refresh().catch(() => undefined)
+  }, [refresh])
+  const clearFilters = useCallback(() => {
+    setSearch("")
+    setSourceFilter("All")
+  }, [setSearch, setSourceFilter])
+
+  useEffect(() => {
+    const handleShortcut = (event: KeyboardEvent) => {
+      if (event.metaKey || event.ctrlKey || event.altKey) return
+      const target = event.target as HTMLElement | null
+      const isTyping =
+        target?.tagName === "INPUT" ||
+        target?.tagName === "TEXTAREA" ||
+        target?.isContentEditable
+      if (event.key === "/" && !isTyping) {
+        event.preventDefault()
+        document.getElementById("service-search")?.focus()
+      } else if (event.key.toLowerCase() === "r" && !isTyping) {
+        event.preventDefault()
+        retryList()
+      } else if (event.key.toLowerCase() === "n" && !isTyping) {
+        event.preventDefault()
+        openCreateForm()
+      }
+    }
+    window.addEventListener("keydown", handleShortcut)
+    return () => window.removeEventListener("keydown", handleShortcut)
+  }, [openCreateForm, retryList])
 
   const handleRestartAsAdministrator = async () => {
     setAdminLaunching(true)
@@ -348,7 +372,8 @@ function App() {
     } catch (e) {
       showActionFeedback(
         "error",
-        `Couldn’t open the administrator window. ${errorMessage(e)}`
+        "Couldn’t open the administrator window.",
+        errorMessage(e)
       )
     } finally {
       setAdminLaunching(false)
@@ -375,8 +400,11 @@ function App() {
                 Launchpane
               </h1>
               <p className="text-xs tabular-nums text-muted-foreground">
-                {filteredJobs.length}{" "}
-                {filteredJobs.length === 1 ? "service" : "services"}
+                {error
+                  ? "Services unavailable"
+                  : hasActiveFilters
+                    ? `${filteredJobs.length} of ${jobs.length} services`
+                    : `${filteredJobs.length} ${filteredJobs.length === 1 ? "service" : "services"}`}
               </p>
             </div>
           </div>
@@ -446,41 +474,52 @@ function App() {
                   onClick={() => void handleRestartAsAdministrator()}
                   disabled={adminLaunching}
                   className="rounded-lg bg-card"
+                  aria-label="Open Administrator Window"
                 >
-                  <Shield className="mr-1 h-4 w-4" />
-                  {adminLaunching ? "Opening…" : "Open Administrator Window"}
+                  <Shield className="h-4 w-4 lg:mr-1" />
+                  <span className="hidden lg:inline">
+                    {adminLaunching ? "Opening…" : "Open Administrator Window"}
+                  </span>
+                  <span className="lg:hidden">
+                    {adminLaunching ? "Opening…" : "Admin"}
+                  </span>
                 </Button>
               </Hint>
             ) : null}
             <Hint
-              label="Refresh agent list"
-              description="Reload launchd state and plist metadata without changing any jobs."
+              label="Refresh service list"
+              description="Reload launchd state and plist metadata without changing any services. Shortcut: R."
             >
               <Button
                 variant="outline"
                 size="sm"
-                onClick={refresh}
+                onClick={retryList}
+                aria-keyshortcuts="R"
+                aria-label="Refresh service list"
+                disabled={loading}
                 className="rounded-lg bg-card"
               >
-                <RefreshCw className="mr-1 h-4 w-4" />
-                Refresh
+                <RefreshCw
+                  className={`h-4 w-4 md:mr-1 ${loading ? "animate-spin" : ""}`}
+                />
+                <span className="hidden md:inline">
+                  {loading ? "Refreshing…" : "Refresh"}
+                </span>
               </Button>
             </Hint>
             <Hint
               label="Create a user agent"
-              description="Open the editor for a new plist in your personal LaunchAgents folder."
+              description="Open the editor for a new plist in your personal LaunchAgents folder. Shortcut: N."
             >
               <Button
                 size="sm"
                 className="rounded-lg shadow-sm"
-                onClick={() => {
-                  setEditingJob(null)
-                  setFormKey((k) => k + 1)
-                  setFormOpen(true)
-                }}
+                onClick={openCreateForm}
+                aria-keyshortcuts="N"
+                aria-label="Create a user agent"
               >
-                <Plus className="mr-1 h-4 w-4" />
-                New Agent
+                <Plus className="h-4 w-4 md:mr-1" />
+                <span className="hidden md:inline">New Agent</span>
               </Button>
             </Hint>
           </div>
@@ -490,11 +529,11 @@ function App() {
       <main className="p-4">
         <section
           className="overflow-hidden rounded-xl border bg-card shadow-sm"
-          aria-label="Launchd agents"
+          aria-label="Background services"
         >
           <div
             className="border-b bg-accent/35 p-3"
-            aria-label="Agent filters"
+            aria-label="Service filters"
           >
             <SearchBar
               search={search}
@@ -506,6 +545,8 @@ function App() {
           <JobList
             jobs={filteredJobs}
             loading={loading}
+            error={error}
+            hasActiveFilters={hasActiveFilters}
             emptyTitle={
               hasActiveFilters
                 ? "No services match your filters"
@@ -543,37 +584,20 @@ function App() {
             onDelete={(job) => setConfirmRequest({ kind: "delete", job })}
             onSelect={handleSelect}
             onRevealInFinder={(job) => revealInFinder(job.plist_path)}
+            onRetry={retryList}
+            onCreate={openCreateForm}
+            onClearFilters={clearFilters}
           />
         </section>
       </main>
 
-      {(visibleListError || actionFeedback) && (
+      {actionFeedback && (
         <div
           data-testid="feedback-region"
           className="pointer-events-none fixed right-4 bottom-4 z-50 flex w-[min(24rem,calc(100vw-2rem))] flex-col gap-2"
           aria-live="polite"
           aria-relevant="additions text"
         >
-          {visibleListError && (
-            <div
-              role="alert"
-              aria-atomic="true"
-              className="pointer-events-auto flex items-start gap-2 rounded-xl border border-red-200 bg-card p-3 text-sm text-red-700 shadow-xl dark:border-red-900 dark:text-red-300"
-            >
-              <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
-              <span className="min-w-0 flex-1">{visibleListError}</span>
-              <Button
-                variant="ghost"
-                size="icon-xs"
-                className="text-destructive hover:text-destructive"
-                onClick={() => setVisibleListError(null)}
-                aria-label="Dismiss list error"
-              >
-                <X />
-              </Button>
-            </div>
-          )}
-
           {actionFeedback && (
             <div
               data-testid="action-feedback"
@@ -594,7 +618,17 @@ function App() {
               ) : (
                 <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
               )}
-              <span className="min-w-0 flex-1">{actionFeedback.message}</span>
+              <div className="min-w-0 flex-1">
+                <p>{actionFeedback.message}</p>
+                {actionFeedback.detail && (
+                  <details className="mt-1 text-xs opacity-80">
+                    <summary className="cursor-pointer">Technical details</summary>
+                    <p className="mt-1 break-words font-mono">
+                      {actionFeedback.detail}
+                    </p>
+                  </details>
+                )}
+              </div>
               {actionFeedback.kind !== "loading" && (
                 <Button
                   variant="ghost"

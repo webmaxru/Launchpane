@@ -45,7 +45,7 @@ describe("JobDetail", () => {
 
     renderDetail()
 
-    expect(screen.getByText("Loading agent details…")).toBeInTheDocument()
+    expect(screen.getByText("Loading service details…")).toBeInTheDocument()
     expect(screen.queryByRole("tablist")).not.toBeInTheDocument()
   })
 
@@ -83,7 +83,7 @@ describe("JobDetail", () => {
     renderDetail()
 
     const tabList = await screen.findByRole("tablist", {
-      name: "Agent detail sections",
+      name: "Service detail sections",
     })
 
     expect(tabList).toHaveClass("rounded-lg", "bg-zinc-200/80", "p-0.5")
@@ -107,7 +107,7 @@ describe("JobDetail", () => {
     renderDetail()
 
     const alert = await screen.findByRole("alert")
-    expect(alert).toHaveTextContent("Could not load this agent")
+    expect(alert).toHaveTextContent("Could not load this service")
     expect(alert).toHaveTextContent("plist is unreadable")
     expect(screen.queryByRole("tablist")).not.toBeInTheDocument()
   })

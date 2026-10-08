@@ -166,7 +166,7 @@ export function JobDetail({ plistPath, open, onClose, onEdit }: JobDetailProps) 
         <SheetContent className="flex h-full w-full flex-col gap-0 bg-card p-0 text-card-foreground sm:max-w-[44rem]">
         <SheetHeader className="shrink-0 gap-0 border-b px-6 py-5 pr-14">
           <SheetTitle className="truncate text-base font-semibold" title={job?.label}>
-            {job?.label ?? (loading ? "Loading agent…" : "Agent details")}
+            {job?.label ?? (loading ? "Loading service…" : "Service details")}
           </SheetTitle>
           <SheetDescription
             className="truncate font-mono text-xs"
@@ -174,7 +174,7 @@ export function JobDetail({ plistPath, open, onClose, onEdit }: JobDetailProps) 
           >
             {job?.plist_path ??
               plistPath ??
-              "Agent details, configuration, logs, and controls."}
+              "Service details, configuration, logs, and controls."}
           </SheetDescription>
 
           {job && (
@@ -240,7 +240,7 @@ export function JobDetail({ plistPath, open, onClose, onEdit }: JobDetailProps) 
         {showLoading && (
           <div className="flex flex-1 items-center justify-center gap-2 text-sm text-muted-foreground">
             <Loader2 className="h-4 w-4 animate-spin" />
-            Loading agent details…
+            Loading service details…
           </div>
         )}
 
@@ -250,7 +250,7 @@ export function JobDetail({ plistPath, open, onClose, onEdit }: JobDetailProps) 
             className="flex flex-1 flex-col items-center justify-center gap-2 px-6 text-center"
           >
             <AlertCircle className="h-5 w-5 text-red-600 dark:text-red-400" />
-            <p className="text-sm font-medium">Could not load this agent</p>
+            <p className="text-sm font-medium">Could not load this service</p>
             <p className="max-w-md text-xs text-muted-foreground break-words">{error}</p>
           </div>
         )}
@@ -266,7 +266,7 @@ export function JobDetail({ plistPath, open, onClose, onEdit }: JobDetailProps) 
                 className={`grid h-9 w-full rounded-lg bg-zinc-200/80 p-0.5 dark:bg-zinc-800 ${
                   tabs.length === 2 ? "grid-cols-2" : "grid-cols-3"
                 }`}
-                aria-label="Agent detail sections"
+                aria-label="Service detail sections"
               >
                 {tabs.map((tab) => (
                   <TabsTrigger
@@ -404,7 +404,7 @@ export function JobDetail({ plistPath, open, onClose, onEdit }: JobDetailProps) 
                 </Section>
               )}
               {!job.plist.standard_out_path && !job.plist.standard_error_path && (
-                <EmptyState>No log paths configured for this agent</EmptyState>
+                <EmptyState>No log paths configured for this service</EmptyState>
               )}
             </TabsContent>
 

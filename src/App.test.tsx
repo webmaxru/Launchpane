@@ -15,9 +15,19 @@ async function confirmAction(
   await user.click(within(dialog).getByRole("button", { name }))
 }
 
-function confirmActionSync(name: string) {
-  const dialog = screen.getByRole("dialog")
-  fireEvent.click(within(dialog).getByRole("button", { name }))
+async function chooseRowAction(
+  user: ReturnType<typeof userEvent.setup>,
+  jobLabel: string,
+  action: string
+) {
+  await user.click(
+    await screen.findByRole("button", { name: `Actions for ${jobLabel}` })
+  )
+  await user.click(
+    screen.getByRole("menuitem", {
+      name: action === "Remove" ? "Remove agent…" : action,
+    })
+  )
 }
 
 beforeEach(() => {
@@ -41,10 +51,7 @@ describe("App action feedback", () => {
     const user = userEvent.setup()
     render(<App />)
 
-    const disableButtons = await screen.findAllByRole("button", {
-      name: "Disable",
-    })
-    await user.click(disableButtons[0])
+    await chooseRowAction(user, "com.example.running-agent", "Disable")
     await confirmAction(user, "Disable")
 
     expect(await screen.findByRole("status")).toHaveTextContent(
@@ -60,16 +67,15 @@ describe("App action feedback", () => {
     const user = userEvent.setup()
     render(<App />)
 
-    const enableButtons = await screen.findAllByRole("button", {
-      name: "Enable",
-    })
-    await user.click(enableButtons[0])
+    await chooseRowAction(user, "com.example.stopped-agent", "Enable")
     await confirmAction(user, "Enable")
 
     await waitFor(() => {
-      expect(screen.getByRole("alert")).toHaveTextContent(
-        "Couldn’t enable com.example.stopped-agent. Permission denied"
+      const alert = screen.getByRole("alert")
+      expect(alert).toHaveTextContent(
+        "Couldn’t enable com.example.stopped-agent."
       )
+      expect(alert).toHaveTextContent("Permission denied")
     })
   })
 
@@ -85,10 +91,7 @@ describe("App action feedback", () => {
     const user = userEvent.setup()
     render(<App />)
 
-    const disableButtons = await screen.findAllByRole("button", {
-      name: "Disable",
-    })
-    await user.click(disableButtons[0])
+    await chooseRowAction(user, "com.example.running-agent", "Disable")
     await confirmAction(user, "Disable")
 
     expect(screen.getByRole("status")).toHaveTextContent(
@@ -108,12 +111,12 @@ describe("App action feedback", () => {
   })
 
   it("does not let a stale success timer dismiss newer loading feedback", async () => {
-    let resolveDisable: (enabled: boolean) => void = () => {}
+    let resolveStop: () => void = () => {}
     setFakeHandler(
-      "disable_job",
+      "stop_job",
       () =>
-        new Promise<boolean>((resolve) => {
-          resolveDisable = resolve
+        new Promise<void>((resolve) => {
+          resolveStop = resolve
         })
     )
     render(<App />)
@@ -121,9 +124,6 @@ describe("App action feedback", () => {
     const adminButton = await screen.findByRole("button", {
       name: "Open Administrator Window",
     })
-    const disableButton = (await screen.findAllByRole("button", {
-      name: "Disable",
-    }))[0]
     vi.useFakeTimers()
 
     await act(async () => {
@@ -137,27 +137,26 @@ describe("App action feedback", () => {
     act(() => {
       vi.advanceTimersByTime(3000)
     })
-    fireEvent.click(disableButton)
-    confirmActionSync("Disable")
+    fireEvent.click(screen.getByRole("button", { name: "Stop" }))
     expect(screen.getByRole("status")).toHaveTextContent(
-      "Disabling com.example.running-agent…"
+      "Unloading com.example.running-agent…"
     )
 
     act(() => {
       vi.advanceTimersByTime(2000)
     })
     expect(screen.getByRole("status")).toHaveTextContent(
-      "Disabling com.example.running-agent…"
+      "Unloading com.example.running-agent…"
     )
 
     await act(async () => {
-      resolveDisable(false)
+      resolveStop()
       for (let index = 0; index < 5; index += 1) {
         await Promise.resolve()
       }
     })
     expect(screen.getByRole("status")).toHaveTextContent(
-      "com.example.running-agent is now disabled."
+      "com.example.running-agent unloaded successfully."
     )
 
     act(() => {
@@ -166,23 +165,17 @@ describe("App action feedback", () => {
     expect(screen.queryByTestId("action-feedback")).not.toBeInTheDocument()
   })
 
-  it("automatically dismisses failure feedback", async () => {
-    setFakeHandler("enable_job", () => {
+  it("keeps failure feedback until the user dismisses it", async () => {
+    setFakeHandler("stop_job", () => {
       throw new Error("Permission denied")
     })
     render(<App />)
 
-    const enableButton = (await screen.findAllByRole("button", {
-      name: "Enable",
-    }))[0]
+    const stopButton = await screen.findByRole("button", { name: "Stop" })
     vi.useFakeTimers()
 
     await act(async () => {
-      fireEvent.click(enableButton)
-      await Promise.resolve()
-    })
-    await act(async () => {
-      confirmActionSync("Enable")
+      fireEvent.click(stopButton)
       await Promise.resolve()
     })
     expect(screen.getByRole("alert")).toHaveTextContent("Permission denied")
@@ -190,6 +183,9 @@ describe("App action feedback", () => {
     act(() => {
       vi.advanceTimersByTime(4000)
     })
+    expect(screen.getByTestId("action-feedback")).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole("button", { name: "Dismiss error" }))
     expect(screen.queryByTestId("action-feedback")).not.toBeInTheDocument()
   })
 
@@ -219,17 +215,16 @@ describe("App action feedback", () => {
     const user = userEvent.setup()
     render(<App />)
 
-    await user.click(await screen.findByRole("button", { name: "Disable" }))
+    await chooseRowAction(user, "com.example.running-agent", "Disable")
     await confirmAction(user, "Disable")
 
     expect(await screen.findByRole("status")).toHaveTextContent(
       "com.example.running-agent is now disabled."
     )
     expect(
-      await screen.findByText(
-        "Couldn’t load background services. Refresh failed"
-      )
+      await screen.findByText("Couldn’t load background services")
     ).toBeInTheDocument()
+    expect(screen.getByText("Refresh failed")).toBeInTheDocument()
   })
 
   it("shows failure feedback when verified enable state does not match", async () => {
@@ -237,10 +232,7 @@ describe("App action feedback", () => {
     const user = userEvent.setup()
     render(<App />)
 
-    const enableButtons = await screen.findAllByRole("button", {
-      name: "Enable",
-    })
-    await user.click(enableButtons[0])
+    await chooseRowAction(user, "com.example.stopped-agent", "Enable")
     await confirmAction(user, "Enable")
 
     await waitFor(() => {
@@ -290,6 +282,43 @@ describe("App appearance", () => {
   })
 })
 
+describe("App workspace navigation", () => {
+  it("focuses search and opens creation from keyboard shortcuts", async () => {
+    const user = userEvent.setup()
+    render(<App />)
+
+    await screen.findByText("com.example.running-agent")
+    await user.keyboard("/")
+    expect(screen.getByRole("searchbox")).toHaveFocus()
+
+    await user.keyboard("{Escape}")
+    screen.getByRole("searchbox").blur()
+    await user.keyboard("n")
+    expect(
+      await screen.findByRole("heading", { name: "New Agent" })
+    ).toBeInTheDocument()
+  })
+
+  it("shows a truthful persistent recovery state when inventory loading fails", async () => {
+    setFakeHandler("list_jobs", () => {
+      throw new Error("launchctl unavailable")
+    })
+    const user = userEvent.setup()
+    render(<App />)
+
+    expect(await screen.findByText("Services unavailable")).toBeInTheDocument()
+    expect(
+      screen.getByText("Couldn’t load background services")
+    ).toBeInTheDocument()
+    expect(
+      screen.queryByText("No background services found")
+    ).not.toBeInTheDocument()
+
+    await user.click(screen.getByText("Technical details"))
+    expect(screen.getByText("launchctl unavailable")).toBeVisible()
+  })
+})
+
 describe("App action confirmation", () => {
   it.each([
     ["enable", "Enable", "enable_job", "Enable agent"],
@@ -303,10 +332,13 @@ describe("App action confirmation", () => {
       const user = userEvent.setup()
       render(<App />)
 
-      const rowButtons = await screen.findAllByRole("button", {
-        name: buttonName,
-      })
-      await user.click(rowButtons[0])
+      await chooseRowAction(
+        user,
+        buttonName === "Enable"
+          ? "com.example.stopped-agent"
+          : "com.example.running-agent",
+        buttonName
+      )
 
       const dialog = await screen.findByRole("dialog")
       expect(
@@ -330,10 +362,13 @@ describe("App action confirmation", () => {
     const user = userEvent.setup()
     render(<App />)
 
-    const rowButtons = await screen.findAllByRole("button", {
-      name: buttonName,
-    })
-    await user.click(rowButtons[0])
+    await chooseRowAction(
+      user,
+      buttonName === "Enable"
+        ? "com.example.stopped-agent"
+        : "com.example.running-agent",
+      buttonName
+    )
 
     const dialog = await screen.findByRole("dialog")
     await user.click(within(dialog).getByRole("button", { name: "Cancel" }))
@@ -348,10 +383,7 @@ describe("App action confirmation", () => {
     const user = userEvent.setup()
     render(<App />)
 
-    const disableButtons = await screen.findAllByRole("button", {
-      name: "Disable",
-    })
-    await user.click(disableButtons[0])
+    await chooseRowAction(user, "com.example.running-agent", "Disable")
 
     const dialog = await screen.findByRole("dialog")
     expect(dialog).toHaveTextContent("com.example.running-agent")
