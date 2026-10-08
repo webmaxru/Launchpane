@@ -355,3 +355,19 @@ describe("App action confirmation", () => {
     expect(dialog).toHaveTextContent("com.example.running-agent")
   })
 })
+
+describe("App header branding", () => {
+  it("renders the Launchpane brand mark next to the title", async () => {
+    const { container } = render(<App />)
+    const header = container.querySelector("header")
+    expect(header).not.toBeNull()
+
+    const mark = header!.querySelector("img")
+    expect(mark).not.toBeNull()
+    expect(mark!.getAttribute("src")).toContain("svg")
+
+    await waitFor(() => {
+      expect(within(header!).getByText("Launchpane")).toBeTruthy()
+    })
+  })
+})

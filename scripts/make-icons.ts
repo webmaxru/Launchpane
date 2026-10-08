@@ -192,7 +192,13 @@ async function main(): Promise<void> {
   )
   console.log("✓ branding/launchpane-wordmark.svg + store PNG")
 
-  // 7. Persist the selection so future runs are reproducible.
+  // 7. Frontend asset so the in-app header shows the same mark as the bundle.
+  const appIcon = join(ROOT, "src", "assets", "app-icon.svg")
+  mkdirSync(dirname(appIcon), { recursive: true })
+  copyFileSync(conceptPath, appIcon)
+  console.log("✓ src/assets/app-icon.svg (in-app header mark)")
+
+  // 8. Persist the selection so future runs are reproducible.
   writeFileSync(
     SELECTION_FILE,
     `${JSON.stringify({ concept, updatedAt: new Date().toISOString() }, null, 2)}\n`,

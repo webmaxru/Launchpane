@@ -14,6 +14,8 @@ or Apple-owned assets are included.
 | `launchpane-icon.svg` | Master app icon — a copy of the selected concept |
 | `launchpane-icon-1024.png` | Rasterised master icon **with alpha** — input for icon generation |
 | `launchpane-wordmark.svg` | Horizontal lockup (icon + wordmark + tagline), rebuilt from the selection |
+| `../src/assets/app-icon.svg` | Generated — the in-app header mark, kept in sync with the selected concept |
+| `screenshots/source/*.svg` | Store screenshot mockups; `<g data-app-icon …/>` is replaced with the live mark at render time |
 
 Every icon concept has a fully transparent background. Nothing in the pipeline
 flattens the app icon onto a solid colour; the single exception is the App Store
@@ -31,24 +33,25 @@ pnpm icons 02-ignition-switch # promote a concept and rebuild every artefact
 
 | Concept | Idea |
 | --- | --- |
-| `01-launch-pane` | Graphite squircle of agent tiles, one lifting clear and glowing mint **(in use)** |
+| `01-launch-pane` | Graphite squircle of agent tiles, one lifting clear and glowing mint |
 | `02-ignition-switch` | Free-form vertical toggle in the ON position with a power-symbol knob |
 | `03-cutout-pane` | Indigo squircle with a launch arrow knocked out of a white pane |
-| `04-daemon-pulse` | Free-form pane frame with a heartbeat running straight through it |
+| `04-daemon-pulse` | Free-form pane frame with a heartbeat running straight through it **(in use)** |
 | `05-pane-stack` | Free-form 3D stack of tilted panes, front pane active |
 
 ### Palette
 
+The palette below tracks the shipping mark (`04-daemon-pulse`).
+
 | Token | Hex | Use |
 | --- | --- | --- |
-| Graphite (light) | `#2B3566` | Icon plate gradient start |
-| Graphite (mid) | `#1B2040` | Icon plate gradient middle |
-| Graphite (deep) | `#0E1226` | Icon plate gradient end |
-| Pane Glass | `#FFFFFF` @ 7–22 % | Inactive agent tiles |
-| Signal Mint (light) | `#7DF9D0` | Active tile highlight |
-| Signal Mint (mid) | `#35D6A4` | Active tile body |
-| Signal Mint (deep) | `#17A98A` | Active tile shade |
-| Launch Ink | `#0E2E27` | Arrow glyph on the active tile |
+| Indigo (light) | `#6E8BFF` | Pane frame gradient start |
+| Indigo (mid) | `#3D5BE0` | Pane frame gradient middle |
+| Indigo (deep) | `#242A9E` | Pane frame gradient end |
+| Signal Mint (light) | `#7DF9D0` | Pulse highlight |
+| Signal Mint (mid) | `#2BD39C` | Pulse body |
+| Signal Amber | `#FFD36B` | Pulse trailing edge |
+| Pane Glass | `#FFFFFF` @ 7–22 % | Inactive agent dots |
 | Ink | `#1B2559` | Wordmark |
 | Ink Muted | `#6B7699` | Tagline |
 

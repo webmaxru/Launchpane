@@ -5,13 +5,24 @@
  * 1280x800, 1440x900, 2560x1600, 2880x1800.
  */
 import { execFileSync, spawn } from "node:child_process"
-import { mkdirSync, mkdtempSync, readdirSync, existsSync, rmSync, statSync, writeFileSync } from "node:fs"
+import {
+  mkdirSync,
+  mkdtempSync,
+  readdirSync,
+  existsSync,
+  readFileSync,
+  rmSync,
+  statSync,
+  writeFileSync,
+} from "node:fs"
 import { tmpdir } from "node:os"
 import { join, parse } from "node:path"
 import { pathToFileURL } from "node:url"
 
 const SOURCE_DIR = join(process.cwd(), "branding", "screenshots", "source")
 const OUTPUT_DIR = join(process.cwd(), "branding", "store", "screenshots")
+const MASTER_ICON = join(process.cwd(), "branding", "launchpane-icon.svg")
+const ICON_VIEWBOX = 1024
 const SIZES = [
   { width: 1280, height: 800 },
   { width: 1440, height: 900 },
@@ -21,6 +32,41 @@ const SIZES = [
 
 function sips(args: string[]): void {
   execFileSync("/usr/bin/sips", args, { stdio: "ignore" })
+}
+
+/** Returns the drawable contents of an SVG, without its root element. */
+function svgBody(markup: string): string {
+  const opening = markup.indexOf(">", markup.indexOf("<svg"))
+  const closing = markup.lastIndexOf("</svg>")
+  return markup.slice(opening + 1, closing).trim()
+}
+
+/**
+ * Replaces `<g data-app-icon x=".." y=".." size=".."/>` placeholders in a mockup
+ * with the current brand mark, so screenshots always match the shipping header.
+ */
+function inlineAppIcon(markup: string): string {
+  const placeholder =
+    /<g\s+data-app-icon\s+x="([\d.]+)"\s+y="([\d.]+)"\s+size="([\d.]+)"\s*\/>/g
+  if (!placeholder.test(markup)) return markup
+  placeholder.lastIndex = 0
+
+  const icon = svgBody(readFileSync(MASTER_ICON, "utf8"))
+  let index = 0
+
+  return markup.replace(placeholder, (_match, x, y, size) => {
+    index += 1
+    // Namespace ids so the mark's gradients cannot collide with the mockup's.
+    const scoped = icon
+      .replace(/id="([A-Za-z][\w-]*)"/g, (_m, id: string) => `id="s${index}${id}"`)
+      .replace(/url\(#([A-Za-z][\w-]*)\)/g, (_m, id: string) => `url(#s${index}${id})`)
+      .replace(
+        /(xlink:href|href)="#([A-Za-z][\w-]*)"/g,
+        (_m, attr: string, id: string) => `${attr}="#s${index}${id}"`
+      )
+    const scale = Number(size) / ICON_VIEWBOX
+    return `<g transform="translate(${x},${y}) scale(${scale})">${scoped}</g>`
+  })
 }
 
 function ensureSources(): string[] {
@@ -126,8 +172,10 @@ async function main(): Promise<void> {
   for (const file of sourceFiles) {
     const parsed = parse(file)
     const sourcePath = join(SOURCE_DIR, file)
+    const preparedPath = join(SOURCE_DIR, ".tmp-render", `${parsed.name}-prepared.svg`)
+    writeFileSync(preparedPath, inlineAppIcon(readFileSync(sourcePath, "utf8")), "utf8")
     const renderTarget = join(SOURCE_DIR, ".tmp-render", `${parsed.name}-master.png`)
-    await renderSvgToPng(sourcePath, renderTarget, 2880, 1800)
+    await renderSvgToPng(preparedPath, renderTarget, 2880, 1800)
 
     for (const { width, height } of SIZES) {
       const sizeDir = join(OUTPUT_DIR, `${width}x${height}`)

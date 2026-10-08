@@ -38,6 +38,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { TooltipProvider } from "@/components/ui/tooltip"
 import { Hint } from "@/components/Hint"
+import appIconUrl from "@/assets/app-icon.svg"
 import {
   AlertCircle,
   CheckCircle2,
@@ -358,6 +359,15 @@ function App() {
       <header className="sticky top-0 z-20 border-b border-zinc-200/90 bg-zinc-100/95 px-5 py-3 backdrop-blur-xl dark:border-zinc-800 dark:bg-zinc-950/95">
         <div className="flex items-center justify-between gap-4">
           <div className="flex min-w-0 items-center gap-3">
+            <img
+              src={appIconUrl}
+              alt=""
+              aria-hidden="true"
+              width={28}
+              height={28}
+              className="h-7 w-7 shrink-0 select-none"
+              draggable={false}
+            />
             <div className="min-w-0">
               <h1 className="truncate text-[15px] font-semibold leading-tight">
                 Launchpane

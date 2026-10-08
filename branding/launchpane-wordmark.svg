@@ -1,57 +1,45 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1600" height="400" viewBox="0 0 1600 400">
   <g transform="translate(40,24) scale(0.344)">
-    <title>Concept 1 — Launch Pane</title>
+    <title>Concept 4 — Daemon Pulse (free-form, no plate)</title>
       <defs>
-        <linearGradient id="c1plate" x1="0.1" y1="0" x2="0.9" y2="1">
-          <stop offset="0%" stop-color="#2B3566"/>
-          <stop offset="48%" stop-color="#1B2040"/>
-          <stop offset="100%" stop-color="#0E1226"/>
+        <linearGradient id="c4frame" x1="0.1" y1="0" x2="0.9" y2="1">
+          <stop offset="0%" stop-color="#6E8BFF"/>
+          <stop offset="50%" stop-color="#3D5BE0"/>
+          <stop offset="100%" stop-color="#242A9E"/>
         </linearGradient>
-        <linearGradient id="c1glass" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.22"/>
-          <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0.07"/>
+        <linearGradient id="c4pulse" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stop-color="#2BD39C"/>
+          <stop offset="50%" stop-color="#7DF9D0"/>
+          <stop offset="100%" stop-color="#FFD36B"/>
         </linearGradient>
-        <linearGradient id="c1live" x1="0" y1="0" x2="0.4" y2="1">
-          <stop offset="0%" stop-color="#7DF9D0"/>
-          <stop offset="55%" stop-color="#35D6A4"/>
-          <stop offset="100%" stop-color="#17A98A"/>
-        </linearGradient>
-        <linearGradient id="c1trail" x1="0" y1="1" x2="0" y2="0">
-          <stop offset="0%" stop-color="#35D6A4" stop-opacity="0"/>
-          <stop offset="100%" stop-color="#7DF9D0" stop-opacity="0.75"/>
-        </linearGradient>
-        <linearGradient id="c1rim" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.38"/>
-          <stop offset="60%" stop-color="#FFFFFF" stop-opacity="0.04"/>
-          <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0.10"/>
-        </linearGradient>
-        <filter id="c1soft" x="-80%" y="-200%" width="260%" height="500%">
-          <feGaussianBlur stdDeviation="22"/>
+        <filter id="c4shadow" x="-30%" y="-30%" width="160%" height="160%">
+          <feDropShadow dx="0" dy="18" stdDeviation="22" flood-color="#0B1030" flood-opacity="0.30"/>
         </filter>
-        <filter id="c1glow" x="-60%" y="-60%" width="220%" height="220%">
-          <feGaussianBlur stdDeviation="26" result="b"/>
+        <filter id="c4glow" x="-50%" y="-50%" width="200%" height="200%">
+          <feGaussianBlur stdDeviation="18" result="b"/>
           <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
         </filter>
+        <mask id="c4gap">
+          <rect x="0" y="0" width="1024" height="1024" fill="#fff"/>
+          <rect x="96" y="432" width="200" height="160" rx="40" fill="#000"/>
+          <rect x="728" y="432" width="200" height="160" rx="40" fill="#000"/>
+        </mask>
       </defs>
     
-      <g>
-        <path d="M512 72h0c168 0 252 0 302 50s50 134 50 302v176c0 168 0 252-50 302s-134 50-302 50h0c-168 0-252 0-302-50s-50-134-50-302V424c0-168 0-252 50-302s134-50 302-50z" fill="url(#c1plate)"/>
-        <path d="M512 72h0c168 0 252 0 302 50s50 134 50 302v176c0 168 0 252-50 302s-134 50-302 50h0c-168 0-252 0-302-50s-50-134-50-302V424c0-168 0-252 50-302s134-50 302-50z" fill="url(#c1rim)"/>
-        <path d="M512 72h0c168 0 252 0 302 50s50 134 50 302v176c0 168 0 252-50 302s-134 50-302 50h0c-168 0-252 0-302-50s-50-134-50-302V424c0-168 0-252 50-302s134-50 302-50z" fill="none" stroke="#FFFFFF" stroke-opacity="0.22" stroke-width="6"/>
+      <g filter="url(#c4shadow)" mask="url(#c4gap)">
+        <rect x="186" y="186" width="652" height="652" rx="186" fill="none" stroke="url(#c4frame)" stroke-width="86"/>
       </g>
     
       <g>
-        <rect x="266" y="556" width="208" height="208" rx="46" fill="url(#c1glass)" stroke="#FFFFFF" stroke-opacity="0.26" stroke-width="5"/>
-        <rect x="550" y="556" width="208" height="208" rx="46" fill="url(#c1glass)" stroke="#FFFFFF" stroke-opacity="0.26" stroke-width="5"/>
-        <rect x="266" y="272" width="208" height="208" rx="46" fill="url(#c1glass)" stroke="#FFFFFF" stroke-opacity="0.26" stroke-width="5"/>
+        <circle cx="332" cy="356" r="34" fill="#9FB6FF"/>
+        <circle cx="444" cy="356" r="34" fill="#9FB6FF" opacity="0.6"/>
+        <circle cx="556" cy="356" r="34" fill="#9FB6FF" opacity="0.35"/>
       </g>
     
-      <ellipse cx="654" cy="474" rx="110" ry="30" fill="#35D6A4" opacity="0.30" filter="url(#c1soft)"/>
-    
-      <g filter="url(#c1glow)">
-        <rect x="550" y="196" width="208" height="208" rx="46" fill="url(#c1live)"/>
-        <rect x="550" y="196" width="208" height="208" rx="46" fill="none" stroke="#FFFFFF" stroke-opacity="0.55" stroke-width="5"/>
-        <path d="M654 252 l72 84 h-40 v64 h-64 v-64 h-40 z" fill="#0E2E27"/>
+      <g filter="url(#c4glow)">
+        <path d="M128 512 H330 l64 -150 l84 320 l70 -210 l54 40 H896"
+              fill="none" stroke="url(#c4pulse)" stroke-width="56"
+              stroke-linecap="round" stroke-linejoin="round"/>
       </g>
   </g>
   <text x="440" y="214" font-family="SF Pro Display, Helvetica Neue, Helvetica, Arial, sans-serif" font-size="132" font-weight="600" fill="#1B2559" letter-spacing="-3">Launchpane</text>
