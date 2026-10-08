@@ -1,12 +1,6 @@
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Hint } from "@/components/Hint"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
 import { TableCell, TableRow } from "@/components/ui/table"
 import type { JobListEntry } from "@/types"
 import {
@@ -14,8 +8,6 @@ import {
   Square,
   RotateCw,
   MoreHorizontal,
-  FileText,
-  FolderOpen,
   Zap,
   Loader2,
 } from "lucide-react"
@@ -49,7 +41,6 @@ type JobRowProps = {
   onDisable: (job: JobListEntry) => void
   onDelete: (job: JobListEntry) => void
   onSelect: (job: JobListEntry) => void
-  onRevealInFinder: (job: JobListEntry) => void
 }
 
 function StatusBadge({ status }: { status: JobListEntry["status"] }) {
@@ -186,7 +177,6 @@ export function JobRow({
   onDisable,
   onDelete,
   onSelect,
-  onRevealInFinder,
 }: JobRowProps) {
   const isUserAgent = job.source === "UserAgent"
   const isLoginItem = job.source === "LoginItem"
@@ -410,55 +400,30 @@ export function JobRow({
               </Hint>
             )}
           </div>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild disabled={isPending}>
-              <span className="ml-auto inline-flex">
-                <Hint
-                  label="More actions"
-                  description={
-                    isPending
-                      ? pendingDescription
-                      : isLoginItem
-                        ? "Open details or reveal this login item’s helper bundle in Finder."
-                        : "Open details, reveal the plist in Finder, or run the agent immediately."
-                  }
-                  disabled={isPending}
-                >
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 shrink-0"
-                    disabled={isPending}
-                    aria-label={`More actions for ${job.label}`}
-                  >
-                    <MoreHorizontal className="h-4 w-4" />
-                  </Button>
-                </Hint>
-              </span>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent
-              align="end"
-              className="bg-white text-zinc-950 dark:bg-zinc-950 dark:text-zinc-50"
+          <span className="ml-auto inline-flex">
+            <Hint
+              label="Open details"
+              description={
+                isPending
+                  ? pendingDescription
+                  : isLoginItem
+                    ? "Open this login item’s details and management options."
+                    : "Open this agent’s configuration, logs, commands, and file actions."
+              }
+              disabled={isPending}
             >
-              {!isLoginItem && (
-                <DropdownMenuItem
-                  onClick={() => onKickstart(job)}
-                  disabled={!isUserAgent || isPending}
-                >
-                  <Zap className="mr-2 h-4 w-4" />
-                  Run Now
-                </DropdownMenuItem>
-              )}
-              <DropdownMenuItem onClick={() => onSelect(job)}>
-                <FileText className="mr-2 h-4 w-4" />
-                Details
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => onRevealInFinder(job)}>
-                <FolderOpen className="mr-2 h-4 w-4" />
-                Reveal in Finder
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 shrink-0"
+                onClick={() => onSelect(job)}
+                disabled={isPending}
+                aria-label={`Open details for ${job.label}`}
+              >
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </Hint>
+          </span>
         </div>
       </TableCell>
     </TableRow>

@@ -39,7 +39,6 @@ export function JobList({
   onDisable,
   onDelete,
   onSelect,
-  onRevealInFinder,
 }: JobListProps) {
   return (
     <TooltipProvider delayDuration={450}>
@@ -88,7 +87,6 @@ export function JobList({
               onDisable={onDisable}
               onDelete={onDelete}
               onSelect={onSelect}
-              onRevealInFinder={onRevealInFinder}
             />
           ))
         )}

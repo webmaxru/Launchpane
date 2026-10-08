@@ -376,7 +376,7 @@ describe("JobList", () => {
     expect(screen.getByRole("button", { name: "Remove" })).toBeEnabled()
   })
 
-  it("opens details only from the far-right actions menu, not from the row", async () => {
+  it("opens details immediately from the far-right action, not from the row", async () => {
     const user = userEvent.setup()
     const onSelect = vi.fn()
     const job = mockJobs[0]
@@ -385,20 +385,12 @@ describe("JobList", () => {
     await user.click(screen.getByText(job.label))
     expect(onSelect).not.toHaveBeenCalled()
 
-    const menuTrigger = screen.getByRole("button", {
-      name: `More actions for ${job.label}`,
+    const detailsButton = screen.getByRole("button", {
+      name: `Open details for ${job.label}`,
     })
-    expect(
-      menuTrigger.closest('[data-slot="dropdown-menu-trigger"]')
-    ).toHaveClass("ml-auto")
+    expect(detailsButton.parentElement).toHaveClass("ml-auto")
 
-    await user.click(menuTrigger)
-    const detailsItem = screen.getByText("Details")
-    expect(detailsItem.closest('[data-slot="dropdown-menu-content"]')).toHaveClass(
-      "bg-white",
-      "dark:bg-zinc-950"
-    )
-    await user.click(detailsItem)
+    await user.click(detailsButton)
     expect(onSelect).toHaveBeenCalledOnce()
     expect(onSelect).toHaveBeenCalledWith(job)
   })
@@ -477,12 +469,10 @@ describe("JobList", () => {
     }
 
     for (const trigger of screen.getAllByRole("button", {
-      name: /More actions for/,
+      name: /Open details for/,
     })) {
       expect(trigger).toHaveClass("h-8", "w-8", "shrink-0")
-      expect(
-        trigger.closest('[data-slot="dropdown-menu-trigger"]')
-      ).toHaveClass("ml-auto")
+      expect(trigger.parentElement).toHaveClass("ml-auto")
     }
   })
 
@@ -510,25 +500,25 @@ describe("JobList", () => {
     )
   })
 
-  it("uses consistent action names and availability in the overflow menu", async () => {
+  it("opens system job details directly without an overflow menu", async () => {
     const user = userEvent.setup()
+    const onSelect = vi.fn()
     const systemJob: JobListEntry = {
       ...mockJobs[0],
       label: "com.example.daemon",
       plist_path: "/Library/LaunchDaemons/com.example.daemon.plist",
       source: "SystemDaemon",
     }
-    renderJobList([systemJob], { isAdministrator: true })
+    renderJobList([systemJob], { isAdministrator: true, onSelect })
 
     await user.click(
       screen.getByRole("button", {
-        name: `More actions for ${systemJob.label}`,
+        name: `Open details for ${systemJob.label}`,
       })
     )
 
-    expect(screen.getByRole("menuitem", { name: "Run Now" })).toHaveAttribute(
-      "data-disabled"
-    )
+    expect(onSelect).toHaveBeenCalledWith(systemJob)
+    expect(screen.queryByRole("menu")).not.toBeInTheDocument()
   })
   it("renders login items as a distinct, plist-free source", () => {
     renderJobList([loginItemJob])
@@ -551,17 +541,18 @@ describe("JobList", () => {
     expect(onDisable).toHaveBeenCalledWith(loginItemJob)
   })
 
-  it("omits Run Now from the login item overflow menu", async () => {
+  it("opens login item details directly without an overflow menu", async () => {
     const user = userEvent.setup()
-    renderJobList([loginItemJob])
+    const onSelect = vi.fn()
+    renderJobList([loginItemJob], { onSelect })
 
     await user.click(
       screen.getByRole("button", {
-        name: `More actions for ${loginItemJob.label}`,
+        name: `Open details for ${loginItemJob.label}`,
       })
     )
 
-    expect(screen.queryByRole("menuitem", { name: "Run Now" })).not.toBeInTheDocument()
-    expect(screen.getByRole("menuitem", { name: "Details" })).toBeInTheDocument()
+    expect(onSelect).toHaveBeenCalledWith(loginItemJob)
+    expect(screen.queryByRole("menu")).not.toBeInTheDocument()
   })
 })
