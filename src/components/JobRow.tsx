@@ -416,7 +416,14 @@ export function JobRow({
                 variant="ghost"
                 size="icon"
                 className="h-8 w-8 shrink-0"
-                onClick={() => onSelect(job)}
+                onPointerDown={(event) => {
+                  if (event.button === 0) onSelect(job)
+                }}
+                onClick={(event) => {
+                  // Pointer activation opens on press; click remains for keyboard
+                  // and assistive-technology activation.
+                  if (event.detail === 0) onSelect(job)
+                }}
                 disabled={isPending}
                 aria-label={`Open details for ${job.label}`}
               >

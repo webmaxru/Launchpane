@@ -376,13 +376,12 @@ describe("JobList", () => {
     expect(screen.getByRole("button", { name: "Remove" })).toBeEnabled()
   })
 
-  it("opens details immediately from the far-right action, not from the row", async () => {
-    const user = userEvent.setup()
+  it("opens details immediately from the far-right action, not from the row", () => {
     const onSelect = vi.fn()
     const job = mockJobs[0]
     renderJobList([job], { onSelect })
 
-    await user.click(screen.getByText(job.label))
+    fireEvent.click(screen.getByText(job.label))
     expect(onSelect).not.toHaveBeenCalled()
 
     const detailsButton = screen.getByRole("button", {
@@ -390,7 +389,23 @@ describe("JobList", () => {
     })
     expect(detailsButton.parentElement).toHaveClass("ml-auto")
 
-    await user.click(detailsButton)
+    fireEvent.pointerDown(detailsButton, { button: 0 })
+    expect(onSelect).toHaveBeenCalledOnce()
+    expect(onSelect).toHaveBeenCalledWith(job)
+  })
+
+  it("retains keyboard activation for the direct details action", () => {
+    const onSelect = vi.fn()
+    const job = mockJobs[0]
+    renderJobList([job], { onSelect })
+
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: `Open details for ${job.label}`,
+      }),
+      { detail: 0 }
+    )
+
     expect(onSelect).toHaveBeenCalledOnce()
     expect(onSelect).toHaveBeenCalledWith(job)
   })
