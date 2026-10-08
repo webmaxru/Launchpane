@@ -26,7 +26,10 @@
   "bundle": {
     "active": true,
     "targets": "all",
-    "copyright": "Copyright © 2026 Launchpane contributors. Original work © azu and contributors.",
+    "copyright": "Copyright © 2026 Launchpane contributors. MIT licensed.",
+    "resources": {
+      "../LICENSE": "LICENSE"
+    },
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",

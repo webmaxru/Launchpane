@@ -97,4 +97,4 @@ Generated PNGs are opaque and contain no alpha channel.
 - [ ] App sandbox impact reviewed — Launchpane drives `launchctl` and writes to
       `~/Library/LaunchAgents`, which sandboxed apps cannot do. A notarised direct
       download is the lower-friction distribution route.
-- [ ] `LICENSE` and `NOTICE` shipped with the source distribution.
+- [ ] `LICENSE` shipped with the source distribution and inside the `.app` bundle.

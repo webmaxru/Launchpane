@@ -2,7 +2,7 @@
 name = "launchpane"
 version = "1.2.1"
 description = "A GUI for managing macOS launchd agents and daemons"
-authors = ["Launchpane contributors", "azu"]
+authors = ["Launchpane contributors"]
 license = "MIT"
 repository = "https://github.com/webmaxru/Launchpane"
 edition = "2024"

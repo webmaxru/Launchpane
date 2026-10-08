@@ -7,10 +7,7 @@ pub fn build<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<Menu<R>> {
     let about = AboutMetadata {
         name: Some("Launchpane".into()),
         version: Some(app.package_info().version.to_string()),
-        copyright: Some(
-            "Copyright © 2026 Launchpane contributors. Original work © azu and contributors."
-                .into(),
-        ),
+        copyright: Some("Copyright © 2026 Launchpane contributors. MIT licensed.".into()),
         comments: Some(
             "A focused macOS interface for launch agents, daemons, and login items.".into(),
         ),
@@ -18,8 +15,8 @@ pub fn build<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<Menu<R>> {
         website: Some("https://github.com/webmaxru/Launchpane".into()),
         website_label: Some("Launchpane on GitHub".into()),
         credits: Some(
-            "Created by the Launchpane contributors.\n\n\
-             Based on MIT-licensed work by azu and the original upstream contributors."
+            "Manage launch agents, daemons, and login items from a single window.\n\n\
+             github.com/webmaxru/Launchpane"
                 .into(),
         ),
         icon: app.default_window_icon().cloned(),

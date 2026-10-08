@@ -137,9 +137,5 @@ screenshots, and can submit the version for review.
 
 ## License
 
-Launchpane is released under the [MIT License](LICENSE).
-
-Launchpane is an independent derivative of an MIT-licensed upstream project by
-[azu](https://github.com/azu) and its contributors. The upstream copyright notice is
-preserved in [`LICENSE`](LICENSE) and the attribution details are recorded in
-[`NOTICE`](NOTICE). The upstream authors do not endorse or support this project.
+Launchpane is released under the [MIT License](LICENSE), which is shipped inside
+the application bundle at `Contents/Resources/LICENSE`.
