@@ -2,8 +2,9 @@
 
 Launchpane's App Store pipeline builds a universal macOS app, embeds its Mac App
 Store provisioning profile, signs it with Apple distribution certificates,
-creates a signed installer package, validates the package with App Store
-Connect, and uploads the binary, metadata, and screenshots with Fastlane.
+creates a signed installer package, then uploads the binary, metadata, and
+screenshots through the App Store Connect REST API. No Xcode, Transporter, or
+Fastlane installation is required.
 
 ## Apple account prerequisites
 
@@ -74,16 +75,15 @@ The workflow:
 4. signs with the Mac App Distribution certificate;
 5. creates `Launchpane.pkg` with the Mac Installer Distribution certificate;
 6. verifies code and installer signatures;
-7. validates the package with Apple's `altool`;
-8. uploads the package, metadata, and screenshots through Fastlane;
+7. uploads the package through the App Store Connect build upload API;
+8. writes metadata, screenshots, age rating, and review details over the API;
 9. optionally submits the version for App Review.
 
 The age-rating declaration is uploaded from [`age-rating.json`](age-rating.json).
 
 ## Local release
 
-Install Ruby dependencies with `bundle install`, put credentials in a temporary
-keychain, and export:
+Install credentials in a temporary keychain, then export:
 
 ```bash
 export MACOS_PROVISIONING_PROFILE_PATH=/secure/Launchpane.provisionprofile
@@ -91,7 +91,19 @@ export APP_STORE_CONNECT_API_KEY_ID=...
 export APP_STORE_CONNECT_API_ISSUER_ID=...
 export APP_STORE_CONNECT_API_KEY_PATH=/secure/AuthKey_KEYID.p8
 export APP_BUILD_NUMBER=1
+
+# Used by scripts/appstore-submit.mjs
+export ASC_KEY_ID="$APP_STORE_CONNECT_API_KEY_ID"
+export ASC_ISSUER_ID="$APP_STORE_CONNECT_API_ISSUER_ID"
+export ASC_KEY_PATH="$APP_STORE_CONNECT_API_KEY_PATH"
+export ASC_APP_ID=6820735995
+export ASC_CONTACT_FIRST_NAME=...
+export ASC_CONTACT_LAST_NAME=...
+export ASC_CONTACT_EMAIL=...
+export ASC_CONTACT_PHONE='+4700000000'
 ```
+
+Set `ASC_SUBMIT=false` to prepare everything without submitting for review.
 
 Then run:
 
@@ -99,8 +111,7 @@ Then run:
 pnpm appstore:release
 ```
 
-The signed package and generated Fastlane payload are placed in
-`release/appstore/`.
+The signed package is placed in `release/appstore/`.
 
 ## Public pages
 

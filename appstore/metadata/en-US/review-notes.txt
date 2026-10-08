@@ -2,7 +2,7 @@ Launchpane manages macOS launch agents, launch daemons, and application login-it
 
 Review path:
 1. Launch the app. No account or sign-in is required.
-2. Use the segmented filters to inspect User, Home, System, Daemon, and Login Items.
+2. Use the search field and the source dropdown to inspect User, Home, System, Daemon, and Login Items.
 3. Select a user agent to inspect its configuration and logs.
 4. Create or edit a user agent to exercise write access to ~/Library/LaunchAgents.
 5. System agents and daemons are read-only in the Mac App Store build.

@@ -116,7 +116,10 @@ verify_package() {
   codesign --verify --deep --strict --verbose=2 "$APP_PATH"
   codesign --display --entitlements :- "$APP_PATH" > "$OUTPUT_DIR/signed-entitlements.plist"
   pkgutil --check-signature "$PKG_PATH"
-  spctl --assess --type install --verbose=2 "$PKG_PATH"
+  # Gatekeeper assesses Developer ID distribution, so it always rejects a Mac
+  # App Store package. Report the result without failing the build.
+  spctl --assess --type install --verbose=2 "$PKG_PATH" || \
+    echo "note: spctl rejects Mac App Store packages by design; signature verified above"
 }
 
 validate_with_apple() {
