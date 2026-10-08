@@ -2,12 +2,14 @@ mod commands;
 mod error;
 mod launchctl;
 mod login_items;
+mod menu;
 mod plist_util;
 mod types;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        .menu(menu::build)
         .invoke_handler(tauri::generate_handler![
             commands::list_jobs,
             commands::get_job_detail,
