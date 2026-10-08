@@ -26,10 +26,8 @@ describe("JobDetail", () => {
     const content = title.closest('[data-slot="sheet-content"]')
 
     expect(content).toHaveClass(
-      "bg-white",
-      "text-zinc-950",
-      "dark:bg-zinc-950",
-      "dark:text-zinc-50"
+      "bg-card",
+      "text-card-foreground"
     )
     expect(content).not.toHaveClass(
       "animate-in",
@@ -47,7 +45,7 @@ describe("JobDetail", () => {
 
     renderDetail()
 
-    expect(screen.getByText("Loading agent details…")).toBeInTheDocument()
+    expect(screen.getByText("Loading service details…")).toBeInTheDocument()
     expect(screen.queryByRole("tablist")).not.toBeInTheDocument()
   })
 
@@ -72,20 +70,20 @@ describe("JobDetail", () => {
     const logsTab = screen.getByRole("tab", { name: "Logs" })
 
     expect(configTab).toHaveAttribute("data-state", "active")
-    expect(configTab).toHaveClass("bg-white", "text-zinc-950", "shadow-sm")
-    expect(logsTab).not.toHaveClass("bg-white")
+    expect(configTab).toHaveClass("bg-card", "text-foreground", "shadow-sm")
+    expect(logsTab).not.toHaveClass("bg-card")
 
     await user.click(logsTab)
 
-    expect(logsTab).toHaveClass("bg-white", "text-zinc-950", "shadow-sm")
-    expect(configTab).not.toHaveClass("bg-white")
+    expect(logsTab).toHaveClass("bg-card", "text-foreground", "shadow-sm")
+    expect(configTab).not.toHaveClass("bg-card")
   })
 
   it("groups the detail tabs in a segmented control like the source filter", async () => {
     renderDetail()
 
     const tabList = await screen.findByRole("tablist", {
-      name: "Agent detail sections",
+      name: "Service detail sections",
     })
 
     expect(tabList).toHaveClass("rounded-lg", "bg-zinc-200/80", "p-0.5")
@@ -109,7 +107,7 @@ describe("JobDetail", () => {
     renderDetail()
 
     const alert = await screen.findByRole("alert")
-    expect(alert).toHaveTextContent("Could not load this agent")
+    expect(alert).toHaveTextContent("Could not load this service")
     expect(alert).toHaveTextContent("plist is unreadable")
     expect(screen.queryByRole("tablist")).not.toBeInTheDocument()
   })

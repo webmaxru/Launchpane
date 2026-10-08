@@ -1,5 +1,6 @@
 import { useState, useCallback } from "react"
 import { readLogFile } from "@/lib/invoke"
+import { errorMessage } from "@/lib/errors"
 
 function stripAnsiAndControl(text: string): string {
   return text
@@ -35,7 +36,7 @@ export function useLogs(): UseLogsReturn {
         result.modified_at ? new Date(Number(result.modified_at)) : null
       )
     } catch (e) {
-      setError(String(e))
+      setError(`Couldn’t read this log file. ${errorMessage(e)}`)
       setContent("")
       setModifiedAt(null)
     } finally {

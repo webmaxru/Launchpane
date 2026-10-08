@@ -1,10 +1,10 @@
 import { describe, expect, it, vi } from "vitest"
-import { render, screen, within } from "@testing-library/react"
+import { render, screen } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { SearchBar } from "./SearchBar"
 
 describe("SearchBar", () => {
-  it("exposes a Login Items group in the source filter", async () => {
+  it("groups source choices in a descriptive menu", async () => {
     const user = userEvent.setup()
     const onSourceFilterChange = vi.fn()
 
@@ -17,28 +17,46 @@ describe("SearchBar", () => {
       />
     )
 
-    const group = screen.getByRole("group", { name: "Filter agents by source" })
-    expect(
-      within(group).getAllByRole("button").map((button) => button.textContent)
-    ).toEqual(["All", "User", "Home", "System", "Daemon", "Login Items"])
+    await user.click(
+      screen.getByRole("button", { name: "Source filter: All services" })
+    )
 
-    await user.click(screen.getByRole("button", { name: "Login Items" }))
+    expect(
+      screen.getByRole("menuitemradio", { name: /My agents/ })
+    ).toHaveTextContent("Automations you created in your LaunchAgents folder")
+    expect(
+      screen.getByRole("menuitemradio", { name: /Login items/ })
+    ).toHaveTextContent("Helpers registered by installed applications")
+
+    await user.click(screen.getByRole("menuitemradio", { name: /Login items/ }))
     expect(onSourceFilterChange).toHaveBeenCalledWith("LoginItem")
   })
 
-  it("marks the active group as pressed", () => {
+  it("shows and clears active filters", async () => {
+    const user = userEvent.setup()
+    const onSearchChange = vi.fn()
+    const onSourceFilterChange = vi.fn()
+
     render(
       <SearchBar
-        search=""
-        onSearchChange={vi.fn()}
-        sourceFilter="LoginItem"
-        onSourceFilterChange={vi.fn()}
+        search="backup"
+        onSearchChange={onSearchChange}
+        sourceFilter="Home"
+        onSourceFilterChange={onSourceFilterChange}
       />
     )
 
-    expect(screen.getByRole("button", { name: "Login Items" })).toHaveAttribute(
-      "aria-pressed",
-      "true"
+    expect(
+      screen.getByRole("button", { name: "Source filter: My agents" })
+    ).toBeInTheDocument()
+    expect(screen.getByRole("searchbox")).toHaveAttribute(
+      "aria-keyshortcuts",
+      "/"
     )
+
+    await user.click(screen.getByRole("button", { name: "Clear all filters" }))
+
+    expect(onSearchChange).toHaveBeenCalledWith("")
+    expect(onSourceFilterChange).toHaveBeenCalledWith("All")
   })
 })

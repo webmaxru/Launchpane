@@ -2,16 +2,29 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Hint } from "@/components/Hint"
 import { TableCell, TableRow } from "@/components/ui/table"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import type { JobListEntry } from "@/types"
 import {
+  Eye,
+  FolderOpen,
   Play,
   Square,
   RotateCw,
   MoreHorizontal,
+  Power,
+  Trash2,
   Zap,
   Loader2,
 } from "lucide-react"
 import type { PendingAction } from "@/types"
+import type { SyntheticEvent } from "react"
 
 function formatRelativeTime(epochMillis: string): string {
   const ms = Number(epochMillis)
@@ -41,35 +54,36 @@ type JobRowProps = {
   onDisable: (job: JobListEntry) => void
   onDelete: (job: JobListEntry) => void
   onSelect: (job: JobListEntry) => void
+  onRevealInFinder: (job: JobListEntry) => void
 }
 
 function StatusBadge({ status }: { status: JobListEntry["status"] }) {
   switch (status) {
     case "Running":
       return (
-        <Badge className="border-0 bg-emerald-50 text-emerald-700 shadow-none dark:bg-emerald-950/60 dark:text-emerald-300">
-          <span className="size-1.5 rounded-full bg-emerald-500" />
+        <Badge className="border-0 bg-success-soft text-success-foreground shadow-none">
+          <span className="size-1.5 rounded-full bg-success" />
           Running
         </Badge>
       )
     case "Loaded":
       return (
-        <Badge className="border-0 bg-blue-50 text-blue-700 shadow-none dark:bg-blue-950/60 dark:text-blue-300">
-          <span className="size-1.5 rounded-full bg-blue-500" />
+        <Badge className="border-0 bg-accent text-accent-foreground shadow-none">
+          <span className="size-1.5 rounded-full bg-primary" />
           Loaded
         </Badge>
       )
     case "Unloaded":
       return (
-        <Badge className="border-0 bg-zinc-100 text-zinc-600 shadow-none dark:bg-zinc-800 dark:text-zinc-300">
+        <Badge className="border-0 bg-secondary text-secondary-foreground shadow-none">
           <span className="size-1.5 rounded-full bg-zinc-400" />
           Unloaded
         </Badge>
       )
     default:
       return (
-        <Badge className="border-0 bg-amber-50 text-amber-700 shadow-none dark:bg-amber-950/50 dark:text-amber-300">
-          <span className="size-1.5 rounded-full bg-amber-500" />
+        <Badge className="border-0 bg-warning-soft text-warning-foreground shadow-none">
+          <span className="size-1.5 rounded-full bg-warning" />
           Unknown
         </Badge>
       )
@@ -80,25 +94,25 @@ function SourceBadge({ source }: { source: JobListEntry["source"] }) {
   switch (source) {
     case "UserAgent":
       return (
-        <Badge className="border-0 bg-zinc-100 text-zinc-600 shadow-none dark:bg-zinc-800 dark:text-zinc-300">
+        <Badge className="border-0 bg-secondary text-secondary-foreground shadow-none">
           User
         </Badge>
       )
     case "SystemAgent":
       return (
-        <Badge className="border-0 bg-blue-50 text-blue-700 shadow-none dark:bg-blue-950/50 dark:text-blue-300">
+        <Badge className="border-0 bg-accent text-accent-foreground shadow-none">
           System
         </Badge>
       )
     case "SystemDaemon":
       return (
-        <Badge className="border-0 bg-purple-50 text-purple-700 shadow-none dark:bg-purple-950/50 dark:text-purple-300">
+        <Badge className="border-0 bg-accent text-accent-foreground shadow-none">
           Daemon
         </Badge>
       )
     case "LoginItem":
       return (
-        <Badge className="border-0 bg-orange-50 text-orange-700 shadow-none dark:bg-orange-950/50 dark:text-orange-300">
+        <Badge className="border-0 bg-secondary text-secondary-foreground shadow-none">
           Login Item
         </Badge>
       )
@@ -114,13 +128,13 @@ export function EnabledBadge({ enabled, pendingKind = null }: EnabledBadgeProps)
   if (pendingKind) {
     const label =
       pendingKind === "enable"
-        ? "Enabling..."
+        ? "Enabling…"
         : pendingKind === "disable"
-          ? "Disabling..."
-          : "Loading..."
+          ? "Disabling…"
+          : "Loading…"
     return (
       <Badge
-        className="border-0 bg-blue-50 text-blue-700 shadow-none dark:bg-blue-950/50 dark:text-blue-300"
+        className="border-0 bg-accent text-accent-foreground shadow-none"
         title={`${label} The enabled state is being updated and verified with launchd.`}
         data-testid="enabled-badge"
       >
@@ -132,11 +146,11 @@ export function EnabledBadge({ enabled, pendingKind = null }: EnabledBadgeProps)
   if (enabled === true) {
     return (
       <Badge
-        className="border-0 bg-emerald-50 text-emerald-700 shadow-none dark:bg-emerald-950/60 dark:text-emerald-300"
+        className="border-0 bg-success-soft text-success-foreground shadow-none"
         title="Enabled. launchd is allowed to load and run this job."
         data-testid="enabled-badge"
       >
-        <span className="size-1.5 rounded-full bg-emerald-500" />
+        <span className="size-1.5 rounded-full bg-success" />
         Enabled
       </Badge>
     )
@@ -144,7 +158,7 @@ export function EnabledBadge({ enabled, pendingKind = null }: EnabledBadgeProps)
   if (enabled === false) {
     return (
       <Badge
-        className="border-0 bg-zinc-100 text-zinc-600 shadow-none dark:bg-zinc-800 dark:text-zinc-300"
+        className="border-0 bg-secondary text-secondary-foreground shadow-none"
         title="Disabled. launchd will not load this job until it is enabled again."
         data-testid="enabled-badge"
       >
@@ -155,11 +169,11 @@ export function EnabledBadge({ enabled, pendingKind = null }: EnabledBadgeProps)
   }
   return (
     <Badge
-      className="border-0 bg-amber-50 text-amber-700 shadow-none dark:bg-amber-950/50 dark:text-amber-300"
+      className="border-0 bg-warning-soft text-warning-foreground shadow-none"
       title="Unknown. The app could not determine whether launchd considers this job enabled."
       data-testid="enabled-badge"
     >
-      <span className="size-1.5 rounded-full bg-amber-500" />
+      <span className="size-1.5 rounded-full bg-warning" />
       Unknown
     </Badge>
   )
@@ -177,37 +191,75 @@ export function JobRow({
   onDisable,
   onDelete,
   onSelect,
+  onRevealInFinder,
 }: JobRowProps) {
   const isUserAgent = job.source === "UserAgent"
   const isLoginItem = job.source === "LoginItem"
   const canToggle = isUserAgent || isLoginItem || isAdministrator
   const isPending = pendingAction?.plistPath === job.plist_path
   const isTogglePending =
-    isPending && (pendingAction?.kind === "enable" || pendingAction?.kind === "disable")
+    isPending &&
+    (pendingAction?.kind === "enable" || pendingAction?.kind === "disable")
   const pendingToggleKind =
     pendingAction?.kind === "enable" || pendingAction?.kind === "disable"
       ? pendingAction.kind
       : null
   const toggleLabel = job.enabled === true ? "Disable" : "Enable"
   const handleToggle = job.enabled === true ? onDisable : onEnable
-  const pendingDescription = "Wait for the current operation on this job to finish."
-  const systemActionDescription =
-    "System jobs are read-only in the table. Use Details to inspect the job."
-  const toggleDescription = isPending
-    ? pendingDescription
-    : !canToggle
-      ? "Open an administrator window to change whether launchd may load this system job."
-      : isLoginItem
-        ? job.enabled === true
-          ? "Stop this app’s background helper from launching at login. The parent app may turn it back on from its own settings."
-          : "Allow this app’s background helper to launch at login again."
-        : job.enabled === true
-          ? "Prevent launchd from loading this job again. You will confirm before the change is applied."
-          : "Allow launchd to load this job again. You will confirm before the change is applied."
+  const primaryAction =
+    !isUserAgent
+      ? null
+      : job.status === "Running"
+        ? {
+            label: "Stop",
+            description:
+              "Unload this running service now. Its plist file and enabled setting are unchanged.",
+            icon: Square,
+            run: onStop,
+          }
+        : job.status === "Loaded"
+          ? {
+              label: "Run now",
+              description:
+                "Ask launchd to start this loaded service immediately without changing its schedule.",
+              icon: Zap,
+              run: onKickstart,
+            }
+          : {
+              label: "Load",
+              description:
+                "Register this plist with launchd now. This does not change whether the service is enabled.",
+              icon: Play,
+              run: onStart,
+            }
+  const PrimaryIcon = primaryAction?.icon
+  const openDetails = () => {
+    if (!isPending) onSelect(job)
+  }
+  const stopRowActivation = (event: SyntheticEvent) => {
+    event.stopPropagation()
+  }
 
   return (
-    <TableRow className="h-12 hover:bg-blue-50/50 dark:hover:bg-blue-950/20">
-      <TableCell className="max-w-0 truncate pl-4 font-medium" title={job.label}>{job.label}</TableCell>
+    <TableRow
+      className="h-12 cursor-pointer outline-none hover:bg-accent/45 focus-visible:bg-accent/55 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
+      tabIndex={isPending ? -1 : 0}
+      aria-label={`View details for ${job.label}`}
+      aria-busy={isPending}
+      onClick={openDetails}
+      onKeyDown={(event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault()
+          openDetails()
+        }
+      }}
+    >
+      <TableCell
+        className="max-w-0 truncate pl-4 font-medium"
+        title={`${job.label} — open details`}
+      >
+        {job.label}
+      </TableCell>
       <TableCell>
         <SourceBadge source={job.source} />
       </TableCell>
@@ -223,214 +275,94 @@ export function JobRow({
       <TableCell className="text-muted-foreground text-xs tabular-nums">
         {job.last_run_at ? formatRelativeTime(job.last_run_at) : "—"}
       </TableCell>
-      <TableCell className="pr-3">
-        <div
-          className="flex w-full min-w-[18.625rem] items-center justify-end gap-0.5"
-          data-testid="row-actions"
-        >
-          <div
-            className="flex w-[6.25rem] shrink-0 items-center justify-start gap-0.5"
-            data-testid="row-icon-actions"
-          >
-            {isLoginItem ? null : (
-              <>
-            {job.status === "Running" ? (
-              <Hint
-                label="Stop agent"
-                description={
-                  isPending
-                    ? pendingDescription
-                    : isUserAgent
-                      ? "Unload this running job from launchd. Its plist file and enabled setting are unchanged."
-                      : systemActionDescription
-                }
-                disabled={!isUserAgent || isPending}
-              >
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8"
-                  onClick={() => onStop(job)}
-                  disabled={!isUserAgent || isPending}
-                  aria-label="Stop agent"
-                >
-                  <Square className="h-4 w-4" />
-                </Button>
-              </Hint>
-            ) : job.status === "Loaded" ? (
-              <Hint
-                label="Unload agent"
-                description={
-                  isPending
-                    ? pendingDescription
-                    : isUserAgent
-                      ? "Remove this loaded job from launchd without deleting its plist or changing its enabled setting."
-                      : systemActionDescription
-                }
-                disabled={!isUserAgent || isPending}
-              >
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8"
-                  onClick={() => onStop(job)}
-                  disabled={!isUserAgent || isPending}
-                  aria-label="Unload agent"
-                >
-                  <Square className="h-4 w-4" />
-                </Button>
-              </Hint>
-            ) : (
-              <Hint
-                label="Load agent"
-                description={
-                  isPending
-                    ? pendingDescription
-                    : isUserAgent
-                      ? "Register this plist with launchd now. This does not change whether the job is enabled."
-                      : systemActionDescription
-                }
-                disabled={!isUserAgent || isPending}
-              >
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8"
-                  onClick={() => onStart(job)}
-                  disabled={!isUserAgent || isPending}
-                  aria-label="Load agent"
-                >
-                  <Play className="h-4 w-4" />
-                </Button>
-              </Hint>
-            )}
-            {job.status !== "Unloaded" && (
-              <Hint
-                label="Restart agent"
-                description={
-                  isPending
-                    ? pendingDescription
-                    : isUserAgent
-                      ? "Unload and immediately load this job again so launchd starts it with its current configuration."
-                      : systemActionDescription
-                }
-                disabled={!isUserAgent || isPending}
-              >
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8"
-                  onClick={() => onRestart(job)}
-                  disabled={!isUserAgent || isPending}
-                  aria-label="Restart agent"
-                >
-                  <RotateCw className="h-4 w-4" />
-                </Button>
-              </Hint>
-            )}
-            {(job.status === "Running" || job.status === "Loaded") && (
-              <Hint
-                label="Run agent now"
-                description={
-                  isPending
-                    ? pendingDescription
-                    : isUserAgent
-                      ? "Ask launchd to start this loaded job immediately, without changing its schedule or enabled setting."
-                      : systemActionDescription
-                }
-                disabled={!isUserAgent || isPending}
-              >
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8"
-                  onClick={() => onKickstart(job)}
-                  disabled={!isUserAgent || isPending}
-                  aria-label="Run agent now"
-                >
-                  <Zap className="h-4 w-4" />
-                </Button>
-              </Hint>
-            )}
-              </>
-            )}
-          </div>
-          <Hint
-            label={`${toggleLabel} ${isLoginItem ? "login item" : "agent"}`}
-            description={toggleDescription}
-            disabled={!canToggle || isPending}
-          >
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-8 w-20 shrink-0 justify-center bg-white dark:bg-zinc-900"
-              onClick={() => handleToggle(job)}
-              disabled={!canToggle || isPending}
-            >
-              {isTogglePending && (
-                <Loader2
-                  className="h-3 w-3 animate-spin"
-                  data-testid="toggle-spinner"
-                  aria-hidden="true"
-                />
-              )}
-              {toggleLabel}
-            </Button>
-          </Hint>
-          <div className="flex w-20 shrink-0 items-center justify-start">
-            {isUserAgent && (
-              <Hint
-                label="Remove agent"
-                description={
-                  isPending
-                    ? pendingDescription
-                    : "Stop this agent and permanently delete its plist file. You will confirm before removal."
-                }
+      <TableCell className="pr-3" onClick={stopRowActivation}>
+        <div className="flex items-center justify-end gap-1" data-testid="row-actions">
+          {primaryAction && PrimaryIcon && (
+            <Hint label={primaryAction.label} description={primaryAction.description}>
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8 min-w-16 bg-card"
+                onClick={(event) => {
+                  event.stopPropagation()
+                  primaryAction.run(job)
+                }}
                 disabled={isPending}
               >
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="h-8 w-20 border-red-200 bg-white text-red-600 hover:border-red-300 hover:bg-red-50 hover:text-red-700 dark:border-red-900 dark:bg-zinc-900 dark:text-red-400 dark:hover:bg-red-950/40"
-                  onClick={() => onDelete(job)}
-                  disabled={isPending}
-                >
-                  Remove
-                </Button>
-              </Hint>
-            )}
-          </div>
-          <span className="ml-auto inline-flex">
-            <Hint
-              label="Open details"
-              description={
-                isPending
-                  ? pendingDescription
-                  : isLoginItem
-                    ? "Open this login item’s details and management options."
-                    : "Open this agent’s configuration, logs, commands, and file actions."
-              }
-              disabled={isPending}
-            >
+                {isPending ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <PrimaryIcon className="h-3.5 w-3.5" />
+                )}
+                {primaryAction.label}
+              </Button>
+            </Hint>
+          )}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-8 w-8 shrink-0"
-                onPointerDown={(event) => {
-                  if (event.button === 0) onSelect(job)
-                }}
-                onClick={(event) => {
-                  // Pointer activation opens on press; click remains for keyboard
-                  // and assistive-technology activation.
-                  if (event.detail === 0) onSelect(job)
-                }}
+                className="h-8 w-8"
                 disabled={isPending}
-                aria-label={`Open details for ${job.label}`}
+                aria-label={`Actions for ${job.label}`}
               >
                 <MoreHorizontal className="h-4 w-4" />
               </Button>
-            </Hint>
-          </span>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-52">
+              <DropdownMenuLabel className="truncate" title={job.label}>
+                {job.label}
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onSelect={() => onSelect(job)}>
+                <Eye />
+                View details
+              </DropdownMenuItem>
+              {isUserAgent && job.status !== "Unloaded" && (
+                <>
+                  {job.status === "Loaded" && (
+                    <DropdownMenuItem onSelect={() => onStop(job)}>
+                      <Square />
+                      Unload
+                    </DropdownMenuItem>
+                  )}
+                  <DropdownMenuItem onSelect={() => onRestart(job)}>
+                    <RotateCw />
+                    Restart
+                  </DropdownMenuItem>
+                  {job.status === "Running" && (
+                    <DropdownMenuItem onSelect={() => onKickstart(job)}>
+                      <Zap />
+                      Run now
+                    </DropdownMenuItem>
+                  )}
+                </>
+              )}
+              {canToggle && (
+                <DropdownMenuItem onSelect={() => handleToggle(job)}>
+                  {isTogglePending ? <Loader2 className="animate-spin" /> : <Power />}
+                  {toggleLabel}
+                </DropdownMenuItem>
+              )}
+              <DropdownMenuItem onSelect={() => onRevealInFinder(job)}>
+                <FolderOpen />
+                Reveal in Finder
+              </DropdownMenuItem>
+              {isUserAgent && (
+                <>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    variant="destructive"
+                    onSelect={() => onDelete(job)}
+                  >
+                    <Trash2 />
+                    Remove agent…
+                  </DropdownMenuItem>
+                </>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </TableCell>
     </TableRow>

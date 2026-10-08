@@ -1,5 +1,5 @@
-import { describe, it, expect, vi } from "vitest"
-import { fireEvent, render, screen } from "@testing-library/react"
+import { describe, expect, it, vi } from "vitest"
+import { fireEvent, render, screen, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import type { ComponentProps } from "react"
 import { JobList } from "./JobList"
@@ -14,7 +14,7 @@ const mockJobs: JobListEntry[] = [
     source: "UserAgent",
     status: "Running",
     enabled: true,
-    last_run_at: String(Date.now()),
+    last_run_at: "200",
     is_home_agent: true,
   },
   {
@@ -67,350 +67,188 @@ function renderJobList(
   )
 }
 
+async function openActions(user: ReturnType<typeof userEvent.setup>, label: string) {
+  await user.click(screen.getByRole("button", { name: `Actions for ${label}` }))
+  return screen.getByRole("menu")
+}
+
 describe("JobList", () => {
-  it("renders loading state", () => {
-    render(
-      <JobList
-        jobs={[]}
-        loading={true}
-        onStart={noop}
-        onStop={noop}
-        onRestart={noop}
-        onKickstart={noop}
-        onEnable={noop}
-        onDisable={noop}
-        onDelete={noop}
-        onSelect={noop}
-        onRevealInFinder={noop}
-      />
-    )
-    expect(screen.getByText("Loading agents...")).toBeInTheDocument()
-    expect(screen.getByTestId("enabled-badge")).toHaveTextContent("Loading...")
-    const loadingRow = screen.getByText("Loading agents...").closest("tr")
-    expect(loadingRow?.querySelectorAll("td")).toHaveLength(1)
-    expect(loadingRow?.querySelector("td")?.getAttribute("colspan")).toBe("7")
+  it("renders loading state before the first result", () => {
+    renderJobList([], { loading: true })
+
+    expect(screen.getByText("Loading background services…")).toBeInTheDocument()
+    expect(screen.getByTestId("enabled-badge")).toHaveTextContent("Loading…")
   })
 
-  it("renders empty state", () => {
-    render(
-      <JobList
-        jobs={[]}
-        loading={false}
-        onStart={noop}
-        onStop={noop}
-        onRestart={noop}
-        onKickstart={noop}
-        onEnable={noop}
-        onDisable={noop}
-        onDelete={noop}
-        onSelect={noop}
-        onRevealInFinder={noop}
-      />
+  it("renders one persistent failure state with retry and technical details", async () => {
+    const user = userEvent.setup()
+    const onRetry = vi.fn()
+    renderJobList([], {
+      error: "Permission denied by launchctl",
+      onRetry,
+    })
+
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      "Couldn’t load background services"
     )
-    expect(screen.getByText("No agents found")).toBeInTheDocument()
+    expect(
+      screen.queryByText("No background services found")
+    ).not.toBeInTheDocument()
+
+    await user.click(screen.getByRole("button", { name: "Retry" }))
+    expect(onRetry).toHaveBeenCalledOnce()
+
+    await user.click(screen.getByText("Technical details"))
+    expect(screen.getByText("Permission denied by launchctl")).toBeVisible()
   })
 
-  it("renders job list with labels", () => {
-    render(
-      <JobList
-        jobs={mockJobs}
-        loading={false}
-        onStart={noop}
-        onStop={noop}
-        onRestart={noop}
-        onKickstart={noop}
-        onEnable={noop}
-        onDisable={noop}
-        onDelete={noop}
-        onSelect={noop}
-        onRevealInFinder={noop}
-      />
-    )
-    expect(screen.getByText("com.example.running")).toBeInTheDocument()
-    expect(screen.getByText("com.example.stopped")).toBeInTheDocument()
+  it("puts recovery actions in the empty state", async () => {
+    const user = userEvent.setup()
+    const onRetry = vi.fn()
+    const onCreate = vi.fn()
+    renderJobList([], { onRetry, onCreate })
+
+    await user.click(screen.getByRole("button", { name: "Refresh" }))
+    await user.click(screen.getByRole("button", { name: "New Agent" }))
+
+    expect(onRetry).toHaveBeenCalledOnce()
+    expect(onCreate).toHaveBeenCalledOnce()
   })
 
-  it("renders status badges", () => {
-    render(
-      <JobList
-        jobs={mockJobs}
-        loading={false}
-        onStart={noop}
-        onStop={noop}
-        onRestart={noop}
-        onKickstart={noop}
-        onEnable={noop}
-        onDisable={noop}
-        onDelete={noop}
-        onSelect={noop}
-        onRevealInFinder={noop}
-      />
-    )
-    expect(screen.getByText("Running")).toBeInTheDocument()
-    expect(screen.getByText("Unloaded")).toBeInTheDocument()
-    expect(screen.getAllByText("Enabled")).toHaveLength(2)
-    expect(screen.getByText("Disabled")).toBeInTheDocument()
+  it("offers one clear action when filters produce no matches", async () => {
+    const user = userEvent.setup()
+    const onClearFilters = vi.fn()
+    renderJobList([], {
+      hasActiveFilters: true,
+      emptyTitle: "No services match your filters",
+      onClearFilters,
+    })
+
+    await user.click(screen.getByRole("button", { name: "Clear filters" }))
+    expect(onClearFilters).toHaveBeenCalledOnce()
+    expect(
+      screen.queryByRole("button", { name: "New Agent" })
+    ).not.toBeInTheDocument()
   })
 
-  it("renders PID for running job", () => {
-    render(
-      <JobList
-        jobs={mockJobs}
-        loading={false}
-        onStart={noop}
-        onStop={noop}
-        onRestart={noop}
-        onKickstart={noop}
-        onEnable={noop}
-        onDisable={noop}
-        onDelete={noop}
-        onSelect={noop}
-        onRevealInFinder={noop}
-      />
-    )
-    expect(screen.getByText("1234")).toBeInTheDocument()
+  it("explains the relationship between enabled, loaded, and running", () => {
+    renderJobList(mockJobs)
+
+    const guide = screen.getByLabelText("How service state works")
+    expect(guide).toHaveTextContent("Enabled may load at login or on schedule")
+    expect(guide).toHaveTextContent("Loaded is registered with launchd")
+    expect(guide).toHaveTextContent("Running has an active process now")
   })
 
-  it('shows "Run now" only for active (non-Unloaded) agents', () => {
-    render(
-      <JobList
-        jobs={mockJobs}
-        loading={false}
-        onStart={noop}
-        onStop={noop}
-        onRestart={noop}
-        onKickstart={noop}
-        onEnable={noop}
-        onDisable={noop}
-        onDelete={noop}
-        onSelect={noop}
-        onRevealInFinder={noop}
-      />
-    )
-    // mockJobs has one Running and one Unloaded agent → exactly one Run now button
-    const runButtons = screen.getAllByRole("button", { name: "Run agent now" })
-    expect(runButtons).toHaveLength(1)
+  it("sorts rows from sortable column headers", async () => {
+    const user = userEvent.setup()
+    renderJobList(mockJobs)
+
+    const labels = () =>
+      screen
+        .getAllByRole("row")
+        .slice(1)
+        .map((row) => within(row).queryByText(/com\.example\./)?.textContent)
+
+    expect(labels()).toEqual(["com.example.running", "com.example.stopped"])
+    await user.click(screen.getByRole("button", { name: /Label/ }))
+    expect(labels()).toEqual(["com.example.stopped", "com.example.running"])
   })
 
-  it("calls onKickstart when Run now is clicked", () => {
+  it("opens details from the row with pointer or keyboard", () => {
+    const onSelect = vi.fn()
+    renderJobList([mockJobs[0]], { onSelect })
+
+    const row = screen.getByRole("row", {
+      name: `View details for ${mockJobs[0].label}`,
+    })
+    fireEvent.click(row)
+    fireEvent.keyDown(row, { key: "Enter" })
+
+    expect(onSelect).toHaveBeenCalledTimes(2)
+    expect(onSelect).toHaveBeenCalledWith(mockJobs[0])
+  })
+
+  it("shows only one context-aware runtime action per user agent", () => {
+    renderJobList(mockJobs)
+
+    expect(screen.getByRole("button", { name: "Stop" })).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "Load" })).toBeInTheDocument()
+    expect(screen.queryByRole("button", { name: "Restart" })).not.toBeInTheDocument()
+    expect(screen.queryByRole("button", { name: "Remove" })).not.toBeInTheDocument()
+  })
+
+  it("runs the context-aware primary action without opening details", async () => {
+    const user = userEvent.setup()
+    const onStop = vi.fn()
+    const onSelect = vi.fn()
+    renderJobList([mockJobs[0]], { onStop, onSelect })
+
+    await user.click(screen.getByRole("button", { name: "Stop" }))
+
+    expect(onStop).toHaveBeenCalledWith(mockJobs[0])
+    expect(onSelect).not.toHaveBeenCalled()
+  })
+
+  it("moves secondary and destructive actions into an overflow menu", async () => {
+    const user = userEvent.setup()
+    const onRestart = vi.fn()
     const onKickstart = vi.fn()
-    render(
-      <JobList
-        jobs={mockJobs}
-        loading={false}
-        onStart={noop}
-        onStop={noop}
-        onRestart={noop}
-        onKickstart={onKickstart}
-        onEnable={noop}
-        onDisable={noop}
-        onDelete={noop}
-        onSelect={noop}
-        onRevealInFinder={noop}
-      />
-    )
-    screen.getByRole("button", { name: "Run agent now" }).click()
-    expect(onKickstart).toHaveBeenCalledWith(
-      expect.objectContaining({ label: "com.example.running" })
-    )
-  })
-
-  it("renders only the action that can change the current enabled state", () => {
-    render(
-      <JobList
-        jobs={mockJobs}
-        loading={false}
-        onStart={noop}
-        onStop={noop}
-        onRestart={noop}
-        onKickstart={noop}
-        onEnable={noop}
-        onDisable={noop}
-        onDelete={noop}
-        onSelect={noop}
-        onRevealInFinder={noop}
-      />
-    )
-
-    expect(screen.getAllByRole("button", { name: "Enable" })).toHaveLength(1)
-    expect(screen.getAllByRole("button", { name: "Disable" })).toHaveLength(1)
-    expect(screen.getAllByRole("button", { name: "Remove" })).toHaveLength(2)
-  })
-
-  it("calls the row action handlers from the explicit buttons", () => {
-    const onEnable = vi.fn()
     const onDisable = vi.fn()
+    const onRevealInFinder = vi.fn()
     const onDelete = vi.fn()
-    render(
-      <JobList
-        jobs={mockJobs}
-        loading={false}
-        onStart={noop}
-        onStop={noop}
-        onRestart={noop}
-        onKickstart={noop}
-        onEnable={onEnable}
-        onDisable={onDisable}
-        onDelete={onDelete}
-        onSelect={noop}
-        onRevealInFinder={noop}
-      />
+    renderJobList([mockJobs[0]], {
+      onRestart,
+      onKickstart,
+      onDisable,
+      onRevealInFinder,
+      onDelete,
+    })
+
+    let menu = await openActions(user, mockJobs[0].label)
+    expect(within(menu).getByRole("menuitem", { name: "Restart" })).toBeVisible()
+    expect(within(menu).getByRole("menuitem", { name: "Run now" })).toBeVisible()
+    expect(within(menu).getByRole("menuitem", { name: "Disable" })).toBeVisible()
+    expect(
+      within(menu).getByRole("menuitem", { name: "Remove agent…" })
+    ).toBeVisible()
+
+    await user.click(within(menu).getByRole("menuitem", { name: "Restart" }))
+    expect(onRestart).toHaveBeenCalledWith(mockJobs[0])
+
+    menu = await openActions(user, mockJobs[0].label)
+    await user.click(
+      within(menu).getByRole("menuitem", { name: "Reveal in Finder" })
     )
+    expect(onRevealInFinder).toHaveBeenCalledWith(mockJobs[0])
 
-    const enableButton = screen.getByRole("button", { name: "Enable" })
-    const disableButton = screen.getByRole("button", { name: "Disable" })
-    const removeButtons = screen.getAllByRole("button", { name: "Remove" })
-
-    enableButton.click()
-    disableButton.click()
-    removeButtons[0].click()
-
-    expect(onEnable).toHaveBeenCalledWith(mockJobs[1])
-    expect(onDisable).toHaveBeenCalledWith(mockJobs[0])
+    menu = await openActions(user, mockJobs[0].label)
+    await user.click(
+      within(menu).getByRole("menuitem", { name: "Remove agent…" })
+    )
     expect(onDelete).toHaveBeenCalledWith(mockJobs[0])
   })
 
-  it("always displays an enabled-state badge", () => {
-    render(
-      <JobList
-        jobs={[{ ...mockJobs[0], enabled: null }]}
-        loading={false}
-        onStart={noop}
-        onStop={noop}
-        onRestart={noop}
-        onKickstart={noop}
-        onEnable={noop}
-        onDisable={noop}
-        onDelete={noop}
-        onSelect={noop}
-        onRevealInFinder={noop}
-      />
-    )
-
-    expect(screen.getByText("Unknown")).toBeInTheDocument()
-    expect(screen.getByRole("button", { name: "Enable" })).toBeInTheDocument()
-    expect(screen.queryByRole("button", { name: "Disable" })).not.toBeInTheDocument()
-  })
-
-  it.each([
-    ["true", true, "Enabled"],
-    ["false", false, "Disabled"],
-    ["null", null as unknown as boolean, "Unknown"],
-    ["undefined", undefined as unknown as boolean, "Unknown"],
-  ])("never renders an empty Enabled cell for enabled=%s", (_name, enabled, label) => {
-    renderJobList([{ ...mockJobs[0], enabled }])
-
-    const badge = screen.getByTestId("enabled-badge")
-    const enabledCell = badge.closest("td")
-
-    expect(enabledCell).not.toBeNull()
-    expect(enabledCell?.textContent?.trim()).not.toBe("")
-    expect(badge).toHaveTextContent(label)
-  })
-
-  it("renders Disabled as a passive neutral indicator, not an action control", () => {
-    renderJobList([{ ...mockJobs[0], enabled: false }])
-
-    const badge = screen.getByTestId("enabled-badge")
-
-    expect(badge).toHaveAttribute("data-variant", "default")
-    expect(badge).toHaveClass(
-      "border-0",
-      "bg-zinc-100",
-      "text-zinc-600",
-      "shadow-none"
-    )
-    expect(badge).not.toHaveClass("border-red-300")
-  })
-
-  it.each([
-    ["true", true, "Disable"],
-    ["false", false, "Enable"],
-    ["null", null as unknown as boolean, "Enable"],
-    ["undefined", undefined as unknown as boolean, "Enable"],
-  ])("renders exactly one toggle button for enabled=%s", (_name, enabled, label) => {
-    renderJobList([{ ...mockJobs[0], enabled }])
-
-    const enableButtons = screen.queryAllByRole("button", { name: "Enable" })
-    const disableButtons = screen.queryAllByRole("button", { name: "Disable" })
-
-    expect(enableButtons).toHaveLength(label === "Enable" ? 1 : 0)
-    expect(disableButtons).toHaveLength(label === "Disable" ? 1 : 0)
-    expect(enableButtons.length + disableButtons.length).toBe(1)
-  })
-
-  it.each([
-    ["enable", false, "Enable"],
-    ["disable", true, "Disable"],
-  ] as const)(
-    "shows pending UI and disables the toggle button while %s is in flight",
-    (kind, enabled, label) => {
-      const job = { ...mockJobs[0], enabled }
-      renderJobList([job], {
-        pendingAction: { plistPath: job.plist_path, kind },
-      })
-
-      const toggleButton = screen.getByRole("button", { name: label })
-      const enabledCell = screen.getByTestId("enabled-badge").closest("td")
-
-      expect(toggleButton).toBeDisabled()
-      expect(screen.getByTestId("toggle-spinner")).toBeInTheDocument()
-      expect(screen.getByTestId("enabled-badge")).toHaveTextContent(
-        kind === "enable" ? "Enabling..." : "Disabling..."
-      )
-      expect(enabledCell?.textContent?.trim()).not.toBe("")
-    }
-  )
-
-  it("does not disable this row's buttons when another row has a pending action", () => {
-    const job = mockJobs[0]
-    renderJobList([job], {
+  it("shows pending state without adding focusable disabled tooltip wrappers", () => {
+    renderJobList([mockJobs[0]], {
       pendingAction: {
-        plistPath: "/Users/test/Library/LaunchAgents/com.example.other.plist",
+        plistPath: mockJobs[0].plist_path,
         kind: "disable",
       },
     })
 
-    expect(screen.getByRole("button", { name: "Disable" })).toBeEnabled()
-    expect(screen.getByRole("button", { name: "Stop agent" })).toBeEnabled()
-    expect(screen.getByRole("button", { name: "Remove" })).toBeEnabled()
+    expect(screen.getByRole("button", { name: "Stop" })).toBeDisabled()
+    expect(
+      screen.getByRole("button", { name: `Actions for ${mockJobs[0].label}` })
+    ).toBeDisabled()
+    expect(screen.queryByRole("button", { name: "Disable" })).not.toBeInTheDocument()
+    expect(screen.queryByRole("row", {
+      name: `View details for ${mockJobs[0].label}`,
+    })).not.toHaveAttribute("tabindex", "0")
   })
 
-  it("opens details immediately from the far-right action, not from the row", () => {
-    const onSelect = vi.fn()
-    const job = mockJobs[0]
-    renderJobList([job], { onSelect })
-
-    fireEvent.click(screen.getByText(job.label))
-    expect(onSelect).not.toHaveBeenCalled()
-
-    const detailsButton = screen.getByRole("button", {
-      name: `Open details for ${job.label}`,
-    })
-    expect(detailsButton.parentElement).toHaveClass("ml-auto")
-
-    fireEvent.pointerDown(detailsButton, { button: 0 })
-    expect(onSelect).toHaveBeenCalledOnce()
-    expect(onSelect).toHaveBeenCalledWith(job)
-  })
-
-  it("retains keyboard activation for the direct details action", () => {
-    const onSelect = vi.fn()
-    const job = mockJobs[0]
-    renderJobList([job], { onSelect })
-
-    fireEvent.click(
-      screen.getByRole("button", {
-        name: `Open details for ${job.label}`,
-      }),
-      { detail: 0 }
-    )
-
-    expect(onSelect).toHaveBeenCalledOnce()
-    expect(onSelect).toHaveBeenCalledWith(job)
-  })
-
-  it("allows system toggles only in administrator mode", () => {
+  it("allows system enablement only from an administrator menu", async () => {
+    const user = userEvent.setup()
     const onDisable = vi.fn()
     const systemJob: JobListEntry = {
       ...mockJobs[0],
@@ -418,156 +256,51 @@ describe("JobList", () => {
       plist_path: "/Library/LaunchDaemons/com.example.daemon.plist",
       source: "SystemDaemon",
     }
-    const props = {
-      jobs: [systemJob],
-      loading: false,
-      onStart: noop,
-      onStop: noop,
-      onRestart: noop,
-      onKickstart: noop,
-      onEnable: noop,
-      onDisable,
-      onDelete: noop,
-      onSelect: noop,
-      onRevealInFinder: noop,
-    }
-    const { rerender } = render(
-      <JobList {...props} isAdministrator={false} />
+    const props = { onDisable }
+    const { rerender } = renderJobList([systemJob], props)
+
+    let menu = await openActions(user, systemJob.label)
+    expect(within(menu).queryByRole("menuitem", { name: "Disable" })).toBeNull()
+    await user.keyboard("{Escape}")
+
+    rerender(
+      <JobList
+        jobs={[systemJob]}
+        loading={false}
+        isAdministrator
+        onStart={noop}
+        onStop={noop}
+        onRestart={noop}
+        onKickstart={noop}
+        onEnable={noop}
+        onDisable={onDisable}
+        onDelete={noop}
+        onSelect={noop}
+        onRevealInFinder={noop}
+      />
     )
-
-    expect(screen.getByRole("button", { name: "Disable" })).toBeDisabled()
-
-    rerender(<JobList {...props} isAdministrator={true} />)
-    screen.getByRole("button", { name: "Disable" }).click()
+    menu = await openActions(user, systemJob.label)
+    await user.click(within(menu).getByRole("menuitem", { name: "Disable" }))
     expect(onDisable).toHaveBeenCalledWith(systemJob)
   })
 
-  it("keeps the toggle button aligned regardless of how many icon actions a row has", () => {
-    renderJobList(mockJobs)
-
-    const clusters = screen.getAllByTestId("row-icon-actions")
-    expect(clusters).toHaveLength(2)
-
-    // The Running row renders stop/restart/run-now, the Unloaded row only load.
-    expect(clusters[0].querySelectorAll("button")).toHaveLength(3)
-    expect(clusters[1].querySelectorAll("button")).toHaveLength(1)
-
-    for (const cluster of clusters) {
-      expect(cluster).toHaveClass("w-[6.25rem]", "shrink-0", "justify-start")
-    }
-
-    for (const label of ["Disable", "Enable"]) {
-      expect(screen.getByRole("button", { name: label })).toHaveClass(
-        "h-8",
-        "w-20",
-        "shrink-0"
-      )
-    }
-  })
-
-  it("fits a consistently sized action strip inside the Actions column", () => {
-    renderJobList(mockJobs)
-
-    expect(screen.getByRole("columnheader", { name: "Actions" })).toHaveClass(
-      "w-80"
-    )
-
-    for (const actions of screen.getAllByTestId("row-actions")) {
-      expect(actions).toHaveClass("min-w-[18.625rem]", "gap-0.5")
-    }
-
-    for (const label of ["Enable", "Disable", "Remove"]) {
-      for (const button of screen.getAllByRole("button", { name: label })) {
-        expect(button).toHaveClass("h-8", "w-20")
-        expect(button).toHaveAttribute("data-variant", "outline")
-      }
-    }
-
-    for (const trigger of screen.getAllByRole("button", {
-      name: /Open details for/,
-    })) {
-      expect(trigger).toHaveClass("h-8", "w-8", "shrink-0")
-      expect(trigger.parentElement).toHaveClass("ml-auto")
-    }
-  })
-
-  it("shows detailed hints for disabled controls", async () => {
+  it("keeps login item actions plist-free and non-destructive", async () => {
     const user = userEvent.setup()
-    const systemJob: JobListEntry = {
-      ...mockJobs[1],
-      label: "com.example.system-agent",
-      plist_path: "/Library/LaunchAgents/com.example.system-agent.plist",
-      source: "SystemAgent",
-    }
-    renderJobList([systemJob])
-
-    const loadButton = screen.getByRole("button", { name: "Load agent" })
-    expect(loadButton).toBeDisabled()
-
-    const hintTrigger = loadButton.closest('span[tabindex="0"]')
-    expect(hintTrigger).not.toBeNull()
-    await user.hover(hintTrigger!)
-
-    const tooltip = await screen.findByRole("tooltip")
-    expect(tooltip).toHaveTextContent("Load agent")
-    expect(tooltip).toHaveTextContent(
-      "System jobs are read-only in the table. Use Details to inspect the job."
-    )
-  })
-
-  it("opens system job details directly without an overflow menu", async () => {
-    const user = userEvent.setup()
-    const onSelect = vi.fn()
-    const systemJob: JobListEntry = {
-      ...mockJobs[0],
-      label: "com.example.daemon",
-      plist_path: "/Library/LaunchDaemons/com.example.daemon.plist",
-      source: "SystemDaemon",
-    }
-    renderJobList([systemJob], { isAdministrator: true, onSelect })
-
-    await user.click(
-      screen.getByRole("button", {
-        name: `Open details for ${systemJob.label}`,
-      })
-    )
-
-    expect(onSelect).toHaveBeenCalledWith(systemJob)
-    expect(screen.queryByRole("menu")).not.toBeInTheDocument()
-  })
-  it("renders login items as a distinct, plist-free source", () => {
-    renderJobList([loginItemJob])
-
-    expect(screen.getByText("Login Item")).toBeInTheDocument()
-    // Load/unload/restart/run-now have no meaning without a plist, so the slot is empty
-    // but keeps its width to hold the Enable/Disable column alignment.
-    expect(screen.getByTestId("row-icon-actions")).toBeEmptyDOMElement()
-    expect(screen.queryByRole("button", { name: "Remove" })).not.toBeInTheDocument()
-    expect(screen.getByTestId("enabled-badge")).toHaveTextContent("Enabled")
-  })
-
-  it("allows toggling a login item without administrator mode", () => {
     const onDisable = vi.fn()
-    renderJobList([loginItemJob], { isAdministrator: false, onDisable })
+    renderJobList([loginItemJob], { onDisable })
 
-    const toggle = screen.getByRole("button", { name: "Disable" })
-    expect(toggle).toBeEnabled()
-    fireEvent.click(toggle)
-    expect(onDisable).toHaveBeenCalledWith(loginItemJob)
+    expect(screen.queryByRole("button", { name: "Stop" })).not.toBeInTheDocument()
+    const menu = await openActions(user, loginItemJob.label)
+    expect(within(menu).getByRole("menuitem", { name: "Disable" })).toBeVisible()
+    expect(
+      within(menu).queryByRole("menuitem", { name: /Remove/ })
+    ).not.toBeInTheDocument()
   })
 
-  it("opens login item details directly without an overflow menu", async () => {
-    const user = userEvent.setup()
-    const onSelect = vi.fn()
-    renderJobList([loginItemJob], { onSelect })
+  it("always displays explicit status and enabled state", () => {
+    renderJobList([{ ...mockJobs[0], enabled: null, status: "Unknown" }])
 
-    await user.click(
-      screen.getByRole("button", {
-        name: `Open details for ${loginItemJob.label}`,
-      })
-    )
-
-    expect(onSelect).toHaveBeenCalledWith(loginItemJob)
-    expect(screen.queryByRole("menu")).not.toBeInTheDocument()
+    expect(screen.getAllByText("Unknown")).toHaveLength(2)
+    expect(screen.getByTestId("enabled-badge")).toHaveTextContent("Unknown")
   })
 })

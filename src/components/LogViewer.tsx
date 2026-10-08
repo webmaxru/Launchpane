@@ -33,7 +33,7 @@ export function LogViewer({ logPath, tailLines = 200 }: LogViewerProps) {
   if (!logPath) {
     return (
       <div className="text-sm text-muted-foreground py-4">
-        No log path configured
+        This agent does not have a log file configured.
       </div>
     )
   }
@@ -100,7 +100,7 @@ export function LogViewer({ logPath, tailLines = 200 }: LogViewerProps) {
               onClick={() => openLogInEditor(logPath)}
             >
               <ExternalLink className="mr-1 h-3 w-3" />
-              Open in Editor
+              Open in editor
             </Button>
           </Hint>
         </div>
@@ -110,7 +110,7 @@ export function LogViewer({ logPath, tailLines = 200 }: LogViewerProps) {
       ) : (
         <ScrollArea className="h-64 rounded-md border bg-muted/30">
           <pre className="p-3 text-xs font-mono whitespace-pre-wrap break-all">
-            {content || "(empty)"}
+            {content || "No log entries."}
           </pre>
         </ScrollArea>
       )}

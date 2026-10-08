@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react"
 import type { JobListEntry, SourceFilter } from "@/types"
 import { listJobs } from "@/lib/invoke"
+import { errorMessage } from "@/lib/errors"
 
 type UseJobsReturn = {
   jobs: JobListEntry[]
@@ -28,14 +29,16 @@ export function useJobs(): UseJobsReturn {
       const result = await listJobs()
       setJobs(result)
     } catch (e) {
-      setError(String(e))
+      const detail = errorMessage(e)
+      setError(detail)
+      throw e
     } finally {
       setLoading(false)
     }
   }, [])
 
   useEffect(() => {
-    refresh()
+    void refresh().catch(() => undefined)
   }, [refresh])
 
   const filteredJobs = jobs.filter((job) => {
