@@ -53,6 +53,7 @@ import {
   X,
 } from "lucide-react"
 import { useTheme } from "@/hooks/useTheme"
+import { errorMessage } from "@/lib/errors"
 import type { JobActionKind, PendingAction } from "@/types"
 
 const FEEDBACK_DISMISS_MS = 4000
@@ -80,23 +81,23 @@ const CONFIRM_COPY: Record<
   }
 > = {
   enable: {
-    title: "Enable Agent",
+    title: "Enable agent",
     description:
-      "launchd will be allowed to load and run this agent, including at login or on its schedule.",
+      "Allow launchd to load and run this agent at login or on its schedule.",
     confirmLabel: "Enable",
     destructive: false,
   },
   disable: {
-    title: "Disable Agent",
+    title: "Disable agent",
     description:
-      "launchd will stop loading this agent. It will not run again until you enable it.",
+      "Prevent launchd from loading this agent again until you enable it.",
     confirmLabel: "Disable",
     destructive: false,
   },
   delete: {
-    title: "Remove Agent",
+    title: "Remove agent",
     description:
-      "This will stop the agent and permanently delete its plist file. This cannot be undone.",
+      "Stop this agent and permanently delete its plist file. You can’t undo this.",
     confirmLabel: "Remove",
     destructive: true,
   },
@@ -106,14 +107,14 @@ type ConfirmCopy = (typeof CONFIRM_COPY)[ConfirmKind]
 
 const LOGIN_ITEM_CONFIRM_COPY: Partial<Record<ConfirmKind, ConfirmCopy>> = {
   enable: {
-    title: "Enable Login Item",
+    title: "Enable login item",
     description:
-      "This app’s background helper will be allowed to launch again at login.",
+      "Allow this app’s background helper to launch at login.",
     confirmLabel: "Enable",
     destructive: false,
   },
   disable: {
-    title: "Disable Login Item",
+    title: "Disable login item",
     description:
       "macOS will stop launching this app’s background helper at login. The parent app may turn it back on from its own settings.",
     confirmLabel: "Disable",
@@ -186,7 +187,7 @@ function App() {
       .catch((e) =>
         showActionFeedback(
           "error",
-          `Failed to read runtime privileges: ${String(e)}`
+          `Couldn’t read administrator status. ${errorMessage(e)}`
         )
       )
   }, [showActionFeedback])
@@ -242,7 +243,7 @@ function App() {
             const actualState = result === true ? "enabled" : "disabled"
             showActionFeedback(
               "error",
-              `Failed to ${verb} ${job.label}: verified state is ${actualState}, expected ${expectedState}.`
+              `Couldn’t ${verb} ${job.label}. launchd reported ${actualState}, not ${expectedState}.`
             )
             return false
           }
@@ -252,7 +253,7 @@ function App() {
         try {
           await refresh()
         } catch (e) {
-          successMessage = `${successMessage} The list could not be refreshed: ${String(e)}`
+          successMessage = `${successMessage} The list may be out of date because refresh failed. ${errorMessage(e)}`
         }
 
         showActionFeedback("success", successMessage)
@@ -260,7 +261,7 @@ function App() {
       } catch (e) {
         showActionFeedback(
           "error",
-          `Failed to ${verb} ${job.label}: ${String(e)}`
+          `Couldn’t ${verb} ${job.label}. ${errorMessage(e)}`
         )
         return false
       } finally {
@@ -336,17 +337,18 @@ function App() {
   const ThemeIcon = theme === "dark" ? Moon : theme === "light" ? Sun : Monitor
   const themeLabel =
     theme === "system" ? "System appearance" : `${theme[0].toUpperCase()}${theme.slice(1)} appearance`
+  const hasActiveFilters = search.trim().length > 0 || sourceFilter !== "All"
 
   const handleRestartAsAdministrator = async () => {
     setAdminLaunching(true)
-    showActionFeedback("loading", "Starting administrator mode…")
+    showActionFeedback("loading", "Opening administrator window…")
     try {
       await restartAsAdministrator()
-      showActionFeedback("success", "Administrator window started.")
+      showActionFeedback("success", "Administrator window opened.")
     } catch (e) {
       showActionFeedback(
         "error",
-        `Failed to start administrator mode: ${String(e)}`
+        `Couldn’t open the administrator window. ${errorMessage(e)}`
       )
     } finally {
       setAdminLaunching(false)
@@ -355,8 +357,8 @@ function App() {
 
   return (
     <TooltipProvider delayDuration={450}>
-      <div className="min-h-screen bg-zinc-100 text-zinc-950 dark:bg-zinc-950 dark:text-zinc-50">
-      <header className="sticky top-0 z-20 border-b border-zinc-200/90 bg-zinc-100/95 px-5 py-3 backdrop-blur-xl dark:border-zinc-800 dark:bg-zinc-950/95">
+      <div className="min-h-screen bg-background text-foreground">
+      <header className="sticky top-0 z-20 border-b bg-background/95 px-4 py-2.5 backdrop-blur-xl">
         <div className="flex items-center justify-between gap-4">
           <div className="flex min-w-0 items-center gap-3">
             <img
@@ -372,8 +374,9 @@ function App() {
               <h1 className="truncate text-[15px] font-semibold leading-tight">
                 Launchpane
               </h1>
-              <p className="text-xs text-muted-foreground">
-                {filteredJobs.length} {filteredJobs.length === 1 ? "agent" : "agents"}
+              <p className="text-xs tabular-nums text-muted-foreground">
+                {filteredJobs.length}{" "}
+                {filteredJobs.length === 1 ? "service" : "services"}
               </p>
             </div>
           </div>
@@ -398,7 +401,7 @@ function App() {
               </DropdownMenuTrigger>
               <DropdownMenuContent
                 align="end"
-                className="w-52 bg-white text-zinc-950 dark:bg-zinc-950 dark:text-zinc-50"
+                className="w-52 bg-popover text-popover-foreground"
               >
                 <DropdownMenuLabel>Appearance</DropdownMenuLabel>
                 <DropdownMenuRadioGroup
@@ -423,7 +426,7 @@ function App() {
               </DropdownMenuContent>
             </DropdownMenu>
             {isAdministrator ? (
-              <div className="flex h-8 items-center gap-1.5 rounded-lg border border-emerald-300 bg-emerald-50 px-2.5 text-xs font-medium text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-300">
+              <div className="flex h-8 items-center gap-1.5 rounded-lg border border-success/35 bg-success-soft px-2.5 text-xs font-medium text-success-foreground">
                 <ShieldCheck className="h-4 w-4" />
                 Administrator
               </div>
@@ -442,22 +445,22 @@ function App() {
                   size="sm"
                   onClick={() => void handleRestartAsAdministrator()}
                   disabled={adminLaunching}
-                  className="rounded-lg bg-white dark:bg-zinc-900"
+                  className="rounded-lg bg-card"
                 >
                   <Shield className="mr-1 h-4 w-4" />
-                  {adminLaunching ? "Starting..." : "Start as Administrator"}
+                  {adminLaunching ? "Opening…" : "Open Administrator Window"}
                 </Button>
               </Hint>
             ) : null}
             <Hint
               label="Refresh agent list"
-              description="Read the latest launchd state and plist metadata from disk without changing any jobs."
+              description="Reload launchd state and plist metadata without changing any jobs."
             >
               <Button
                 variant="outline"
                 size="sm"
                 onClick={refresh}
-                className="rounded-lg bg-white dark:bg-zinc-900"
+                className="rounded-lg bg-card"
               >
                 <RefreshCw className="mr-1 h-4 w-4" />
                 Refresh
@@ -469,7 +472,7 @@ function App() {
             >
               <Button
                 size="sm"
-                className="rounded-lg bg-blue-600 text-white shadow-sm hover:bg-blue-500 dark:bg-blue-500 dark:hover:bg-blue-400"
+                className="rounded-lg shadow-sm"
                 onClick={() => {
                   setEditingJob(null)
                   setFormKey((k) => k + 1)
@@ -484,26 +487,35 @@ function App() {
         </div>
       </header>
 
-      <main className="space-y-4 p-5">
+      <main className="p-4">
         <section
-          className="rounded-xl border border-zinc-200 bg-white p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900"
-          aria-label="Agent filters"
-        >
-          <SearchBar
-            search={search}
-            onSearchChange={setSearch}
-            sourceFilter={sourceFilter}
-            onSourceFilterChange={setSourceFilter}
-          />
-        </section>
-
-        <section
-          className="overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900"
+          className="overflow-hidden rounded-xl border bg-card shadow-sm"
           aria-label="Launchd agents"
         >
+          <div
+            className="border-b bg-accent/35 p-3"
+            aria-label="Agent filters"
+          >
+            <SearchBar
+              search={search}
+              onSearchChange={setSearch}
+              sourceFilter={sourceFilter}
+              onSourceFilterChange={setSourceFilter}
+            />
+          </div>
           <JobList
             jobs={filteredJobs}
             loading={loading}
+            emptyTitle={
+              hasActiveFilters
+                ? "No services match your filters"
+                : "No background services found"
+            }
+            emptyDescription={
+              hasActiveFilters
+                ? "Try a different search or source filter."
+                : "Refresh the list or create a user agent."
+            }
             isAdministrator={isAdministrator}
             pendingAction={pendingAction}
             onStart={(job) =>
@@ -546,7 +558,7 @@ function App() {
             <div
               role="alert"
               aria-atomic="true"
-              className="pointer-events-auto flex items-start gap-2 rounded-xl border border-red-200 bg-white p-3 text-sm text-red-700 shadow-xl dark:border-red-900 dark:bg-zinc-900 dark:text-red-300"
+              className="pointer-events-auto flex items-start gap-2 rounded-xl border border-red-200 bg-card p-3 text-sm text-red-700 shadow-xl dark:border-red-900 dark:text-red-300"
             >
               <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
               <span className="min-w-0 flex-1">{visibleListError}</span>
@@ -567,12 +579,12 @@ function App() {
               data-testid="action-feedback"
               role={actionFeedback.kind === "error" ? "alert" : "status"}
               aria-atomic="true"
-              className={`pointer-events-auto flex items-start gap-2 rounded-xl border bg-white p-3 text-sm shadow-xl dark:bg-zinc-900 ${
+              className={`pointer-events-auto flex items-start gap-2 rounded-xl border bg-card p-3 text-sm shadow-xl ${
                 actionFeedback.kind === "error"
                   ? "border-destructive/40 text-destructive"
                   : actionFeedback.kind === "success"
-                    ? "border-emerald-500/40 text-emerald-700 dark:text-emerald-300"
-                    : "border-blue-500/40 text-blue-700 dark:text-blue-300"
+                    ? "border-success/40 text-success-foreground"
+                    : "border-primary/40 text-primary"
               }`}
             >
               {actionFeedback.kind === "loading" ? (
@@ -629,7 +641,7 @@ function App() {
         open={!!confirmRequest}
         onOpenChange={(isOpen) => !isOpen && setConfirmRequest(null)}
       >
-        <DialogContent className="border-zinc-200 bg-white text-zinc-950 sm:max-w-[26rem] dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-50">
+        <DialogContent         className="bg-popover text-popover-foreground sm:max-w-[26rem]">
           <DialogHeader>
             <DialogTitle>
               {confirmRequest ? confirmCopy(confirmRequest).title : ""}
@@ -638,7 +650,7 @@ function App() {
               {confirmRequest ? confirmCopy(confirmRequest).description : ""}
             </DialogDescription>
           </DialogHeader>
-          <p className="rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2 font-mono text-sm break-all dark:border-zinc-800 dark:bg-zinc-900">
+          <p className="rounded-lg border bg-muted/60 px-3 py-2 font-mono text-sm break-all">
             {confirmRequest?.job.label}
           </p>
           <DialogFooter>
@@ -654,7 +666,7 @@ function App() {
               className={
                 confirmRequest && confirmCopy(confirmRequest).destructive
                   ? "bg-red-600 text-white hover:bg-red-500"
-                  : "bg-blue-600 text-white hover:bg-blue-500 dark:bg-blue-500 dark:hover:bg-blue-400"
+                  : undefined
               }
               onClick={handleConfirm}
             >

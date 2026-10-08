@@ -27,6 +27,12 @@
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
   --color-destructive: var(--destructive);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-success-soft: var(--success-soft);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-warning-soft: var(--warning-soft);
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
@@ -47,24 +53,30 @@
 
 :root {
   --radius: 0.75rem;
-  --background: oklch(0.975 0.002 247.84);
-  --foreground: oklch(0.205 0.01 258.34);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.141 0.005 285.823);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.141 0.005 285.823);
-  --primary: oklch(0.57 0.205 253.8);
-  --primary-foreground: oklch(1 0 0);
-  --secondary: oklch(0.967 0.001 286.375);
-  --secondary-foreground: oklch(0.21 0.006 285.885);
-  --muted: oklch(0.967 0.001 286.375);
-  --muted-foreground: oklch(0.552 0.016 285.938);
-  --accent: oklch(0.967 0.001 286.375);
-  --accent-foreground: oklch(0.21 0.006 285.885);
+  --background: #f7f8fc;
+  --foreground: #171a2f;
+  --card: #ffffff;
+  --card-foreground: #171a2f;
+  --popover: #ffffff;
+  --popover-foreground: #171a2f;
+  --primary: #3d5be0;
+  --primary-foreground: #ffffff;
+  --secondary: #f0f2f8;
+  --secondary-foreground: #343950;
+  --muted: #f0f2f8;
+  --muted-foreground: #626981;
+  --accent: #ecefff;
+  --accent-foreground: #242a9e;
   --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.92 0.004 286.32);
-  --input: oklch(0.92 0.004 286.32);
-  --ring: oklch(0.57 0.205 253.8);
+  --success: #2bd39c;
+  --success-foreground: #087653;
+  --success-soft: #e7fbf4;
+  --warning: #d69a16;
+  --warning-foreground: #795000;
+  --warning-soft: #fff7dc;
+  --border: #e0e3ee;
+  --input: #d9ddea;
+  --ring: #3d5be0;
   --chart-1: oklch(0.646 0.222 41.116);
   --chart-2: oklch(0.6 0.118 184.704);
   --chart-3: oklch(0.398 0.07 227.392);
@@ -81,24 +93,30 @@
 }
 
 .dark {
-  --background: oklch(0.16 0.008 260);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.21 0.006 285.885);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.21 0.006 285.885);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.68 0.18 253.8);
-  --primary-foreground: oklch(0.12 0.01 258);
-  --secondary: oklch(0.274 0.006 286.033);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.274 0.006 286.033);
-  --muted-foreground: oklch(0.705 0.015 286.067);
-  --accent: oklch(0.274 0.006 286.033);
-  --accent-foreground: oklch(0.985 0 0);
+  --background: #111321;
+  --foreground: #f6f7fb;
+  --card: #191c2e;
+  --card-foreground: #f6f7fb;
+  --popover: #191c2e;
+  --popover-foreground: #f6f7fb;
+  --primary: #6e8bff;
+  --primary-foreground: #10142f;
+  --secondary: #25293d;
+  --secondary-foreground: #eef0f8;
+  --muted: #25293d;
+  --muted-foreground: #aeb4c9;
+  --accent: #282e55;
+  --accent-foreground: #edf0ff;
   --destructive: oklch(0.704 0.191 22.216);
+  --success: #43dfad;
+  --success-foreground: #8af6d4;
+  --success-soft: #12382f;
+  --warning: #ffd36b;
+  --warning-foreground: #ffe5a2;
+  --warning-soft: #3d3219;
   --border: oklch(1 0 0 / 10%);
   --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.68 0.18 253.8);
+  --ring: #7d95ff;
   --chart-1: oklch(0.488 0.243 264.376);
   --chart-2: oklch(0.696 0.17 162.48);
   --chart-3: oklch(0.769 0.188 70.08);
@@ -128,6 +146,14 @@
     letter-spacing: -0.006em;
     -webkit-font-smoothing: antialiased;
   }
+  ::selection {
+    background: color-mix(in srgb, var(--primary) 28%, transparent);
+    color: var(--foreground);
+  }
+  * {
+    scrollbar-color: color-mix(in srgb, var(--primary) 36%, var(--muted))
+      transparent;
+  }
   button,
   input {
     font: inherit;
@@ -139,6 +165,21 @@
   .dark [data-slot="select-content"] {
     background-color: rgb(24 24 27);
     color: rgb(250 250 250);
+  }
+}
+
+@layer components {
+  .agent-toolbar {
+    display: grid;
+    min-width: 0;
+    gap: 0.75rem;
+  }
+
+  @media (min-width: 48rem) {
+    .agent-toolbar {
+      grid-template-columns: minmax(14rem, 1fr) auto;
+      align-items: center;
+    }
   }
 }
 

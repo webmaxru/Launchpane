@@ -47,29 +47,29 @@ function StatusBadge({ status }: { status: JobListEntry["status"] }) {
   switch (status) {
     case "Running":
       return (
-        <Badge className="border-0 bg-emerald-50 text-emerald-700 shadow-none dark:bg-emerald-950/60 dark:text-emerald-300">
-          <span className="size-1.5 rounded-full bg-emerald-500" />
+        <Badge className="border-0 bg-success-soft text-success-foreground shadow-none">
+          <span className="size-1.5 rounded-full bg-success" />
           Running
         </Badge>
       )
     case "Loaded":
       return (
-        <Badge className="border-0 bg-blue-50 text-blue-700 shadow-none dark:bg-blue-950/60 dark:text-blue-300">
-          <span className="size-1.5 rounded-full bg-blue-500" />
+        <Badge className="border-0 bg-accent text-accent-foreground shadow-none">
+          <span className="size-1.5 rounded-full bg-primary" />
           Loaded
         </Badge>
       )
     case "Unloaded":
       return (
-        <Badge className="border-0 bg-zinc-100 text-zinc-600 shadow-none dark:bg-zinc-800 dark:text-zinc-300">
+        <Badge className="border-0 bg-secondary text-secondary-foreground shadow-none">
           <span className="size-1.5 rounded-full bg-zinc-400" />
           Unloaded
         </Badge>
       )
     default:
       return (
-        <Badge className="border-0 bg-amber-50 text-amber-700 shadow-none dark:bg-amber-950/50 dark:text-amber-300">
-          <span className="size-1.5 rounded-full bg-amber-500" />
+        <Badge className="border-0 bg-warning-soft text-warning-foreground shadow-none">
+          <span className="size-1.5 rounded-full bg-warning" />
           Unknown
         </Badge>
       )
@@ -80,25 +80,25 @@ function SourceBadge({ source }: { source: JobListEntry["source"] }) {
   switch (source) {
     case "UserAgent":
       return (
-        <Badge className="border-0 bg-zinc-100 text-zinc-600 shadow-none dark:bg-zinc-800 dark:text-zinc-300">
+        <Badge className="border-0 bg-secondary text-secondary-foreground shadow-none">
           User
         </Badge>
       )
     case "SystemAgent":
       return (
-        <Badge className="border-0 bg-blue-50 text-blue-700 shadow-none dark:bg-blue-950/50 dark:text-blue-300">
+        <Badge className="border-0 bg-accent text-accent-foreground shadow-none">
           System
         </Badge>
       )
     case "SystemDaemon":
       return (
-        <Badge className="border-0 bg-purple-50 text-purple-700 shadow-none dark:bg-purple-950/50 dark:text-purple-300">
+        <Badge className="border-0 bg-accent text-accent-foreground shadow-none">
           Daemon
         </Badge>
       )
     case "LoginItem":
       return (
-        <Badge className="border-0 bg-orange-50 text-orange-700 shadow-none dark:bg-orange-950/50 dark:text-orange-300">
+        <Badge className="border-0 bg-secondary text-secondary-foreground shadow-none">
           Login Item
         </Badge>
       )
@@ -114,13 +114,13 @@ export function EnabledBadge({ enabled, pendingKind = null }: EnabledBadgeProps)
   if (pendingKind) {
     const label =
       pendingKind === "enable"
-        ? "Enabling..."
+        ? "Enabling…"
         : pendingKind === "disable"
-          ? "Disabling..."
-          : "Loading..."
+          ? "Disabling…"
+          : "Loading…"
     return (
       <Badge
-        className="border-0 bg-blue-50 text-blue-700 shadow-none dark:bg-blue-950/50 dark:text-blue-300"
+        className="border-0 bg-accent text-accent-foreground shadow-none"
         title={`${label} The enabled state is being updated and verified with launchd.`}
         data-testid="enabled-badge"
       >
@@ -132,11 +132,11 @@ export function EnabledBadge({ enabled, pendingKind = null }: EnabledBadgeProps)
   if (enabled === true) {
     return (
       <Badge
-        className="border-0 bg-emerald-50 text-emerald-700 shadow-none dark:bg-emerald-950/60 dark:text-emerald-300"
+        className="border-0 bg-success-soft text-success-foreground shadow-none"
         title="Enabled. launchd is allowed to load and run this job."
         data-testid="enabled-badge"
       >
-        <span className="size-1.5 rounded-full bg-emerald-500" />
+        <span className="size-1.5 rounded-full bg-success" />
         Enabled
       </Badge>
     )
@@ -144,7 +144,7 @@ export function EnabledBadge({ enabled, pendingKind = null }: EnabledBadgeProps)
   if (enabled === false) {
     return (
       <Badge
-        className="border-0 bg-zinc-100 text-zinc-600 shadow-none dark:bg-zinc-800 dark:text-zinc-300"
+        className="border-0 bg-secondary text-secondary-foreground shadow-none"
         title="Disabled. launchd will not load this job until it is enabled again."
         data-testid="enabled-badge"
       >
@@ -155,11 +155,11 @@ export function EnabledBadge({ enabled, pendingKind = null }: EnabledBadgeProps)
   }
   return (
     <Badge
-      className="border-0 bg-amber-50 text-amber-700 shadow-none dark:bg-amber-950/50 dark:text-amber-300"
+      className="border-0 bg-warning-soft text-warning-foreground shadow-none"
       title="Unknown. The app could not determine whether launchd considers this job enabled."
       data-testid="enabled-badge"
     >
-      <span className="size-1.5 rounded-full bg-amber-500" />
+      <span className="size-1.5 rounded-full bg-warning" />
       Unknown
     </Badge>
   )
@@ -192,7 +192,7 @@ export function JobRow({
   const handleToggle = job.enabled === true ? onDisable : onEnable
   const pendingDescription = "Wait for the current operation on this job to finish."
   const systemActionDescription =
-    "System jobs are read-only in the table. Use Details to inspect the job."
+    "System jobs are read-only here. Open details to inspect this job."
   const toggleDescription = isPending
     ? pendingDescription
     : !canToggle
@@ -206,7 +206,7 @@ export function JobRow({
           : "Allow launchd to load this job again. You will confirm before the change is applied."
 
   return (
-    <TableRow className="h-12 hover:bg-blue-50/50 dark:hover:bg-blue-950/20">
+    <TableRow className="h-12 hover:bg-accent/45">
       <TableCell className="max-w-0 truncate pl-4 font-medium" title={job.label}>{job.label}</TableCell>
       <TableCell>
         <SourceBadge source={job.source} />
@@ -225,11 +225,11 @@ export function JobRow({
       </TableCell>
       <TableCell className="pr-3">
         <div
-          className="flex w-full min-w-[18.625rem] items-center justify-end gap-0.5"
+          className="flex w-full min-w-[17rem] items-center justify-end gap-0.5"
           data-testid="row-actions"
         >
           <div
-            className="flex w-[6.25rem] shrink-0 items-center justify-start gap-0.5"
+            className="flex w-[5.5rem] shrink-0 items-center justify-start gap-0.5"
             data-testid="row-icon-actions"
           >
             {isLoginItem ? null : (
@@ -363,7 +363,7 @@ export function JobRow({
             <Button
               variant="outline"
               size="sm"
-              className="h-8 w-20 shrink-0 justify-center bg-white dark:bg-zinc-900"
+              className="h-8 w-[4.5rem] shrink-0 justify-center bg-card"
               onClick={() => handleToggle(job)}
               disabled={!canToggle || isPending}
             >
@@ -377,7 +377,7 @@ export function JobRow({
               {toggleLabel}
             </Button>
           </Hint>
-          <div className="flex w-20 shrink-0 items-center justify-start">
+          <div className="flex w-[4.5rem] shrink-0 items-center justify-start">
             {isUserAgent && (
               <Hint
                 label="Remove agent"
@@ -391,7 +391,7 @@ export function JobRow({
                 <Button
                   variant="outline"
                   size="sm"
-                  className="h-8 w-20 border-red-200 bg-white text-red-600 hover:border-red-300 hover:bg-red-50 hover:text-red-700 dark:border-red-900 dark:bg-zinc-900 dark:text-red-400 dark:hover:bg-red-950/40"
+                  className="h-8 w-[4.5rem] border-red-200 bg-card text-red-600 hover:border-red-300 hover:bg-red-50 hover:text-red-700 dark:border-red-900 dark:text-red-400 dark:hover:bg-red-950/40"
                   onClick={() => onDelete(job)}
                   disabled={isPending}
                 >
@@ -402,7 +402,7 @@ export function JobRow({
           </div>
           <span className="ml-auto inline-flex">
             <Hint
-              label="Open details"
+              label="View details"
               description={
                 isPending
                   ? pendingDescription
@@ -425,7 +425,7 @@ export function JobRow({
                   if (event.detail === 0) onSelect(job)
                 }}
                 disabled={isPending}
-                aria-label={`Open details for ${job.label}`}
+                aria-label={`View details for ${job.label}`}
               >
                 <MoreHorizontal className="h-4 w-4" />
               </Button>

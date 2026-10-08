@@ -26,10 +26,8 @@ describe("JobDetail", () => {
     const content = title.closest('[data-slot="sheet-content"]')
 
     expect(content).toHaveClass(
-      "bg-white",
-      "text-zinc-950",
-      "dark:bg-zinc-950",
-      "dark:text-zinc-50"
+      "bg-card",
+      "text-card-foreground"
     )
     expect(content).not.toHaveClass(
       "animate-in",
@@ -72,13 +70,13 @@ describe("JobDetail", () => {
     const logsTab = screen.getByRole("tab", { name: "Logs" })
 
     expect(configTab).toHaveAttribute("data-state", "active")
-    expect(configTab).toHaveClass("bg-white", "text-zinc-950", "shadow-sm")
-    expect(logsTab).not.toHaveClass("bg-white")
+    expect(configTab).toHaveClass("bg-card", "text-foreground", "shadow-sm")
+    expect(logsTab).not.toHaveClass("bg-card")
 
     await user.click(logsTab)
 
-    expect(logsTab).toHaveClass("bg-white", "text-zinc-950", "shadow-sm")
-    expect(configTab).not.toHaveClass("bg-white")
+    expect(logsTab).toHaveClass("bg-card", "text-foreground", "shadow-sm")
+    expect(configTab).not.toHaveClass("bg-card")
   })
 
   it("groups the detail tabs in a segmented control like the source filter", async () => {

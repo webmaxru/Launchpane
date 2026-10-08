@@ -84,9 +84,9 @@ describe("JobList", () => {
         onRevealInFinder={noop}
       />
     )
-    expect(screen.getByText("Loading agents...")).toBeInTheDocument()
-    expect(screen.getByTestId("enabled-badge")).toHaveTextContent("Loading...")
-    const loadingRow = screen.getByText("Loading agents...").closest("tr")
+    expect(screen.getByText("Loading background services…")).toBeInTheDocument()
+    expect(screen.getByTestId("enabled-badge")).toHaveTextContent("Loading…")
+    const loadingRow = screen.getByText("Loading background services…").closest("tr")
     expect(loadingRow?.querySelectorAll("td")).toHaveLength(1)
     expect(loadingRow?.querySelector("td")?.getAttribute("colspan")).toBe("7")
   })
@@ -107,7 +107,10 @@ describe("JobList", () => {
         onRevealInFinder={noop}
       />
     )
-    expect(screen.getByText("No agents found")).toBeInTheDocument()
+    expect(screen.getByText("No background services found")).toBeInTheDocument()
+    expect(
+      screen.getByText("Refresh the list or create a user agent.")
+    ).toBeInTheDocument()
   })
 
   it("renders job list with labels", () => {
@@ -316,8 +319,8 @@ describe("JobList", () => {
     expect(badge).toHaveAttribute("data-variant", "default")
     expect(badge).toHaveClass(
       "border-0",
-      "bg-zinc-100",
-      "text-zinc-600",
+      "bg-secondary",
+      "text-secondary-foreground",
       "shadow-none"
     )
     expect(badge).not.toHaveClass("border-red-300")
@@ -356,7 +359,7 @@ describe("JobList", () => {
       expect(toggleButton).toBeDisabled()
       expect(screen.getByTestId("toggle-spinner")).toBeInTheDocument()
       expect(screen.getByTestId("enabled-badge")).toHaveTextContent(
-        kind === "enable" ? "Enabling..." : "Disabling..."
+        kind === "enable" ? "Enabling…" : "Disabling…"
       )
       expect(enabledCell?.textContent?.trim()).not.toBe("")
     }
@@ -385,7 +388,7 @@ describe("JobList", () => {
     expect(onSelect).not.toHaveBeenCalled()
 
     const detailsButton = screen.getByRole("button", {
-      name: `Open details for ${job.label}`,
+      name: `View details for ${job.label}`,
     })
     expect(detailsButton.parentElement).toHaveClass("ml-auto")
 
@@ -401,7 +404,7 @@ describe("JobList", () => {
 
     fireEvent.click(
       screen.getByRole("button", {
-        name: `Open details for ${job.label}`,
+        name: `View details for ${job.label}`,
       }),
       { detail: 0 }
     )
@@ -453,13 +456,13 @@ describe("JobList", () => {
     expect(clusters[1].querySelectorAll("button")).toHaveLength(1)
 
     for (const cluster of clusters) {
-      expect(cluster).toHaveClass("w-[6.25rem]", "shrink-0", "justify-start")
+      expect(cluster).toHaveClass("w-[5.5rem]", "shrink-0", "justify-start")
     }
 
     for (const label of ["Disable", "Enable"]) {
       expect(screen.getByRole("button", { name: label })).toHaveClass(
         "h-8",
-        "w-20",
+        "w-[4.5rem]",
         "shrink-0"
       )
     }
@@ -469,22 +472,22 @@ describe("JobList", () => {
     renderJobList(mockJobs)
 
     expect(screen.getByRole("columnheader", { name: "Actions" })).toHaveClass(
-      "w-80"
+      "w-72"
     )
 
     for (const actions of screen.getAllByTestId("row-actions")) {
-      expect(actions).toHaveClass("min-w-[18.625rem]", "gap-0.5")
+      expect(actions).toHaveClass("min-w-[17rem]", "gap-0.5")
     }
 
     for (const label of ["Enable", "Disable", "Remove"]) {
       for (const button of screen.getAllByRole("button", { name: label })) {
-        expect(button).toHaveClass("h-8", "w-20")
+        expect(button).toHaveClass("h-8", "w-[4.5rem]")
         expect(button).toHaveAttribute("data-variant", "outline")
       }
     }
 
     for (const trigger of screen.getAllByRole("button", {
-      name: /Open details for/,
+      name: /View details for/,
     })) {
       expect(trigger).toHaveClass("h-8", "w-8", "shrink-0")
       expect(trigger.parentElement).toHaveClass("ml-auto")
@@ -511,7 +514,7 @@ describe("JobList", () => {
     const tooltip = await screen.findByRole("tooltip")
     expect(tooltip).toHaveTextContent("Load agent")
     expect(tooltip).toHaveTextContent(
-      "System jobs are read-only in the table. Use Details to inspect the job."
+      "System jobs are read-only here. Open details to inspect this job."
     )
   })
 
@@ -528,7 +531,7 @@ describe("JobList", () => {
 
     await user.click(
       screen.getByRole("button", {
-        name: `Open details for ${systemJob.label}`,
+        name: `View details for ${systemJob.label}`,
       })
     )
 
@@ -563,7 +566,7 @@ describe("JobList", () => {
 
     await user.click(
       screen.getByRole("button", {
-        name: `Open details for ${loginItemJob.label}`,
+        name: `View details for ${loginItemJob.label}`,
       })
     )
 

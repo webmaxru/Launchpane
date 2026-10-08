@@ -44,10 +44,8 @@ describe("JobForm", () => {
     const content = title.closest('[data-slot="dialog-content"]')
 
     expect(content).toHaveClass(
-      "bg-white",
-      "text-zinc-950",
-      "dark:bg-zinc-950",
-      "dark:text-zinc-50"
+      "bg-card",
+      "text-card-foreground"
     )
     expect(content).toHaveClass(
       "flex",
@@ -63,12 +61,12 @@ describe("JobForm", () => {
     )
 
     const header = title.closest('[data-slot="dialog-header"]')
-    expect(header).toHaveClass("bg-white", "dark:bg-zinc-950")
+    expect(header).toHaveClass("bg-card")
 
     const body = content?.querySelector(".overflow-y-auto")
-    expect(body).toHaveClass("bg-white", "dark:bg-zinc-950")
+    expect(body).toHaveClass("bg-card")
 
     const footer = content?.querySelector('[data-slot="dialog-footer"]')
-    expect(footer).toHaveClass("bg-zinc-50", "dark:bg-zinc-900")
+    expect(footer).toHaveClass("bg-muted/45")
   })
 })

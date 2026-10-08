@@ -68,7 +68,7 @@ describe("App action feedback", () => {
 
     await waitFor(() => {
       expect(screen.getByRole("alert")).toHaveTextContent(
-        "Failed to enable com.example.stopped-agent: Error: Permission denied"
+        "Couldn’t enable com.example.stopped-agent. Permission denied"
       )
     })
   })
@@ -119,7 +119,7 @@ describe("App action feedback", () => {
     render(<App />)
 
     const adminButton = await screen.findByRole("button", {
-      name: "Start as Administrator",
+      name: "Open Administrator Window",
     })
     const disableButton = (await screen.findAllByRole("button", {
       name: "Disable",
@@ -131,7 +131,7 @@ describe("App action feedback", () => {
       await Promise.resolve()
     })
     expect(screen.getByRole("status")).toHaveTextContent(
-      "Administrator window started."
+      "Administrator window opened."
     )
 
     act(() => {
@@ -226,7 +226,9 @@ describe("App action feedback", () => {
       "com.example.running-agent is now disabled."
     )
     expect(
-      await screen.findByText("Error: Refresh failed")
+      await screen.findByText(
+        "Couldn’t load background services. Refresh failed"
+      )
     ).toBeInTheDocument()
   })
 
@@ -243,7 +245,7 @@ describe("App action feedback", () => {
 
     await waitFor(() => {
       expect(screen.getByRole("alert")).toHaveTextContent(
-        "Failed to enable com.example.stopped-agent: verified state is disabled, expected enabled."
+        "Couldn’t enable com.example.stopped-agent. launchd reported disabled, not enabled."
       )
     })
   })
@@ -253,11 +255,11 @@ describe("App action feedback", () => {
     render(<App />)
 
     await user.click(
-      await screen.findByRole("button", { name: "Start as Administrator" })
+      await screen.findByRole("button", { name: "Open Administrator Window" })
     )
 
     expect(await screen.findByRole("status")).toHaveTextContent(
-      "Administrator window started."
+      "Administrator window opened."
     )
   })
 })
@@ -290,9 +292,9 @@ describe("App appearance", () => {
 
 describe("App action confirmation", () => {
   it.each([
-    ["enable", "Enable", "enable_job", "Enable Agent"],
-    ["disable", "Disable", "disable_job", "Disable Agent"],
-    ["delete", "Remove", "delete_job", "Remove Agent"],
+    ["enable", "Enable", "enable_job", "Enable agent"],
+    ["disable", "Disable", "disable_job", "Disable agent"],
+    ["delete", "Remove", "delete_job", "Remove agent"],
   ])(
     "asks for confirmation before %s and only runs it once confirmed",
     async (_kind, buttonName, command, dialogTitle) => {

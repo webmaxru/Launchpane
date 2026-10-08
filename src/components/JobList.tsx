@@ -13,6 +13,8 @@ import type { JobListEntry, PendingAction } from "@/types"
 type JobListProps = {
   jobs: JobListEntry[]
   loading: boolean
+  emptyTitle?: string
+  emptyDescription?: string
   isAdministrator?: boolean
   pendingAction?: PendingAction | null
   onStart: (job: JobListEntry) => void
@@ -29,6 +31,8 @@ type JobListProps = {
 export function JobList({
   jobs,
   loading,
+  emptyTitle = "No background services found",
+  emptyDescription = "Refresh the list or create a user agent.",
   isAdministrator = false,
   pendingAction = null,
   onStart,
@@ -43,15 +47,17 @@ export function JobList({
   return (
     <TooltipProvider delayDuration={450}>
       <Table className="table-fixed">
-      <TableHeader className="bg-zinc-50/95 dark:bg-zinc-900/95">
+      <TableHeader className="bg-accent/30">
         <TableRow className="hover:bg-transparent">
-          <TableHead className="pl-4 text-xs font-semibold text-muted-foreground">Label</TableHead>
+          <TableHead className="pl-4 text-xs font-semibold text-muted-foreground">
+            Label
+          </TableHead>
           <TableHead className="w-24">Source</TableHead>
           <TableHead className="w-24">Status</TableHead>
           <TableHead className="w-24">Enabled</TableHead>
           <TableHead className="w-16">PID</TableHead>
           <TableHead className="w-24">Last Run</TableHead>
-          <TableHead className="w-80 pr-3 text-right text-xs font-semibold text-muted-foreground">
+          <TableHead className="w-72 pr-3 text-right text-xs font-semibold text-muted-foreground">
             Actions
           </TableHead>
         </TableRow>
@@ -62,14 +68,17 @@ export function JobList({
             <TableCell colSpan={7} className="h-32 text-center text-muted-foreground" aria-busy="true">
               <span className="inline-flex items-center gap-2">
                 <EnabledBadge enabled={null} pendingKind="load" />
-                <span>Loading agents...</span>
+                <span>Loading background services…</span>
               </span>
             </TableCell>
           </TableRow>
         ) : jobs.length === 0 ? (
           <TableRow>
-            <TableCell colSpan={7} className="h-32 text-center text-muted-foreground">
-              No agents found
+            <TableCell colSpan={7} className="h-32 text-center">
+              <p className="text-sm font-medium text-foreground">{emptyTitle}</p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                {emptyDescription}
+              </p>
             </TableCell>
           </TableRow>
         ) : (

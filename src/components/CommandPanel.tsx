@@ -85,7 +85,7 @@ export function CommandPanel({ job }: CommandPanelProps) {
           Equivalent launchctl commands for this agent.
         </p>
       </div>
-      <div className="overflow-hidden rounded-xl border bg-white dark:bg-zinc-950">
+      <div className="overflow-hidden rounded-xl border bg-card">
         {commands.map((item) => (
           <div
             key={item.label}
@@ -100,7 +100,7 @@ export function CommandPanel({ job }: CommandPanelProps) {
             >
               {item.label}
             </span>
-            <div className="flex min-w-0 items-center gap-2 rounded-md bg-zinc-100 px-3 py-2 dark:bg-zinc-900">
+            <div className="flex min-w-0 items-center gap-2 rounded-md bg-muted px-3 py-2">
               <code className="min-w-0 flex-1 truncate font-mono text-sm">
                 {item.command}
               </code>

@@ -36,9 +36,9 @@ const SOURCE_LABELS: Record<JobSource, string> = {
 function statusBadgeClass(status: JobStatus): string {
   switch (status) {
     case "Running":
-      return "border-0 bg-emerald-50 text-emerald-700 shadow-none dark:bg-emerald-950/60 dark:text-emerald-300"
+      return "border-0 bg-success-soft text-success-foreground shadow-none"
     case "Loaded":
-      return "border-0 bg-blue-50 text-blue-700 shadow-none dark:bg-blue-950/60 dark:text-blue-300"
+      return "border-0 bg-accent text-accent-foreground shadow-none"
     default:
       return "border-0 bg-zinc-100 text-zinc-600 shadow-none dark:bg-zinc-800 dark:text-zinc-300"
   }
@@ -47,9 +47,9 @@ function statusBadgeClass(status: JobStatus): string {
 function statusDotClass(status: JobStatus): string {
   switch (status) {
     case "Running":
-      return "bg-emerald-500"
+      return "bg-success"
     case "Loaded":
-      return "bg-blue-500"
+      return "bg-primary"
     default:
       return "bg-zinc-400"
   }
@@ -163,7 +163,7 @@ export function JobDetail({ plistPath, open, onClose, onEdit }: JobDetailProps) 
   return (
     <TooltipProvider delayDuration={450}>
       <Sheet open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
-        <SheetContent className="flex h-full w-full flex-col gap-0 bg-white p-0 text-zinc-950 sm:max-w-[44rem] dark:bg-zinc-950 dark:text-zinc-50">
+        <SheetContent className="flex h-full w-full flex-col gap-0 bg-card p-0 text-card-foreground sm:max-w-[44rem]">
         <SheetHeader className="shrink-0 gap-0 border-b px-6 py-5 pr-14">
           <SheetTitle className="truncate text-base font-semibold" title={job?.label}>
             {job?.label ?? (loading ? "Loading agent…" : "Agent details")}
@@ -261,7 +261,7 @@ export function JobDetail({ plistPath, open, onClose, onEdit }: JobDetailProps) 
             onValueChange={(value) => setActiveTab(value as DetailTab)}
             className="flex min-h-0 flex-1 flex-col gap-0"
           >
-            <div className="shrink-0 border-b bg-zinc-50 px-6 py-3 dark:bg-zinc-900">
+            <div className="shrink-0 border-b bg-muted/55 px-6 py-3">
               <TabsList
                 className={`grid h-9 w-full rounded-lg bg-zinc-200/80 p-0.5 dark:bg-zinc-800 ${
                   tabs.length === 2 ? "grid-cols-2" : "grid-cols-3"
@@ -274,8 +274,8 @@ export function JobDetail({ plistPath, open, onClose, onEdit }: JobDetailProps) 
                     value={tab.value}
                     className={
                       activeTab === tab.value
-                        ? "h-8 rounded-md bg-white font-semibold text-zinc-950 shadow-sm dark:bg-zinc-700 dark:text-white"
-                        : "h-8 rounded-md font-medium text-zinc-600 hover:bg-white/60 hover:text-zinc-950 dark:text-zinc-300 dark:hover:bg-zinc-700/70 dark:hover:text-white"
+                      ? "h-8 rounded-md bg-card font-semibold text-foreground shadow-sm"
+                      : "h-8 rounded-md font-medium text-muted-foreground hover:bg-accent hover:text-accent-foreground"
                     }
                   >
                     {tab.label}

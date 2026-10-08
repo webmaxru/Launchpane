@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react"
 import type { JobListEntry, SourceFilter } from "@/types"
 import { listJobs } from "@/lib/invoke"
+import { errorMessage } from "@/lib/errors"
 
 type UseJobsReturn = {
   jobs: JobListEntry[]
@@ -28,7 +29,7 @@ export function useJobs(): UseJobsReturn {
       const result = await listJobs()
       setJobs(result)
     } catch (e) {
-      setError(String(e))
+      setError(`Couldn’t load background services. ${errorMessage(e)}`)
     } finally {
       setLoading(false)
     }

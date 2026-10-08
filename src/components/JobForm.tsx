@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/select"
 import type { PlistConfig, LaunchdJob, CalendarInterval } from "@/types"
 import { getHomeDir } from "@/lib/invoke"
+import { errorMessage } from "@/lib/errors"
 import {
   detectHourRange,
   expandHourRange,
@@ -154,11 +155,15 @@ export function JobForm({ open, onClose, onSave, editingJob }: JobFormProps) {
   const handleSave = async () => {
     setError(null)
     if (!config.label.trim()) {
-      setError("Label is required")
+      setError("Enter a label for this agent.")
+      return
+    }
+    if (!args.trim() && !config.program?.trim()) {
+      setError("Enter the command this agent should run.")
       return
     }
     if (scheduleType === "calendar" && hourMode === "range" && hourRange.from > hourRange.to) {
-      setError("Hour range 'from' must be less than or equal to 'to'")
+      setError("The start hour must be earlier than or equal to the end hour.")
       return
     }
 
@@ -184,7 +189,9 @@ export function JobForm({ open, onClose, onSave, editingJob }: JobFormProps) {
       await onSave(finalConfig, editingJob?.plist_path)
       onClose()
     } catch (e) {
-      setError(String(e))
+      setError(
+        `Couldn’t ${isEditing ? "save" : "create"} this agent. ${errorMessage(e)}`
+      )
     } finally {
       setSaving(false)
     }
@@ -192,8 +199,8 @@ export function JobForm({ open, onClose, onSave, editingJob }: JobFormProps) {
 
   return (
     <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
-      <DialogContent className="max-h-[calc(100vh-2rem)] min-h-0 gap-0 border-zinc-200 bg-white p-0 text-zinc-950 sm:max-w-[620px] dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-50">
-        <DialogHeader className="w-full shrink-0 border-b border-zinc-200 bg-white px-6 py-5 pr-14 dark:border-zinc-800 dark:bg-zinc-950">
+      <DialogContent className="max-h-[calc(100vh-2rem)] min-h-0 gap-0 bg-card p-0 text-card-foreground sm:max-w-[620px]">
+        <DialogHeader className="w-full shrink-0 border-b bg-card px-6 py-5 pr-14">
           <DialogTitle className="text-base">
             {isEditing ? "Edit Agent" : "New Agent"}
           </DialogTitle>
@@ -204,7 +211,7 @@ export function JobForm({ open, onClose, onSave, editingJob }: JobFormProps) {
           </DialogDescription>
         </DialogHeader>
 
-        <div className="grid min-h-0 w-full flex-1 gap-6 overflow-y-auto bg-white px-6 py-5 dark:bg-zinc-950">
+        <div className="grid min-h-0 w-full flex-1 gap-6 overflow-y-auto bg-card px-6 py-5">
           <div className="grid gap-1.5">
             <Label htmlFor="label">
               Label <span className="text-destructive">*</span>
@@ -234,7 +241,7 @@ export function JobForm({ open, onClose, onSave, editingJob }: JobFormProps) {
 
           <div className="grid gap-1.5">
             <Label htmlFor="args">
-              Program Arguments <span className="text-destructive">*</span>
+              Command and arguments <span className="text-destructive">*</span>
             </Label>
             <Input
               id="args"
@@ -245,11 +252,11 @@ export function JobForm({ open, onClose, onSave, editingJob }: JobFormProps) {
               autoCorrect="off"
             />
             <p className="text-xs text-muted-foreground">
-              The command to execute, followed by its arguments. Space-separated. Use quotes for arguments containing spaces (e.g. /usr/bin/cmd "arg with spaces").
+              Enter the executable first, followed by any arguments. Put arguments containing spaces in quotes.
             </p>
           </div>
 
-          <div className="grid grid-cols-2 gap-4 rounded-xl border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-800 dark:bg-zinc-900/70">
+          <div className="grid grid-cols-2 gap-4 rounded-xl border bg-muted/45 p-4">
             <div className="grid gap-1.5">
               <Label htmlFor="run-at-load">Run at Load</Label>
               <Select
@@ -306,12 +313,12 @@ export function JobForm({ open, onClose, onSave, editingJob }: JobFormProps) {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="none">No schedule</SelectItem>
-                <SelectItem value="interval">Run every N seconds</SelectItem>
-                <SelectItem value="calendar">Run at specific time</SelectItem>
+                <SelectItem value="interval">Repeat at an interval</SelectItem>
+                <SelectItem value="calendar">Use a calendar schedule</SelectItem>
               </SelectContent>
             </Select>
             <p className="text-xs text-muted-foreground">
-              How to trigger this agent. "No schedule" means manual start only.
+              Add a recurring trigger. Run at Load and Keep Alive can still start the agent without a schedule.
             </p>
           </div>
 
@@ -333,7 +340,7 @@ export function JobForm({ open, onClose, onSave, editingJob }: JobFormProps) {
                 }
               />
               <p className="text-xs text-muted-foreground">
-                e.g. 300 = every 5 minutes, 3600 = every hour.
+                For example, 300 seconds is 5 minutes and 3600 seconds is 1 hour.
               </p>
               {config.start_interval && config.start_interval > 0 && (
                 <div className="rounded-md border bg-muted/30 p-3">
@@ -603,15 +610,11 @@ export function JobForm({ open, onClose, onSave, editingJob }: JobFormProps) {
           {error && <div className="text-sm text-destructive">{error}</div>}
         </div>
 
-        <DialogFooter className="w-full shrink-0 border-t border-zinc-200 bg-zinc-50 px-6 py-4 dark:border-zinc-800 dark:bg-zinc-900">
+        <DialogFooter className="w-full shrink-0 border-t bg-muted/45 px-6 py-4">
           <Button variant="outline" onClick={onClose}>
             Cancel
           </Button>
-          <Button
-            onClick={handleSave}
-            disabled={saving}
-            className="bg-blue-600 text-white hover:bg-blue-500 dark:bg-blue-500 dark:hover:bg-blue-400"
-          >
+          <Button onClick={handleSave} disabled={saving}>
             {saving ? "Saving..." : isEditing ? "Save" : "Create"}
           </Button>
         </DialogFooter>

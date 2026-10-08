@@ -17,7 +17,7 @@ describe("SearchBar", () => {
       />
     )
 
-    const group = screen.getByRole("group", { name: "Filter agents by source" })
+    const group = screen.getByRole("group", { name: "Filter by source" })
     expect(
       within(group).getAllByRole("button").map((button) => button.textContent)
     ).toEqual(["All", "User", "Home", "System", "Daemon", "Login Items"])
