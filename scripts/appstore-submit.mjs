@@ -10,6 +10,8 @@
 //   ASC_CONTACT_FIRST_NAME / ASC_CONTACT_LAST_NAME / ASC_CONTACT_EMAIL /
 //   ASC_CONTACT_PHONE   App Review contact details
 //   ASC_SUBMIT=false    Prepare everything but stop before submitting
+//   ASC_REVIEW_RECORDING_PATH
+//                       Upload a physical-device recording to App Review
 //
 // Usage: node scripts/appstore-submit.mjs
 //
@@ -32,6 +34,7 @@ const ISSUER_ID = required("ASC_ISSUER_ID");
 const KEY_PATH = process.env.ASC_KEY_PATH || `AuthKey_${KEY_ID}.p8`;
 const APP_ID = required("ASC_APP_ID");
 const SUBMIT = process.env.ASC_SUBMIT !== "false";
+const REVIEW_RECORDING_PATH = process.env.ASC_REVIEW_RECORDING_PATH;
 
 const EDITABLE_STATES = [
   "PREPARE_FOR_SUBMISSION",
@@ -446,8 +449,10 @@ async function setReviewDetail(versionId) {
     await api("PATCH", `/v1/appStoreReviewDetails/${existing.data.id}`, {
       data: { type: "appStoreReviewDetails", id: existing.data.id, attributes },
     });
+    log("app review information set");
+    return existing.data.id;
   } else {
-    await api("POST", "/v1/appStoreReviewDetails", {
+    const created = await api("POST", "/v1/appStoreReviewDetails", {
       data: {
         type: "appStoreReviewDetails",
         attributes,
@@ -456,8 +461,54 @@ async function setReviewDetail(versionId) {
         },
       },
     });
+    log("app review information set");
+    return created.data.id;
   }
-  log("app review information set");
+}
+
+async function uploadReviewRecording(reviewDetailId) {
+  if (!REVIEW_RECORDING_PATH) return;
+
+  const recordingPath = path.resolve(REVIEW_RECORDING_PATH);
+  const fileName = path.basename(recordingPath);
+  const buffer = fs.readFileSync(recordingPath);
+  const current = await api(
+    "GET",
+    `/v1/appStoreReviewDetails/${reviewDetailId}/appStoreReviewAttachments`,
+  );
+  const existing = current.data.find(
+    (attachment) =>
+      attachment.attributes.fileName === fileName &&
+      attachment.attributes.assetDeliveryState?.state === "COMPLETE",
+  );
+  if (existing) {
+    log(`review recording ${fileName} already uploaded`);
+    return;
+  }
+
+  const reservation = await api("POST", "/v1/appStoreReviewAttachments", {
+    data: {
+      type: "appStoreReviewAttachments",
+      attributes: { fileName, fileSize: buffer.length },
+      relationships: {
+        appStoreReviewDetail: {
+          data: { type: "appStoreReviewDetails", id: reviewDetailId },
+        },
+      },
+    },
+  });
+  await uploadAsset(reservation.data, buffer, fileName);
+  await api("PATCH", `/v1/appStoreReviewAttachments/${reservation.data.id}`, {
+    data: {
+      type: "appStoreReviewAttachments",
+      id: reservation.data.id,
+      attributes: {
+        uploaded: true,
+        sourceFileChecksum: crypto.createHash("md5").update(buffer).digest("hex"),
+      },
+    },
+  });
+  log(`uploaded App Review recording ${fileName}`);
 }
 
 async function submit(versionId) {
@@ -516,6 +567,7 @@ await setContentRights();
 await uploadScreenshots(localizationId);
 const build = await uploadBuild(bundleVersion());
 await attachBuild(versionId, build);
-await setReviewDetail(versionId);
+const reviewDetailId = await setReviewDetail(versionId);
+await uploadReviewRecording(reviewDetailId);
 if (SUBMIT) await submit(versionId);
 else log("ASC_SUBMIT=false, stopping before submission");
