@@ -23,13 +23,14 @@ save it, select it, then remove it. The app writes only to the user's
 
 2. Physical-device QA and recording
 
-Before resubmission, attach a screen recording captured on a physical Mac
-running the latest supported macOS release. The recording should begin with
+Before resubmission, a screen recording will be attached from a physical Mac
+running the latest macOS release. The recording will begin with
 launching Launchpane and show: inventory loading, search/source filtering,
 opening a user-agent detail view, creating the temporary `/usr/bin/true`
 agent, verifying it in the list, and removing it. It should also show that
-system entries are read-only. The repository includes the complete recording
-shot list and QA checklist in `appstore/review-recording.md`.
+system entries are read-only. Replacement build `202610092309` corrects the
+App Sandbox entitlements required for Tauri's WebKit process and is attached
+to this version.
 
 3. External services
 
@@ -38,7 +39,10 @@ It reads local launchd state, local plist files, local log files, and
 ServiceManagement login-item metadata through macOS APIs and commands. It
 does not use analytics, advertising, authentication, payment processing,
 cloud storage, AI services, or remote data providers. All service and plist
-information remains on the Mac.
+information remains on the Mac. The sandboxed Tauri/WebKit runtime requires
+local network client and server entitlements to start its embedded web
+process; Launchpane does not contact an external endpoint or expose a network
+service.
 
 4. Regional behavior and regulated content
 

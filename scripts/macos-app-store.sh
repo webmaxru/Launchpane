@@ -115,6 +115,12 @@ verify_package() {
   [[ -f "$PKG_PATH" ]] || fail "Signed installer package not found: $PKG_PATH"
   codesign --verify --deep --strict --verbose=2 "$APP_PATH"
   codesign --display --entitlements :- "$APP_PATH" > "$OUTPUT_DIR/signed-entitlements.plist"
+  /usr/libexec/PlistBuddy -c "Print :com.apple.security.app-sandbox" "$OUTPUT_DIR/signed-entitlements.plist" |
+    grep -qx true || fail "Signed app is missing the App Sandbox entitlement"
+  /usr/libexec/PlistBuddy -c "Print :com.apple.security.network.client" "$OUTPUT_DIR/signed-entitlements.plist" |
+    grep -qx true || fail "Signed app is missing the WebKit network client entitlement"
+  /usr/libexec/PlistBuddy -c "Print :com.apple.security.network.server" "$OUTPUT_DIR/signed-entitlements.plist" |
+    grep -qx true || fail "Signed app is missing the WebKit network server entitlement"
   pkgutil --check-signature "$PKG_PATH"
   # Gatekeeper assesses Developer ID distribution, so it always rejects a Mac
   # App Store package. Report the result without failing the build.

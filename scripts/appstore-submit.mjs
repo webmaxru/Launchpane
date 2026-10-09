@@ -215,37 +215,15 @@ async function setAgeRating(appInfoId) {
   const { data } = await api("GET", `/v1/appInfos/${appInfoId}?include=ageRatingDeclaration`);
   const declarationId = data.relationships.ageRatingDeclaration?.data?.id;
   if (!declarationId) return;
+  const attributes = JSON.parse(
+    fs.readFileSync(path.join(ROOT, "appstore/age-rating.json"), "utf8"),
+  );
 
   await api("PATCH", `/v1/ageRatingDeclarations/${declarationId}`, {
     data: {
       type: "ageRatingDeclarations",
       id: declarationId,
-      attributes: {
-        alcoholTobaccoOrDrugUseOrReferences: "NONE",
-        contests: "NONE",
-        gamblingSimulated: "NONE",
-        horrorOrFearThemes: "NONE",
-        matureOrSuggestiveThemes: "NONE",
-        medicalOrTreatmentInformation: "NONE",
-        profanityOrCrudeHumor: "NONE",
-        sexualContentGraphicAndNudity: "NONE",
-        sexualContentOrNudity: "NONE",
-        violenceCartoonOrFantasy: "NONE",
-        violenceRealistic: "NONE",
-        violenceRealisticProlongedGraphicOrSadistic: "NONE",
-        ageRatingOverride: "NONE",
-        kidsAgeBand: null,
-        advertising: false,
-        ageAssurance: false,
-        gambling: false,
-        gunsOrOtherWeapons: false,
-        healthOrWellnessTopics: false,
-        lootBox: false,
-        messagingAndChat: false,
-        parentalControls: false,
-        unrestrictedWebAccess: false,
-        userGeneratedContent: false,
-      },
+      attributes,
     },
   });
   log("age rating declared");

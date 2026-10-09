@@ -1,7 +1,7 @@
 # App Review recording and QA checklist
 
 Apple requested a screen recording captured on a physical Mac running the
-latest supported macOS release. This file is the shot list and the bounded
+latest macOS release. This file is the shot list and the bounded
 test plan for that recording; it is intentionally not a simulated recording.
 
 ## Recording setup
@@ -51,6 +51,19 @@ not required for the main flow and must only expose Enable/Disable controls.
 - [ ] Light and dark macOS appearances render the main flow legibly.
 - [ ] The temporary plist is removed after the test.
 - [ ] The exact submitted build number is shown in the recording notes.
+
+## Verified replacement build
+
+Replacement build `202610092309` is processed as `VALID` and attached to
+version 1.2.1 in App Store Connect. On a physical Apple M1 Mac, a locally
+re-signed copy of the same release bundle was smoke-tested inside the App
+Sandbox: the Tauri WebKit child process launched successfully and began
+loading the app UI. The original build's WebKit child process failed to
+launch, leaving a blank window.
+
+This smoke test does not replace Apple's requested recording. The final
+recording still requires a physical Mac on the latest macOS release plus
+Screen Recording and Accessibility permission for the capture operator.
 
 ## Reply attachments
 
