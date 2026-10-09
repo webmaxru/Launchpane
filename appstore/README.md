@@ -22,6 +22,8 @@ Create these items in the Apple Developer and App Store Connect portals:
 8. Temporary sandbox exception usage information copied from
    [`sandbox-exceptions.md`](sandbox-exceptions.md), including a Feedback
    Assistant ID if Apple requests one.
+9. A physical-device recording and completed QA checklist prepared from
+   [`review-recording.md`](review-recording.md) before each review submission.
 
 Mac App Store review is not guaranteed: launch-service management needs
 temporary sandbox exceptions that Apple evaluates case by case.
@@ -80,6 +82,10 @@ The workflow:
 9. optionally submits the version for App Review.
 
 The age-rating declaration is uploaded from [`age-rating.json`](age-rating.json).
+The App Review recording shot list and test checklist are maintained in
+[`review-recording.md`](review-recording.md). The recording itself must be
+captured on a physical Mac and attached in App Store Connect; it is not
+generated from the screenshot mockup pipeline.
 
 ## Local release
 

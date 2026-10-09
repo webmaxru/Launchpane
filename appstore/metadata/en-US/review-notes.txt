@@ -1,12 +1,55 @@
-Launchpane manages macOS launch agents, launch daemons, and application login-item helpers.
+Launchpane is a local macOS utility for developers, power users, and Mac
+support professionals who need to understand and safely manage background
+services that otherwise require launchctl commands and hidden plist folders.
+It solves the problem of diagnosing startup behavior, service state, and
+launchd configuration from one focused interface.
 
-Review path:
-1. Launch the app. No account or sign-in is required.
-2. Use the search field and the source dropdown to inspect User, Home, System, Daemon, and Login Items.
-3. Select a user agent to inspect its configuration and logs.
-4. Create or edit a user agent to exercise write access to ~/Library/LaunchAgents.
-5. System agents and daemons are read-only in the Mac App Store build.
+1. Access and main flow
 
-The app does not collect analytics, identifiers, diagnostics, or user content. All service and plist information remains on the Mac.
+Launch the app directly; there is no account, sign-in, registration, demo
+credential, subscription, or network setup. The inventory loads from the
+review Mac. Use the search field and source dropdown to inspect User Agents,
+Home Agents, System Agents, System Daemons, and Login Items. Select a row to
+inspect state, configuration, schedule, and available logs. User Agents can
+be enabled, disabled, started, stopped, restarted, tested, edited, created,
+and removed. Login Items support only Enable and Disable because they are
+owned by their parent app. System Agents and System Daemons are displayed for
+context and remain read-only.
 
-Temporary sandbox exceptions and their assessment steps are documented in appstore/sandbox-exceptions.md. A Feedback Assistant ID must be supplied in App Store Connect if Apple requests one.
+To exercise the write flow safely, choose New Agent and create a temporary
+agent using `/usr/bin/true` as the executable, leave Run at Login disabled,
+save it, select it, then remove it. The app writes only to the user's
+`~/Library/LaunchAgents/` directory. No sample file or account is required.
+
+2. Physical-device QA and recording
+
+Before resubmission, attach a screen recording captured on a physical Mac
+running the latest supported macOS release. The recording should begin with
+launching Launchpane and show: inventory loading, search/source filtering,
+opening a user-agent detail view, creating the temporary `/usr/bin/true`
+agent, verifying it in the list, and removing it. It should also show that
+system entries are read-only. The repository includes the complete recording
+shot list and QA checklist in `appstore/review-recording.md`.
+
+3. External services
+
+Launchpane does not use external services to deliver its core functionality.
+It reads local launchd state, local plist files, local log files, and
+ServiceManagement login-item metadata through macOS APIs and commands. It
+does not use analytics, advertising, authentication, payment processing,
+cloud storage, AI services, or remote data providers. All service and plist
+information remains on the Mac.
+
+4. Regional behavior and regulated content
+
+The app has no regional feature or content differences. It behaves
+consistently in all territories. It is not a regulated-industry service and
+does not include protected third-party material or user-generated content.
+
+5. Sandbox and ownership boundaries
+
+The Mac App Store build is sandboxed with narrowly scoped temporary
+exceptions for the standard launchd locations. It writes only user-owned
+agents in `~/Library/LaunchAgents/`; system agents and daemons are read-only.
+Temporary sandbox exception details and assessment steps are documented in
+`appstore/sandbox-exceptions.md`.

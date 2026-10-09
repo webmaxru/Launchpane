@@ -68,6 +68,7 @@ function main(): void {
 
   cpSync(join(ROOT, "branding", "store", "appstore-icon-1024.png"), join(OUTPUT_DIR, "appstore-icon-1024.png"))
   cpSync(join(ROOT, "appstore", "sandbox-exceptions.md"), join(OUTPUT_DIR, "sandbox-exceptions.md"))
+  cpSync(join(ROOT, "appstore", "review-recording.md"), join(OUTPUT_DIR, "review-recording.md"))
   cpSync(join(SOURCE_METADATA, "review-notes.txt"), join(OUTPUT_DIR, "review-notes.txt"))
   cpSync(join(ROOT, "appstore", "age-rating.json"), join(OUTPUT_DIR, "age-rating.json"))
   cpSync(join(ROOT, "appstore", "app-privacy.json"), join(OUTPUT_DIR, "app-privacy.json"))
