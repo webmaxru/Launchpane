@@ -65,6 +65,10 @@ This smoke test does not replace Apple's requested recording. The final
 recording still requires a physical Mac on the latest macOS release plus
 Screen Recording and Accessibility permission for the capture operator.
 
+The same build is available through the internal TestFlight group
+`Launchpane Internal QA`; `salnikov@gmail.com` has been invited as an internal
+tester. Use that installation for the final exact-build recording.
+
 ## Reply attachments
 
 Attach the finished physical-device recording to the App Store Connect
