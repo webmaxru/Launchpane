@@ -79,22 +79,22 @@ processing status, or a successful upload is not evidence that the app works.
 - [ ] The temporary plist is removed after the test.
 - [ ] The exact submitted build number is shown in the recording notes.
 
-## Verified replacement build
+## Earlier replacement-build smoke test
 
-Replacement build `202610092309` is processed as `VALID` and attached to
-version 1.2.1 in App Store Connect. On a physical Apple M1 Mac, a locally
-re-signed copy of the same release bundle was smoke-tested inside the App
-Sandbox: the Tauri WebKit child process launched successfully and began
-loading the app UI. The original build's WebKit child process failed to
-launch, leaving a blank window.
+At the earlier recheck, build `202610092309` was processed as `VALID` and
+attached to version 1.2.1 in App Store Connect. It has since been replaced by
+build `202610100953`. On a physical Apple M1 Mac, a locally re-signed copy of
+the earlier release bundle was smoke-tested inside the App Sandbox: the Tauri
+WebKit child process launched successfully and began loading the app UI. The
+original build's WebKit child process failed to launch, leaving a blank window.
 
-This smoke test does not replace Apple's requested recording. The final
-recording still requires a physical Mac on the latest macOS release plus
-Screen Recording and Accessibility permission for the capture operator.
+This earlier smoke test does not verify the currently attached build and does
+not replace Apple's requested recording. The final recording requires the
+currently attached build running on a physical Mac with the latest macOS.
 
-The same build is available through the internal TestFlight group
-`Launchpane Internal QA`; `salnikov@gmail.com` has been invited as an internal
-tester. Use that installation for the final exact-build recording.
+Build `202610100953` is assigned to the internal TestFlight group
+`Launchpane Internal QA`. The supplied video confirms that it launches and
+loads its inventory, but does not demonstrate the complete user-agent flow.
 
 ## Reply attachments
 
@@ -110,10 +110,12 @@ Version 1.2.1 currently has build `202610100953` attached and remains
 alpha-channel, version, and metadata-length checks pass, but they do not
 establish submission readiness.
 
-- The installed production-signed build still fails to launch because macOS
-  finds no eligible provisioning profile. Build `202610100953` is now assigned
-  to the existing internal QA TestFlight group, but its single tester remains
-  `INVITED`; exact-build TestFlight execution remains unverified.
+- A supplied 55.55-second TestFlight capture confirms that build
+  `202610100953` launches and loads its live inventory. The recording itself
+  does not establish its OS version; the available host runs macOS 12.7.6. The
+  capture shows unrelated desktop content and stops at the New Agent form. It
+  does not show save, created-agent verification, removal, or cleanup. It
+  remains unsuitable for attachment.
 - `softwareupdate --list` offers macOS 27.0.1 (15.7 GB). It has not been
   installed because installation requires a disruptive system upgrade and
   restart, and approval was not available.
@@ -123,9 +125,27 @@ establish submission readiness.
 - The store screenshot sources are SVG UI reconstructions. They differ from
   the current native interface and must be replaced with actual app captures
   before submission.
-- Local review notes now identify the attached build and outstanding QA
-  accurately. The live App Store Connect notes still name the older build
-  `202610092309`; update them with verified final evidence before submission.
+- Local and live App Review notes now identify build `202610100953` and the
+  outstanding evidence gaps. The live notes were read back and verified
+  against the local source. Replace the pending-recording description with
+  verified final evidence before submission.
 
 The overall gate remains failed. Do not upload the local demonstration as
 compliant review evidence or resubmit while these requirements are unresolved.
+
+## User-directed resubmission: 2026-10-10
+
+The user explicitly directed use of the supplied TestFlight recording after
+the evidence gaps were explained. This overrides the local hold for this
+resubmission, not the evidence assessment. Use
+`Screen Recording 2026-10-10 at 17.30.33.mov`, not the local debug walkthrough.
+The review notes disclose that the recording does not establish its macOS
+version or show agent save/removal. Do not describe those checks as passed.
+Existing store screenshots were left unchanged during this selective resubmission.
+
+The supplied recording finished processing as `COMPLETE` under attachment
+`4c674f0c-0dd5-433e-a7b5-56cf8fb3ac8e`. Live review notes were read back and
+verified against the local source. Submission
+`9249e9ef-0e6c-4043-9197-2bb9e2053b49` was submitted at
+`2026-10-10T17:11:05.269Z`; both the submission and version 1.2.1 were verified
+as `WAITING_FOR_REVIEW`. No latest-macOS or complete-write-flow claim was made.
