@@ -1,6 +1,7 @@
 import { execFileSync } from "node:child_process"
 import { readFileSync } from "node:fs"
 import { join } from "node:path"
+import { readCaptureManifest, SCREENSHOT_NAMES, SCREENSHOT_SIZES } from "./store-screenshot-source.ts"
 
 const ROOT = process.cwd()
 const METADATA = join(ROOT, "appstore", "metadata", "en-US")
@@ -38,11 +39,14 @@ function main(): void {
   assert(text("description.txt").length <= 4000, "Description exceeds 4000 characters")
   assert(text("privacy-policy-url.txt").includes("/privacy/"), "Privacy URL is not the privacy policy")
 
-  for (const name of ["overview.png", "detail.png", "login-items.png", "logs.png"]) {
-    const path = join(ROOT, "branding", "store", "screenshots", "2880x1800", name)
-    assert(imageProperty(path, "pixelWidth") === "2880", `${name} width is not 2880`)
-    assert(imageProperty(path, "pixelHeight") === "1800", `${name} height is not 1800`)
-    assert(imageProperty(path, "hasAlpha") === "no", `${name} contains an alpha channel`)
+  readCaptureManifest(ROOT)
+  for (const { width, height } of SCREENSHOT_SIZES) {
+    for (const name of SCREENSHOT_NAMES) {
+      const path = join(ROOT, "branding", "store", "screenshots", `${width}x${height}`, `${name}.png`)
+      assert(imageProperty(path, "pixelWidth") === String(width), `${name} width is not ${width}`)
+      assert(imageProperty(path, "pixelHeight") === String(height), `${name} height is not ${height}`)
+      assert(imageProperty(path, "hasAlpha") === "no", `${name} contains an alpha channel`)
+    }
   }
 
   const icon = join(ROOT, "branding", "store", "appstore-icon-1024.png")

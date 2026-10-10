@@ -40,6 +40,7 @@ pub struct LoadedService {
     pub last_exit_code: Option<i32>,
 }
 
+#[cfg(test)]
 pub fn parse_list_output(output: &str) -> Vec<LoadedService> {
     let mut services = Vec::new();
     for line in output.lines().skip(1) {
@@ -63,21 +64,62 @@ pub fn parse_list_output(output: &str) -> Vec<LoadedService> {
     services
 }
 
-pub fn list_loaded() -> Result<Vec<LoadedService>, AppError> {
+pub fn parse_domain_output(output: &str) -> Vec<LoadedService> {
+    let mut in_services = false;
+    let mut services = Vec::new();
+    for line in output.lines() {
+        let line = line.trim();
+        if line == "services = {" {
+            in_services = true;
+            continue;
+        }
+        if in_services && line == "}" {
+            break;
+        }
+        if !in_services {
+            continue;
+        }
+        let Some((pid, rest)) = line.split_once(char::is_whitespace) else {
+            continue;
+        };
+        let Some((exit_code, label)) = rest.trim_start().split_once(char::is_whitespace) else {
+            continue;
+        };
+        let Ok(pid) = pid.parse::<u32>() else {
+            continue;
+        };
+        if label.trim().is_empty() {
+            continue;
+        }
+        services.push(LoadedService {
+            label: label.trim().to_string(),
+            pid: (pid != 0).then_some(pid),
+            last_exit_code: exit_code.parse().ok(),
+        });
+    }
+    services
+}
+
+pub fn list_loaded(domain: &str) -> Result<Vec<LoadedService>, AppError> {
     let output = Command::new("launchctl")
-        .arg("list")
+        .args(["print", domain])
         .output()
-        .map_err(|e| AppError::Launchctl(format!("failed to run launchctl list: {e}")))?;
+        .map_err(|e| AppError::Launchctl(format!("failed to inspect {domain}: {e}")))?;
 
     if !output.status.success() {
         return Err(AppError::Launchctl(format!(
-            "launchctl list failed: {}",
+            "launchctl print {domain} failed: {}",
             String::from_utf8_lossy(&output.stderr)
         )));
     }
 
     let stdout = String::from_utf8_lossy(&output.stdout);
-    Ok(parse_list_output(&stdout))
+    if !stdout.lines().any(|line| line.trim() == "services = {") {
+        return Err(AppError::Launchctl(format!(
+            "Unrecognized launchctl print format for {domain}; cannot verify service state."
+        )));
+    }
+    Ok(parse_domain_output(&stdout))
 }
 
 pub fn parse_disabled_output(output: &str) -> HashMap<String, bool> {
@@ -114,9 +156,9 @@ pub fn list_disabled(domain: &str) -> Result<HashMap<String, bool>, AppError> {
     )))
 }
 
-pub fn bootstrap(plist_path: &str) -> Result<(), AppError> {
+pub fn bootstrap(domain: &str, plist_path: &str) -> Result<(), AppError> {
     let output = Command::new("launchctl")
-        .args(["bootstrap", &gui_domain(), plist_path])
+        .args(["bootstrap", domain, plist_path])
         .output()
         .map_err(|e| AppError::Launchctl(format!("failed to run launchctl bootstrap: {e}")))?;
 
@@ -138,9 +180,9 @@ pub fn bootstrap(plist_path: &str) -> Result<(), AppError> {
     Ok(())
 }
 
-pub fn bootout(plist_path: &str) -> Result<(), AppError> {
+pub fn bootout(domain: &str, label: &str) -> Result<(), AppError> {
     let output = Command::new("launchctl")
-        .args(["bootout", &gui_domain(), plist_path])
+        .args(["bootout", &service_target(domain, label)])
         .output()
         .map_err(|e| AppError::Launchctl(format!("failed to run launchctl bootout: {e}")))?;
 
@@ -160,10 +202,14 @@ pub fn bootout(plist_path: &str) -> Result<(), AppError> {
     Ok(())
 }
 
-pub fn kickstart(label: &str) -> Result<(), AppError> {
-    let domain = gui_domain();
-    let output = Command::new("launchctl")
-        .args(["kickstart", "-k", &service_target(&domain, label)])
+pub fn kickstart(domain: &str, label: &str, restart: bool) -> Result<(), AppError> {
+    let mut command = Command::new("launchctl");
+    command.arg("kickstart");
+    if restart {
+        command.arg("-k");
+    }
+    let output = command
+        .arg(service_target(domain, label))
         .output()
         .map_err(|e| AppError::Launchctl(format!("failed to run launchctl kickstart: {e}")))?;
 
@@ -209,6 +255,71 @@ pub fn disable(domain: &str, label: &str) -> Result<(), AppError> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn test_parse_domain_output_scopes_services_and_handles_pid_zero() {
+        let services = parse_domain_output(
+            "system = {\n services = {\n 123 0 example.running\n 0 (pe) example.idle\n 0 - example.waiting\n }\n endpoints = {\n 999 0 not.a.service\n }\n}",
+        );
+        assert_eq!(services.len(), 3);
+        assert_eq!(services[0].pid, Some(123));
+        assert_eq!(services[0].last_exit_code, Some(0));
+        assert_eq!(services[1].pid, None);
+        assert_eq!(services[1].last_exit_code, None);
+        assert_eq!(services[2].label, "example.waiting");
+    }
+
+    #[test]
+    #[ignore = "Creates a disposable service in this Mac's GUI launchd domain"]
+    fn real_gui_lifecycle() {
+        let dir = tempfile::tempdir().unwrap();
+        let label = format!("com.launchpane.featurecheck.{}", std::process::id());
+        let domain = gui_domain();
+        let path = dir.path().join("test.plist");
+        let path = path.to_str().unwrap();
+        std::fs::write(path, format!(
+            "<?xml version=\"1.0\"?><!DOCTYPE plist PUBLIC \"-//Apple//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\"><plist version=\"1.0\"><dict><key>Label</key><string>{label}</string><key>ProgramArguments</key><array><string>/bin/sleep</string><string>60</string></array><key>RunAtLoad</key><false/></dict></plist>"
+        )).unwrap();
+        struct Cleanup<'a>(&'a str, &'a str);
+        impl Drop for Cleanup<'_> {
+            fn drop(&mut self) {
+                if let Err(error) = bootout(self.0, self.1) {
+                    eprintln!("Fixture bootout cleanup failed: {error}");
+                }
+                if let Err(error) = enable(self.0, self.1) {
+                    eprintln!("Fixture enable cleanup failed: {error}");
+                }
+            }
+        }
+        let _cleanup = Cleanup(&domain, &label);
+        enable(&domain, &label).unwrap();
+        bootstrap(&domain, path).unwrap();
+        let service = || {
+            list_loaded(&domain)
+                .unwrap()
+                .into_iter()
+                .find(|s| s.label == label)
+        };
+        assert_eq!(service().unwrap().pid, None);
+        kickstart(&domain, &label, false).unwrap();
+        let pid = service().unwrap().pid.unwrap();
+        disable(&domain, &label).unwrap();
+        assert_eq!(list_disabled(&domain).unwrap().get(&label), Some(&true));
+        assert_eq!(service().unwrap().pid, Some(pid));
+        kickstart(&domain, &label, true).unwrap();
+        assert_ne!(service().unwrap().pid.unwrap(), pid);
+        bootout(&domain, &label).unwrap();
+        assert!(service().is_none());
+        assert!(bootstrap(&domain, path).is_err());
+        enable(&domain, &label).unwrap();
+        bootstrap(&domain, path).unwrap();
+        assert!(service().is_some());
+        bootout(&domain, &label).unwrap();
+        assert!(service().is_none());
+        eprintln!(
+            "Verified GUI Load / Run / Restart / Disable while running / Unload / disabled Load rejection / Enable + Load."
+        );
+    }
 
     #[test]
     fn test_parse_list_output_basic() {

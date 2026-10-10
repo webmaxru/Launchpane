@@ -12,23 +12,39 @@ Browse user LaunchAgents (`~/Library/LaunchAgents/`), system agents/daemons, and
 
 - List User Agents (`~/Library/LaunchAgents/`), System Agents, System Daemons, and Login Items
 - Search by label and filter by source (User / Home / System / Daemon / Login Items)
-- Start / Stop / Restart / Test Run (immediate execution) for User Agents
+- Load / Run now / Stop (Unload) / Restart / Enable / Disable for user and shared GUI agents; administrator controls for system daemons
 - Create new agents, edit and delete existing ones
 - Schedule configuration (interval / calendar) with next run time preview
 - View stdout / stderr logs
 - Inspect plist configuration details
 - Reveal plist file in Finder
 
-System Agents and Daemons are read-only. Modification operations are limited to User Agents.
+In the standalone build, `/Library/LaunchAgents` can be controlled in the current
+user's GUI session without root. `/Library/LaunchDaemons` require **Open
+Administrator Window**. Shared system plist files remain protected from editing
+and removal, including in administrator mode.
 
 Login Items are the background helpers that apps register with macOS ServiceManagement
 (`<App>.app/Contents/Library/LoginItems/<Helper>.app`). They have no plist file of their own, so the
-only supported action is Enable / Disable; load, unload, run and remove controls are intentionally
-left empty for them. A parent app may re-register its helper the next time it launches.
+supported actions are Enable / Disable and, while registered, Run now / Restart /
+Unload. Load, Edit and Remove are hidden. Unloading requires confirmation because
+only the parent app can register the helper again; Enable alone does not reload
+it. A parent app may re-register its helper the next time it launches.
+
+See the [standalone action availability tables](docs/native-actions.md) for every
+action's privilege requirements, state dependencies, reasons for disabling or
+hiding it, and real-Mac verification limits. Enable does not load or start;
+Disable does not stop an already loaded service.
+
+The Mac App Store edition has no administrator access: shared agents and daemons
+are read-only, and login helpers retain Enable/Disable only. Edition-specific
+limits stay visible with explanations and a project documentation/source link.
+See the [App Store action and review-policy tables](docs/app-store-actions.md).
 
 ## Install
 
-This app is not code-signed. Download and install via CLI:
+The existing **v1.2.1** downloads are unsigned. Download and install that
+version via CLI:
 
 ```bash
 # Download and extract (Apple Silicon)
@@ -40,6 +56,74 @@ xattr -cr /Applications/Launchpane.app
 For Intel Macs, replace `aarch64` with `x64`.
 
 DMG installers are also available on the [Releases](https://github.com/webmaxru/Launchpane/releases) page.
+Universal builds are available as `Launchpane_universal.app.tar.gz` and a
+versioned Universal DMG. Releases include `SHA256SUMS` for all six downloads.
+These standalone builds are unsigned and unnotarized; they are separate from
+the sandboxed Mac App Store edition. New tagged releases are signed and
+notarized after the `macos-distribution` GitHub environment is configured;
+the existing v1.2.1 assets are not replaced. For a signed release, download
+the DMG and follow the normal macOS installation prompts—do not remove
+quarantine attributes.
+
+## GitHub release pipeline
+
+Pushing a `v<version>` tag runs **Standalone release**. The tag must match
+`package.json`, both Rust version records, and `src-tauri/tauri.conf.json`.
+The pipeline checks the frontend and both backend editions, then builds
+Apple Silicon, Intel, and Universal standalone apps and DMGs. It verifies
+bundle versions, CPU architectures, license inclusion, and DMG integrity,
+imports a Developer ID certificate into a temporary keychain, signs with
+Hardened Runtime, notarizes and staples the apps and DMGs, verifies
+Gatekeeper acceptance, packages the `.app` archives, and generates SHA-256
+checksums. It fails rather than silently publishing unsigned or unstapled
+artifacts.
+
+Only after all builds succeed does it upload all seven assets to a draft
+GitHub release and publish it as latest. A failed build publishes nothing;
+a failed upload leaves a draft, never a partial public release.
+
+### Configure macOS distribution credentials
+
+Before running a signed release, create a **Developer ID Application**
+certificate in the Apple Developer account, export its certificate and private
+key as a password-protected `.p12`, and create an App Store Connect API key
+with access to submit software for notarization. The separate **Developer ID
+Installer** certificate is not needed for the app archives and DMGs.
+
+In GitHub **Settings → Environments**, configure the `macos-distribution`
+environment with these secrets:
+
+| Secret | Value |
+| --- | --- |
+| `DEVELOPER_ID_CERTIFICATE_BASE64` | Base64-encoded Developer ID Application `.p12`, including its private key |
+| `DEVELOPER_ID_CERTIFICATE_PASSWORD` | Password used when exporting the `.p12` |
+| `APPLE_SIGNING_IDENTITY` | Full `Developer ID Application: … (TEAMID)` identity shown by `security find-identity -v -p codesigning` |
+| `APPLE_API_KEY` | App Store Connect API key ID |
+| `APPLE_API_ISSUER` | App Store Connect issuer ID |
+| `APPLE_API_PRIVATE_KEY_BASE64` | Base64-encoded API `.p8` private key |
+
+Protect these secrets; never commit them or paste them into source files.
+Each macOS build runner imports the certificate into a temporary keychain,
+writes the API key to a temporary file, and removes both after the build.
+The workflow checks the imported identity, signed app, notarization tickets,
+stapling, and Gatekeeper assessments before it uploads anything. A missing
+secret or failed Apple notarization stops the release before publication.
+
+The existing **v1.2.1** release was created before these credentials were
+configured and remains unsigned and unnotarized. It is not silently replaced.
+After adding the secrets, publish a new version tag (for example `v1.2.2`) to
+produce signed downloads. App Store distribution continues to use its separate
+manual workflow and credentials.
+
+To publish a subsequent version, configure the distribution secrets above,
+bump the synchronized versions, commit all intended app changes, push the
+commit, and push its matching version tag.
+The workflow also supports manual dispatch with an existing tag. If a failed
+publication left a draft, inspect and delete that draft before retrying;
+the workflow does not overwrite existing releases.
+
+**Publish to Mac App Store** is manual-only and is not triggered by standalone
+tags. Its signing, upload, and review requirements remain separate.
 
 ## Tech Stack
 

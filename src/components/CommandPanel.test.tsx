@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest"
-import { buildCommands, shellQuote } from "@/components/CommandPanel"
+import { render, screen } from "@testing-library/react"
+import { buildCommands, CommandPanel, shellQuote } from "@/components/CommandPanel"
 import type { LaunchdJob } from "@/types"
 
 function job(overrides: Partial<LaunchdJob>): LaunchdJob {
@@ -32,6 +33,14 @@ function job(overrides: Partial<LaunchdJob>): LaunchdJob {
 }
 
 describe("CommandPanel command builders", () => {
+  it("distinguishes Store command references from in-app execution", () => {
+    render(<CommandPanel job={job({ source: "SystemDaemon" })} isAppStore />)
+    expect(screen.getByText(/Mac App Store edition: these commands are reference only/)).toHaveTextContent(
+      "Copying a command does not grant sandbox access or enable administrator controls."
+    )
+    expect(screen.getByRole("button", { name: "Copy restart command" })).toBeEnabled()
+  })
+
   it("quotes shell paths only when needed", () => {
     expect(shellQuote("/tmp/com.example.plist")).toBe("/tmp/com.example.plist")
     expect(shellQuote("/tmp/Launch Agents/example's job.plist")).toBe(
@@ -44,11 +53,13 @@ describe("CommandPanel command builders", () => {
 
     expect(commands.map((item) => item.command)).toEqual([
       "launchctl bootstrap gui/$(id -u) /Users/test/Library/LaunchAgents/com.example.agent.plist",
-      "launchctl bootout gui/$(id -u) /Users/test/Library/LaunchAgents/com.example.agent.plist",
+      "launchctl kickstart gui/$(id -u)/com.example.agent",
       "launchctl kickstart -k gui/$(id -u)/com.example.agent",
+      "launchctl bootout gui/$(id -u)/com.example.agent",
       "launchctl enable gui/$(id -u)/com.example.agent",
       "launchctl disable gui/$(id -u)/com.example.agent",
-      "rm /Users/test/Library/LaunchAgents/com.example.agent.plist",
+      "launchctl print gui/$(id -u)/com.example.agent",
+      "launchctl bootout gui/$(id -u)/com.example.agent && rm /Users/test/Library/LaunchAgents/com.example.agent.plist",
     ])
   })
 
@@ -70,7 +81,7 @@ describe("CommandPanel command builders", () => {
     )
   })
 
-  it("uses sudo for system agents", () => {
+  it("uses the user's GUI domain without sudo for Library agents", () => {
     const commands = buildCommands(
       job({
         source: "SystemAgent",
@@ -79,12 +90,13 @@ describe("CommandPanel command builders", () => {
     )
 
     expect(commands.map((item) => item.command)).toEqual([
-      "sudo launchctl bootstrap gui/$(id -u) /Library/LaunchAgents/com.example.agent.plist",
-      "sudo launchctl bootout gui/$(id -u) /Library/LaunchAgents/com.example.agent.plist",
-      "sudo launchctl kickstart -k gui/$(id -u)/com.example.agent",
-      "sudo launchctl enable gui/$(id -u)/com.example.agent",
-      "sudo launchctl disable gui/$(id -u)/com.example.agent",
-      "sudo rm /Library/LaunchAgents/com.example.agent.plist",
+      "launchctl bootstrap gui/$(id -u) /Library/LaunchAgents/com.example.agent.plist",
+      "launchctl kickstart gui/$(id -u)/com.example.agent",
+      "launchctl kickstart -k gui/$(id -u)/com.example.agent",
+      "launchctl bootout gui/$(id -u)/com.example.agent",
+      "launchctl enable gui/$(id -u)/com.example.agent",
+      "launchctl disable gui/$(id -u)/com.example.agent",
+      "launchctl print gui/$(id -u)/com.example.agent",
     ])
   })
 
@@ -98,14 +110,15 @@ describe("CommandPanel command builders", () => {
 
     expect(commands.map((item) => item.command)).toEqual([
       "sudo launchctl bootstrap system /Library/LaunchDaemons/com.example.agent.plist",
-      "sudo launchctl bootout system /Library/LaunchDaemons/com.example.agent.plist",
+      "sudo launchctl kickstart system/com.example.agent",
       "sudo launchctl kickstart -k system/com.example.agent",
+      "sudo launchctl bootout system/com.example.agent",
       "sudo launchctl enable system/com.example.agent",
       "sudo launchctl disable system/com.example.agent",
-      "sudo rm /Library/LaunchDaemons/com.example.agent.plist",
+      "launchctl print system/com.example.agent",
     ])
   })
-  it("offers only override and inspection commands for login items", () => {
+  it("offers plist-free runtime controls and no load or remove for login items", () => {
     const commands = buildCommands(
       job({
         label: "com.spotify.client.startuphelper",
@@ -116,6 +129,9 @@ describe("CommandPanel command builders", () => {
     )
 
     expect(commands.map((item) => item.command)).toEqual([
+      "launchctl kickstart gui/$(id -u)/com.spotify.client.startuphelper",
+      "launchctl kickstart -k gui/$(id -u)/com.spotify.client.startuphelper",
+      "launchctl bootout gui/$(id -u)/com.spotify.client.startuphelper",
       "launchctl enable gui/$(id -u)/com.spotify.client.startuphelper",
       "launchctl disable gui/$(id -u)/com.spotify.client.startuphelper",
       "launchctl print gui/$(id -u)/com.spotify.client.startuphelper",

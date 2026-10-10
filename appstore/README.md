@@ -28,6 +28,11 @@ Create these items in the Apple Developer and App Store Connect portals:
 Mac App Store review is not guaranteed: launch-service management needs
 temporary sandbox exceptions that Apple evaluates case by case.
 
+The [App Store action table and link-policy assessment](../docs/app-store-actions.md)
+documents disabled edition-specific controls, their hints, and the neutral
+GitHub project link. A feature build or local ad-hoc signature does not replace
+exact-build sandbox QA or establish App Review approval.
+
 ## GitHub environment and secrets
 
 Create a protected GitHub environment named `mac-app-store`. Add an approval
@@ -62,12 +67,9 @@ Run **Publish to Mac App Store** from GitHub Actions. By default it uploads the
 build without submitting it for review. The dispatch form can also submit for
 review and choose automatic release after approval.
 
-Pushing a version tag also uploads a build but does not submit it automatically:
-
-```bash
-pnpm version:patch
-git push origin main --follow-tags
-```
+Version tags publish only the standalone GitHub distribution. Store publishing
+is manual-only: dispatch **Publish to Mac App Store** for the intended source
+ref after preparing current captures, credentials, and submission QA.
 
 The workflow:
 
@@ -85,7 +87,8 @@ The age-rating declaration is uploaded from [`age-rating.json`](age-rating.json)
 The App Review recording shot list and test checklist are maintained in
 [`review-recording.md`](review-recording.md). The recording itself must be
 captured on a physical Mac and attached in App Store Connect; it is not
-generated from the screenshot mockup pipeline.
+generated from the native screenshot resizing pipeline. Screenshot provenance
+must match the current app sources before the workflow can regenerate assets.
 
 ## Local release
 
@@ -120,6 +123,26 @@ pnpm appstore:release
 ```
 
 The signed package is placed in `release/appstore/`.
+
+### Local build and asset outputs
+
+The current native capture set generates four screenshots at each of the four
+supported sizes. `pnpm appstore:prepare` places the largest set and updated
+metadata in `release/appstore/fastlane/`; it preserves existing app bundles and
+installer packages.
+
+Local builds are recorded in `release/build-status.json`, with checksums in
+`release/SHA256SUMS`. Standalone app bundles and DMGs are in
+`release/standalone/{universal,arm64,x86_64}/`. Store artifacts are in
+`release/appstore/`: `Launchpane-unsigned.app`, `Launchpane-unsigned.pkg`, and a
+separate `Launchpane-sandbox-preview.app` signed ad-hoc for local inspection.
+The preview has a distinct executable name to avoid native automation targeting
+another open Launchpane instance.
+
+These are not production-signed releases. Distribution signing requires access
+to the signing key; local assets do not establish App Review compliance or
+replace exact submitted-build QA and the requested physical-Mac recording.
+Nothing is uploaded by the screenshot, verification, or preparation commands.
 
 ## Public pages
 

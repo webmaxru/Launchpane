@@ -24,7 +24,8 @@ import {
   Loader2,
 } from "lucide-react"
 import type { PendingAction } from "@/types"
-import type { SyntheticEvent } from "react"
+import { useRef, useState, type SyntheticEvent } from "react"
+import { actionAvailability, type RuntimeAction } from "@/lib/job-actions"
 
 function formatRelativeTime(epochMillis: string): string {
   const ms = Number(epochMillis)
@@ -45,6 +46,7 @@ function formatRelativeTime(epochMillis: string): string {
 type JobRowProps = {
   job: JobListEntry
   isAdministrator: boolean
+  isAppStore?: boolean
   pendingAction?: PendingAction | null
   onStart: (job: JobListEntry) => void
   onStop: (job: JobListEntry) => void
@@ -159,7 +161,7 @@ export function EnabledBadge({ enabled, pendingKind = null }: EnabledBadgeProps)
     return (
       <Badge
         className="border-0 bg-secondary text-secondary-foreground shadow-none"
-        title="Disabled. launchd will not load this job until it is enabled again."
+        title="Disabled. Future registration is blocked until enabled again. An already loaded service can still run."
         data-testid="enabled-badge"
       >
         <span className="size-1.5 rounded-full bg-zinc-400" />
@@ -182,6 +184,7 @@ export function EnabledBadge({ enabled, pendingKind = null }: EnabledBadgeProps)
 export function JobRow({
   job,
   isAdministrator,
+  isAppStore = false,
   pendingAction = null,
   onStart,
   onStop,
@@ -193,32 +196,48 @@ export function JobRow({
   onSelect,
   onRevealInFinder,
 }: JobRowProps) {
+  const menuTriggerRef = useRef<HTMLButtonElement>(null)
+  const [menuPlacement, setMenuPlacement] = useState<{
+    side: "top" | "bottom"
+    maxHeight: number
+  } | null>(null)
+  const placeMenu = (open: boolean) => {
+    if (!open || !menuTriggerRef.current) return
+    const viewportHeight = document.documentElement.clientHeight || window.innerHeight
+    const rect = menuTriggerRef.current.getBoundingClientRect()
+    const above = Math.max(0, Math.min(viewportHeight, rect.top) - 12)
+    const below = Math.max(0, viewportHeight - Math.max(0, rect.bottom) - 12)
+    setMenuPlacement({
+      side: above > below ? "top" : "bottom",
+      maxHeight: Math.min(viewportHeight * 0.7, Math.max(above, below)),
+    })
+  }
   const isUserAgent = job.source === "UserAgent"
   const isLoginItem = job.source === "LoginItem"
-  const canToggle = isUserAgent || isLoginItem || isAdministrator
   const isPending = pendingAction?.plistPath === job.plist_path
+  const busy = pendingAction != null
   const isTogglePending =
     isPending &&
     (pendingAction?.kind === "enable" || pendingAction?.kind === "disable")
   const pendingToggleKind =
-    pendingAction?.kind === "enable" || pendingAction?.kind === "disable"
+    isPending && (pendingAction?.kind === "enable" || pendingAction?.kind === "disable")
       ? pendingAction.kind
       : null
-  const toggleLabel = job.enabled === true ? "Disable" : "Enable"
-  const handleToggle = job.enabled === true ? onDisable : onEnable
   const primaryAction =
-    !isUserAgent
+    isLoginItem && job.status === "Unloaded"
       ? null
       : job.status === "Running"
         ? {
+            action: "unload" as const,
             label: "Stop",
             description:
-              "Unload this running service now. Its plist file and enabled setting are unchanged.",
+              "Stop and unregister this service. Its enabled setting is unchanged. For login items, the parent app must register the helper again.",
             icon: Square,
             run: onStop,
           }
         : job.status === "Loaded"
           ? {
+              action: "run" as const,
               label: "Run now",
               description:
                 "Ask launchd to start this loaded service immediately without changing its schedule.",
@@ -226,6 +245,7 @@ export function JobRow({
               run: onKickstart,
             }
           : {
+              action: "load" as const,
               label: "Load",
               description:
                 "Register this plist with launchd now. This does not change whether the service is enabled.",
@@ -233,6 +253,37 @@ export function JobRow({
               run: onStart,
             }
   const PrimaryIcon = primaryAction?.icon
+  const primaryState = primaryAction
+    ? actionAvailability(job, primaryAction.action, isAdministrator, busy, isAppStore)
+    : null
+  const menuAction = (
+    action: RuntimeAction,
+    label: string,
+    Icon: typeof Play,
+    run: (job: JobListEntry) => void,
+    description: string
+  ) => {
+    const availability = actionAvailability(job, action, isAdministrator, busy, isAppStore)
+    if (availability.hidden) return null
+    return (
+      <DropdownMenuItem
+        disabled={availability.reason !== null}
+        aria-label={label}
+        aria-description={availability.reason ?? description}
+        onSelect={() => run(job)}
+        title={availability.reason ?? description}
+        className="items-start"
+      >
+        <Icon className="mt-0.5 shrink-0" />
+        <span>
+          {label}
+          {availability.reason && (
+            <span className="mt-0.5 block text-xs leading-relaxed">{availability.reason}</span>
+          )}
+        </span>
+      </DropdownMenuItem>
+    )
+  }
   const openDetails = () => {
     if (!isPending) onSelect(job)
   }
@@ -275,10 +326,14 @@ export function JobRow({
       <TableCell className="text-muted-foreground text-xs tabular-nums">
         {job.last_run_at ? formatRelativeTime(job.last_run_at) : "—"}
       </TableCell>
-      <TableCell className="pr-3" onClick={stopRowActivation}>
+      <TableCell className="pr-3" onClick={stopRowActivation} onKeyDown={stopRowActivation}>
         <div className="flex items-center justify-end gap-1" data-testid="row-actions">
           {primaryAction && PrimaryIcon && (
-            <Hint label={primaryAction.label} description={primaryAction.description}>
+            <Hint
+              label={primaryAction.label}
+              description={primaryState?.reason ?? primaryAction.description}
+              disabled={!!primaryState?.reason && !busy}
+            >
               <Button
                 variant="outline"
                 size="sm"
@@ -287,7 +342,8 @@ export function JobRow({
                   event.stopPropagation()
                   primaryAction.run(job)
                 }}
-                disabled={isPending}
+                disabled={primaryState?.reason != null}
+                title={primaryState?.reason ?? primaryAction.description}
               >
                 {isPending ? (
                   <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -298,7 +354,7 @@ export function JobRow({
               </Button>
             </Hint>
           )}
-          <DropdownMenu>
+          <DropdownMenu onOpenChange={placeMenu}>
             <DropdownMenuTrigger asChild>
               <Button
                 variant="ghost"
@@ -306,11 +362,18 @@ export function JobRow({
                 className="h-8 w-8"
                 disabled={isPending}
                 aria-label={`Actions for ${job.label}`}
+                ref={menuTriggerRef}
               >
                 <MoreHorizontal className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-52">
+            <DropdownMenuContent
+              align="end"
+              side={menuPlacement?.side}
+              collisionPadding={8}
+              style={{ maxHeight: menuPlacement?.maxHeight }}
+              className="w-80 max-h-[min(70vh,var(--radix-dropdown-menu-content-available-height))] overflow-y-auto"
+            >
               <DropdownMenuLabel className="truncate" title={job.label}>
                 {job.label}
               </DropdownMenuLabel>
@@ -319,32 +382,12 @@ export function JobRow({
                 <Eye />
                 View details
               </DropdownMenuItem>
-              {isUserAgent && job.status !== "Unloaded" && (
-                <>
-                  {job.status === "Loaded" && (
-                    <DropdownMenuItem onSelect={() => onStop(job)}>
-                      <Square />
-                      Unload
-                    </DropdownMenuItem>
-                  )}
-                  <DropdownMenuItem onSelect={() => onRestart(job)}>
-                    <RotateCw />
-                    Restart
-                  </DropdownMenuItem>
-                  {job.status === "Running" && (
-                    <DropdownMenuItem onSelect={() => onKickstart(job)}>
-                      <Zap />
-                      Run now
-                    </DropdownMenuItem>
-                  )}
-                </>
-              )}
-              {canToggle && (
-                <DropdownMenuItem onSelect={() => handleToggle(job)}>
-                  {isTogglePending ? <Loader2 className="animate-spin" /> : <Power />}
-                  {toggleLabel}
-                </DropdownMenuItem>
-              )}
+              {menuAction("load", "Load", Play, onStart, "Register the enabled plist with launchd; RunAtLoad or KeepAlive may start it immediately.")}
+              {menuAction("run", "Run now", Zap, onKickstart, "Start a loaded service without changing its schedule or enabled setting.")}
+              {menuAction("unload", "Unload", Square, onStop, "Stop and unregister this service without disabling it. A login item's parent app must register it again.")}
+              {menuAction("restart", "Restart", RotateCw, onRestart, "Terminate the current instance, if any, and ask launchd to start a new one.")}
+              {menuAction("enable", "Enable", Power, onEnable, "Allow future registration. Does not load or start the service.")}
+              {menuAction("disable", "Disable", Power, onDisable, "Prevent future registration. Does not stop a loaded or running service.")}
               <DropdownMenuItem onSelect={() => onRevealInFinder(job)}>
                 <FolderOpen />
                 Reveal in Finder
@@ -354,6 +397,7 @@ export function JobRow({
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
                     variant="destructive"
+                    disabled={busy}
                     onSelect={() => onDelete(job)}
                   >
                     <Trash2 />

@@ -5,3 +5,6 @@ Launchpane 1.2.1
 - Search, filter, inspect, and edit plist files with confidence
 - Faster status feedback and better action confirmation flows
 - Improved App Store release assets and submission-ready branding
+- Explicit Mac App Store explanations for unavailable administrator and shared-service controls
+- Clearer action availability based on service registration and enabled state
+- An optional GitHub project documentation and source link

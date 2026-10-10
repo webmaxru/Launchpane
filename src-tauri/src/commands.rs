@@ -51,9 +51,9 @@ fn is_home_agent(source: &JobSource, config: &PlistConfig) -> bool {
     if *source != JobSource::UserAgent {
         return false;
     }
-    let home = match dirs::home_dir() {
-        Some(h) => h.to_string_lossy().into_owned(),
-        None => return false,
+    let home = match crate::user_paths::home_dir() {
+        Ok(h) => h.to_string_lossy().into_owned(),
+        Err(_) => return false,
     };
     if home.is_empty() {
         return false;
@@ -85,12 +85,11 @@ fn is_home_agent(source: &JobSource, config: &PlistConfig) -> bool {
     strings.iter().any(|s| references_home_path(s, &home))
 }
 
-/// Login items are owned by their parent application. The app may only flip their
-/// launchd enable override; load/unload/run/remove would corrupt another app's bundle.
+/// Login items have no standalone launchd plist to load, edit or remove.
 fn ensure_not_login_item(plist_path: &str, action: &str) -> Result<(), AppError> {
     if login_items::is_login_item_path(plist_path) {
         return Err(AppError::Launchctl(format!(
-            "Login items cannot be {action}. They are managed by their parent app; use Enable or Disable instead."
+            "Login items cannot be {action}. Their parent app owns registration and bundle files; use the supported runtime controls instead."
         )));
     }
     Ok(())
@@ -98,11 +97,11 @@ fn ensure_not_login_item(plist_path: &str, action: &str) -> Result<(), AppError>
 
 fn ensure_user_agent(plist_path: &str) -> Result<(), AppError> {
     ensure_not_login_item(plist_path, "controlled directly")?;
-    let home = dirs::home_dir().unwrap_or_default();
+    let home = crate::user_paths::home_dir()?;
     let user_agents = home.join("Library/LaunchAgents");
     if !std::path::Path::new(plist_path).starts_with(&user_agents) {
         return Err(AppError::Launchctl(
-            "Cannot start/stop system agents or daemons. Only user agents (~/Library/LaunchAgents) can be managed."
+            "Only user-agent plist files (~/Library/LaunchAgents) can be edited or removed. Shared system configuration is protected."
                 .to_string(),
         ));
     }
@@ -113,7 +112,7 @@ fn source_for_path(plist_path: &str) -> Option<JobSource> {
     if login_items::is_login_item_path(plist_path) {
         return Some(JobSource::LoginItem);
     }
-    let home = dirs::home_dir().unwrap_or_default();
+    let home = crate::user_paths::home_dir().ok()?;
     let user_agents = home.join("Library/LaunchAgents");
     let path = std::path::Path::new(plist_path);
     if path.starts_with(user_agents) {
@@ -136,12 +135,32 @@ fn ensure_toggle_allowed(plist_path: &str, source: &JobSource) -> Result<(), App
             "Job source does not match its plist path.".to_string(),
         ));
     }
-    // User agents and login items both live in the user's own GUI domain.
-    let user_owned = matches!(actual_source, JobSource::UserAgent | JobSource::LoginItem);
+    ensure_store_control_allowed(source, false)?;
+    // /Library LaunchAgents run in the current user's GUI domain too. Their
+    // root-owned plist is not being edited by launchctl lifecycle operations.
+    let user_owned = actual_source != JobSource::SystemDaemon;
     if !user_owned && !launchctl::is_administrator() {
         return Err(AppError::Launchctl(
-            "Administrator mode is required to manage system jobs.".to_string(),
+            "Administrator mode is required to manage system daemons.".to_string(),
         ));
+    }
+    Ok(())
+}
+
+fn ensure_store_control_allowed(source: &JobSource, lifecycle: bool) -> Result<(), AppError> {
+    if cfg!(feature = "app-store") {
+        if matches!(source, JobSource::SystemAgent | JobSource::SystemDaemon) {
+            return Err(AppError::Launchctl(
+                "Unavailable in the Mac App Store edition: shared agents and system daemons are read-only."
+                    .to_string(),
+            ));
+        }
+        if *source == JobSource::LoginItem && lifecycle {
+            return Err(AppError::Launchctl(
+                "Unavailable in the Mac App Store edition: login helpers support Enable and Disable only; their parent app manages their lifecycle."
+                    .to_string(),
+            ));
+        }
     }
     Ok(())
 }
@@ -181,9 +200,7 @@ fn verified_enabled_state(
     let plist_disabled = if *source == JobSource::LoginItem {
         None
     } else {
-        plist_util::parse_plist(plist_path)
-            .ok()
-            .and_then(|config| config.disabled)
+        plist_util::parse_plist(plist_path)?.disabled
     };
     Ok(effective_enabled(
         &disabled_overrides,
@@ -194,14 +211,17 @@ fn verified_enabled_state(
 
 #[tauri::command]
 pub async fn list_jobs() -> Result<Vec<JobListEntry>, AppError> {
-    let plist_files = plist_util::scan_plist_files();
-    let loaded = launchctl::list_loaded().unwrap_or_default();
+    let plist_files = plist_util::scan_plist_files()?;
     let gui_domain = launchctl::gui_domain();
-    let gui_disabled = launchctl::list_disabled(&gui_domain).unwrap_or_default();
-    let system_disabled = launchctl::list_disabled("system").unwrap_or_default();
+    let loaded = launchctl::list_loaded(&gui_domain)?;
+    let system_loaded = launchctl::list_loaded("system")?;
+    let gui_disabled = launchctl::list_disabled(&gui_domain)?;
+    let system_disabled = launchctl::list_disabled("system")?;
 
     let loaded_map: HashMap<String, &launchctl::LoadedService> =
         loaded.iter().map(|s| (s.label.clone(), s)).collect();
+    let system_loaded_map: HashMap<String, &launchctl::LoadedService> =
+        system_loaded.iter().map(|s| (s.label.clone(), s)).collect();
 
     let mut entries = Vec::new();
     for (path, source) in plist_files {
@@ -210,7 +230,12 @@ pub async fn list_jobs() -> Result<Vec<JobListEntry>, AppError> {
             Err(_) => continue,
         };
 
-        let (status, pid, exit_code) = if let Some(svc) = loaded_map.get(&config.label) {
+        let services = if source == JobSource::SystemDaemon {
+            &system_loaded_map
+        } else {
+            &loaded_map
+        };
+        let (status, pid, exit_code) = if let Some(svc) = services.get(&config.label) {
             let status = if svc.pid.is_some() {
                 JobStatus::Running
             } else {
@@ -246,7 +271,7 @@ pub async fn list_jobs() -> Result<Vec<JobListEntry>, AppError> {
         });
     }
 
-    let extras = login_item_entries(&loaded_map, &gui_disabled, &entries);
+    let extras = login_item_entries(&loaded_map, &gui_disabled, &entries)?;
     entries.extend(extras);
 
     entries.sort_by(|a, b| a.label.cmp(&b.label));
@@ -260,11 +285,11 @@ fn login_item_entries(
     loaded_map: &HashMap<String, &launchctl::LoadedService>,
     gui_disabled: &HashMap<String, bool>,
     existing: &[JobListEntry],
-) -> Vec<JobListEntry> {
+) -> Result<Vec<JobListEntry>, AppError> {
     let known_labels: std::collections::HashSet<&str> =
         existing.iter().map(|e| e.label.as_str()).collect();
 
-    login_items::scan_login_items()
+    Ok(login_items::scan_login_items()?
         .into_iter()
         .filter(|item| !known_labels.contains(item.label.as_str()))
         .filter_map(|item| {
@@ -294,19 +319,19 @@ fn login_item_entries(
                 is_home_agent: false,
             })
         })
-        .collect()
+        .collect())
 }
 
 /// Builds detail for a login item. There is no plist to parse, so the config carries only
 /// what the helper bundle itself declares; every plist-only field stays empty.
 fn login_item_detail(bundle_path: String) -> Result<LaunchdJob, AppError> {
-    let label = login_items::scan_login_items()
+    let label = login_items::scan_login_items()?
         .into_iter()
         .find(|item| item.bundle_path == bundle_path)
         .map(|item| item.label)
         .ok_or_else(|| AppError::NotFound(bundle_path.clone()))?;
 
-    let loaded = launchctl::list_loaded().unwrap_or_default();
+    let loaded = launchctl::list_loaded(&launchctl::gui_domain())?;
     let svc = loaded.iter().find(|s| s.label == label);
     let (status, pid, exit_code) = match svc {
         Some(s) if s.pid.is_some() => (JobStatus::Running, s.pid, s.last_exit_code),
@@ -352,7 +377,9 @@ pub async fn get_job_detail(plist_path: String) -> Result<LaunchdJob, AppError> 
     }
 
     let plist = plist_util::parse_plist(&plist_path)?;
-    let loaded = launchctl::list_loaded().unwrap_or_default();
+    let source = source_for_path(&plist_path)
+        .ok_or_else(|| AppError::Launchctl("Unknown launchd directory.".to_string()))?;
+    let loaded = launchctl::list_loaded(&domain_for_source(&source))?;
 
     let svc = loaded.iter().find(|s| s.label == plist.label);
     let (status, pid, exit_code) = match svc {
@@ -365,14 +392,6 @@ pub async fn get_job_detail(plist_path: String) -> Result<LaunchdJob, AppError> 
             (status, s.pid, s.last_exit_code)
         }
         None => (JobStatus::Unloaded, None, None),
-    };
-
-    let source = if plist_path.contains("/Library/LaunchDaemons") {
-        crate::types::JobSource::SystemDaemon
-    } else if plist_path.starts_with("/Library/LaunchAgents") {
-        crate::types::JobSource::SystemAgent
-    } else {
-        crate::types::JobSource::UserAgent
     };
 
     let last_run_at = get_last_run_at(&plist);
@@ -390,35 +409,96 @@ pub async fn get_job_detail(plist_path: String) -> Result<LaunchdJob, AppError> 
 
 #[tauri::command]
 pub async fn start_job(plist_path: String) -> Result<(), AppError> {
-    ensure_user_agent(&plist_path)?;
-    // Unload first to avoid "already loaded" or stale state
-    let _ = launchctl::bootout(&plist_path);
-    launchctl::bootstrap(&plist_path)
+    ensure_not_login_item(&plist_path, "loaded from a plist")?;
+    let (domain, label) = control_target(&plist_path, true)?;
+    require_enabled(&plist_path, &label)?;
+    if is_loaded(&domain, &label)? {
+        return Err(AppError::Launchctl(
+            "Already loaded. Use Run now or Restart.".to_string(),
+        ));
+    }
+    launchctl::bootstrap(&domain, &plist_path)?;
+    verify_loaded(&domain, &label, true)
 }
 
 #[tauri::command]
 pub async fn stop_job(plist_path: String) -> Result<(), AppError> {
-    ensure_user_agent(&plist_path)?;
-    launchctl::bootout(&plist_path)
+    let (domain, label) = control_target(&plist_path, true)?;
+    launchctl::bootout(&domain, &label)?;
+    verify_loaded(&domain, &label, false)
 }
 
 #[tauri::command]
 pub async fn restart_job(plist_path: String) -> Result<(), AppError> {
-    ensure_user_agent(&plist_path)?;
-    let _ = launchctl::bootout(&plist_path);
-    launchctl::bootstrap(&plist_path)
+    let (domain, label) = control_target(&plist_path, true)?;
+    if !is_loaded(&domain, &label)? {
+        return Err(AppError::Launchctl(
+            "Load the service before restarting it.".to_string(),
+        ));
+    }
+    launchctl::kickstart(&domain, &label, true)?;
+    verify_loaded(&domain, &label, true)
 }
 
 #[tauri::command]
 pub async fn kickstart_job(label: String, plist_path: String) -> Result<(), AppError> {
-    ensure_user_agent(&plist_path)?;
-    // Ensure the service is loaded before kickstarting
-    let loaded = launchctl::list_loaded().unwrap_or_default();
-    let is_loaded = loaded.iter().any(|s| s.label == label);
-    if !is_loaded {
-        launchctl::bootstrap(&plist_path)?;
+    let (domain, actual_label) = control_target(&plist_path, true)?;
+    if label != actual_label {
+        return Err(AppError::Launchctl(
+            "Label does not match the selected service.".to_string(),
+        ));
     }
-    launchctl::kickstart(&label)
+    if !is_loaded(&domain, &label)? {
+        return Err(AppError::Launchctl(
+            "Load the service before running it.".to_string(),
+        ));
+    }
+    launchctl::kickstart(&domain, &label, false)?;
+    verify_loaded(&domain, &label, true)
+}
+
+fn control_target(plist_path: &str, lifecycle: bool) -> Result<(String, String), AppError> {
+    let source = source_for_path(plist_path)
+        .ok_or_else(|| AppError::Launchctl("Unknown launchd directory.".to_string()))?;
+    ensure_toggle_allowed(plist_path, &source)?;
+    ensure_store_control_allowed(&source, lifecycle)?;
+    let label = if source == JobSource::LoginItem {
+        login_items::scan_login_items()?
+            .into_iter()
+            .find(|item| item.bundle_path == plist_path)
+            .map(|item| item.label)
+            .ok_or_else(|| AppError::NotFound(plist_path.to_string()))?
+    } else {
+        plist_util::parse_plist(plist_path)?.label
+    };
+    Ok((domain_for_source(&source), label))
+}
+
+fn require_enabled(plist_path: &str, label: &str) -> Result<(), AppError> {
+    let source = source_for_path(plist_path)
+        .ok_or_else(|| AppError::Launchctl("Unknown launchd directory.".to_string()))?;
+    if !verified_enabled_state(&source, label, plist_path)? {
+        return Err(AppError::Launchctl(
+            "Enable this service before loading it.".to_string(),
+        ));
+    }
+    Ok(())
+}
+
+fn is_loaded(domain: &str, label: &str) -> Result<bool, AppError> {
+    Ok(launchctl::list_loaded(domain)?
+        .iter()
+        .any(|service| service.label == label))
+}
+
+fn verify_loaded(domain: &str, label: &str, expected: bool) -> Result<(), AppError> {
+    if is_loaded(domain, label)? != expected {
+        return Err(AppError::Launchctl(format!(
+            "The command succeeded, but {domain}/{label} was not {}. Its owner may have changed its registration.",
+            if expected { "loaded" } else { "unloaded" }
+        )));
+    }
+    Ok(())
 }
 
 #[tauri::command]
@@ -428,11 +508,17 @@ pub async fn enable_job(
     source: JobSource,
 ) -> Result<bool, AppError> {
     ensure_toggle_allowed(&plist_path, &source)?;
+    let (_, actual_label) = control_target(&plist_path, false)?;
+    if label != actual_label {
+        return Err(AppError::Launchctl(
+            "Label does not match the selected service.".to_string(),
+        ));
+    }
     launchctl::enable(&domain_for_source(&source), &label)?;
     let enabled = verified_enabled_state(&source, &label, &plist_path)?;
     if !enabled {
         return Err(AppError::Launchctl(format!(
-            "launchctl enable succeeded, but '{label}' is still disabled. The plist's Disabled key may be overriding the launchctl override."
+            "launchctl enable succeeded, but '{label}' is still disabled when read back. Another process may have changed its enabled override."
         )));
     }
     Ok(enabled)
@@ -445,11 +531,17 @@ pub async fn disable_job(
     source: JobSource,
 ) -> Result<bool, AppError> {
     ensure_toggle_allowed(&plist_path, &source)?;
+    let (_, actual_label) = control_target(&plist_path, false)?;
+    if label != actual_label {
+        return Err(AppError::Launchctl(
+            "Label does not match the selected service.".to_string(),
+        ));
+    }
     launchctl::disable(&domain_for_source(&source), &label)?;
     let enabled = verified_enabled_state(&source, &label, &plist_path)?;
     if enabled {
         return Err(AppError::Launchctl(format!(
-            "launchctl disable succeeded, but '{label}' is still enabled. The plist's Disabled key may be overriding the launchctl override."
+            "launchctl disable succeeded, but '{label}' is still enabled when read back. Another process may have changed its enabled override."
         )));
     }
     Ok(enabled)
@@ -457,6 +549,7 @@ pub async fn disable_job(
 
 #[derive(serde::Serialize)]
 pub struct RuntimeInfo {
+    is_app_store: bool,
     is_administrator: bool,
     can_restart_as_administrator: bool,
     review_demo: bool,
@@ -465,7 +558,8 @@ pub struct RuntimeInfo {
 #[tauri::command]
 pub async fn get_runtime_info() -> RuntimeInfo {
     RuntimeInfo {
-        is_administrator: launchctl::is_administrator(),
+        is_app_store: cfg!(feature = "app-store"),
+        is_administrator: !cfg!(feature = "app-store") && launchctl::is_administrator(),
         can_restart_as_administrator: !cfg!(feature = "app-store"),
         review_demo: !cfg!(feature = "app-store")
             && std::env::var_os("LAUNCHPANE_REVIEW_DEMO").is_some(),
@@ -507,7 +601,8 @@ fn process_effective_uid(pid: u32) -> Option<u32> {
 #[cfg(feature = "app-store")]
 pub async fn restart_as_administrator(_app: tauri::AppHandle) -> Result<(), AppError> {
     Err(AppError::Launchctl(
-        "Administrator mode is not available in the Mac App Store build.".to_string(),
+        "Unavailable in the Mac App Store edition: administrator access is not supported."
+            .to_string(),
     ))
 }
 
@@ -601,13 +696,13 @@ pub async fn restart_as_administrator(app: tauri::AppHandle) -> Result<(), AppEr
 
 #[tauri::command]
 pub async fn save_job(plist_path: String, config: PlistConfig) -> Result<(), AppError> {
-    ensure_not_login_item(&plist_path, "edited")?;
+    ensure_user_agent(&plist_path)?;
     plist_util::write_plist(&plist_path, &config)
 }
 
 #[tauri::command]
 pub async fn create_job(label: String, config: PlistConfig) -> Result<String, AppError> {
-    let agents_dir = plist_util::get_user_agents_dir();
+    let agents_dir = plist_util::get_user_agents_dir()?;
     if !agents_dir.exists() {
         std::fs::create_dir_all(&agents_dir)?;
     }
@@ -633,15 +728,22 @@ pub async fn create_job(label: String, config: PlistConfig) -> Result<String, Ap
 
 #[tauri::command]
 pub async fn save_raw_plist(plist_path: String, xml: String) -> Result<(), AppError> {
-    ensure_not_login_item(&plist_path, "edited")?;
+    ensure_user_agent(&plist_path)?;
     plist_util::write_raw_plist(&plist_path, &xml)
 }
 
 #[tauri::command]
 pub async fn delete_job(plist_path: String, label: String) -> Result<(), AppError> {
-    ensure_not_login_item(&plist_path, "removed")?;
-    let _ = launchctl::bootout(&plist_path);
-    let _ = launchctl::disable(&launchctl::gui_domain(), &label);
+    ensure_user_agent(&plist_path)?;
+    let (domain, actual_label) = control_target(&plist_path, true)?;
+    if label != actual_label {
+        return Err(AppError::Launchctl(
+            "Label does not match the selected service.".to_string(),
+        ));
+    }
+    launchctl::bootout(&domain, &label)?;
+    verify_loaded(&domain, &label, false)?;
+    launchctl::disable(&domain, &label)?;
     if std::path::Path::new(&plist_path).exists() {
         std::fs::remove_file(&plist_path)?;
     }
@@ -716,9 +818,10 @@ pub async fn open_log_in_editor(path: String) -> Result<(), AppError> {
 
 #[tauri::command]
 pub async fn get_home_dir() -> Result<String, AppError> {
-    dirs::home_dir()
-        .and_then(|p| p.to_str().map(String::from))
-        .ok_or_else(|| AppError::Launchctl("could not determine home directory".to_string()))
+    crate::user_paths::home_dir()?
+        .to_str()
+        .map(String::from)
+        .ok_or_else(|| AppError::Launchctl("Home directory is not valid UTF-8.".to_string()))
 }
 
 #[tauri::command]
@@ -727,6 +830,20 @@ pub async fn reveal_in_finder(path: String) -> Result<(), AppError> {
         .arg("-R")
         .arg(&path)
         .spawn()?;
+    Ok(())
+}
+
+#[tauri::command]
+pub async fn open_project_page() -> Result<(), AppError> {
+    let output = std::process::Command::new("/usr/bin/open")
+        .arg("https://github.com/webmaxru/Launchpane")
+        .output()?;
+    if !output.status.success() {
+        return Err(AppError::Launchctl(format!(
+            "Could not open the project page: {}",
+            String::from_utf8_lossy(&output.stderr).trim()
+        )));
+    }
     Ok(())
 }
 
@@ -843,6 +960,118 @@ mod tests {
     }
 
     #[test]
+    fn test_library_agents_are_controllable_in_own_gui_domain() {
+        assert_eq!(
+            ensure_toggle_allowed(
+                "/Library/LaunchAgents/com.example.plist",
+                &JobSource::SystemAgent
+            )
+            .is_ok(),
+            !cfg!(feature = "app-store")
+        );
+        assert!(
+            ensure_toggle_allowed(
+                "/Library/LaunchAgents/com.example.plist",
+                &JobSource::SystemDaemon
+            )
+            .is_err()
+        );
+    }
+
+    #[test]
+    fn test_daemon_changes_require_root() {
+        let result = ensure_toggle_allowed(
+            "/Library/LaunchDaemons/com.example.plist",
+            &JobSource::SystemDaemon,
+        );
+        assert_eq!(
+            result.is_ok(),
+            !cfg!(feature = "app-store") && launchctl::is_administrator()
+        );
+    }
+
+    #[test]
+    fn test_store_control_boundaries() {
+        for source in [
+            JobSource::UserAgent,
+            JobSource::SystemAgent,
+            JobSource::SystemDaemon,
+            JobSource::LoginItem,
+        ] {
+            for lifecycle in [false, true] {
+                let blocked = cfg!(feature = "app-store")
+                    && (matches!(source, JobSource::SystemAgent | JobSource::SystemDaemon)
+                        || (source == JobSource::LoginItem && lifecycle));
+                assert_eq!(
+                    ensure_store_control_allowed(&source, lifecycle).is_err(),
+                    blocked
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn test_runtime_info_reports_distribution() {
+        let info = tauri::async_runtime::block_on(get_runtime_info());
+        assert_eq!(info.is_app_store, cfg!(feature = "app-store"));
+        assert_eq!(info.can_restart_as_administrator, !info.is_app_store);
+        if info.is_app_store {
+            assert!(!info.is_administrator);
+            assert!(!info.review_demo);
+        }
+    }
+
+    #[test]
+    #[cfg(feature = "app-store")]
+    fn test_store_commands_reject_shared_changes_before_accessing_files() {
+        tauri::async_runtime::block_on(async {
+            for (source, path) in [
+                (
+                    JobSource::SystemAgent,
+                    "/Library/LaunchAgents/com.launchpane.not-real.plist",
+                ),
+                (
+                    JobSource::SystemDaemon,
+                    "/Library/LaunchDaemons/com.launchpane.not-real.plist",
+                ),
+            ] {
+                let results = [
+                    start_job(path.to_string()).await,
+                    stop_job(path.to_string()).await,
+                    restart_job(path.to_string()).await,
+                    kickstart_job("not-real".to_string(), path.to_string()).await,
+                    enable_job("not-real".to_string(), path.to_string(), source.clone())
+                        .await
+                        .map(|_| ()),
+                    disable_job("not-real".to_string(), path.to_string(), source)
+                        .await
+                        .map(|_| ()),
+                ];
+                for result in results {
+                    assert!(
+                        result
+                            .unwrap_err()
+                            .to_string()
+                            .contains("Mac App Store edition")
+                    );
+                }
+            }
+            for result in [
+                stop_job(LOGIN_ITEM_PATH.to_string()).await,
+                restart_job(LOGIN_ITEM_PATH.to_string()).await,
+                kickstart_job("not-real".to_string(), LOGIN_ITEM_PATH.to_string()).await,
+            ] {
+                assert!(
+                    result
+                        .unwrap_err()
+                        .to_string()
+                        .contains("Mac App Store edition")
+                );
+            }
+        });
+    }
+
+    #[test]
     fn test_login_items_reject_plist_only_actions() {
         assert!(ensure_not_login_item(LOGIN_ITEM_PATH, "removed").is_err());
         assert!(ensure_user_agent(LOGIN_ITEM_PATH).is_err());
@@ -906,5 +1135,248 @@ mod tests {
             process_effective_uid(std::process::id()),
             Some(launchctl::effective_uid())
         );
+    }
+
+    #[test]
+    #[ignore = "Requires authenticated root execution and the original user's HOME and LAUNCHPANE_USER_UID"]
+    fn real_administrator_feature_check() {
+        assert!(
+            launchctl::is_administrator(),
+            "Run this opt-in test as root"
+        );
+        assert_ne!(
+            launchctl::gui_domain(),
+            "gui/0",
+            "Preserve the original user's GUI domain"
+        );
+        tauri::async_runtime::block_on(async {
+            for (directory, source) in [
+                ("/Library/LaunchDaemons", JobSource::SystemDaemon),
+                ("/Library/LaunchAgents", JobSource::SystemAgent),
+            ] {
+                let label = format!(
+                    "com.launchpane.admincheck.{}.{}",
+                    std::process::id(),
+                    if source == JobSource::SystemDaemon {
+                        "daemon"
+                    } else {
+                        "agent"
+                    }
+                );
+                let path = format!("{directory}/{label}.plist");
+                assert!(
+                    !std::path::Path::new(&path).exists(),
+                    "Refusing to overwrite an existing file"
+                );
+                let domain = domain_for_source(&source);
+                struct Cleanup(String, String, String);
+                impl Drop for Cleanup {
+                    fn drop(&mut self) {
+                        if let Err(error) = launchctl::bootout(&self.0, &self.1) {
+                            eprintln!("Administrator fixture bootout cleanup failed: {error}");
+                        }
+                        if let Err(error) = launchctl::enable(&self.0, &self.1) {
+                            eprintln!("Administrator fixture enable cleanup failed: {error}");
+                        }
+                        if std::path::Path::new(&self.2).exists() {
+                            std::fs::remove_file(&self.2)
+                                .expect("Administrator fixture plist cleanup failed");
+                        }
+                    }
+                }
+                let _cleanup = Cleanup(domain.clone(), label.clone(), path.clone());
+                let mut config = cfg(Some("/bin/sleep"), Some(vec!["/bin/sleep", "60"]));
+                config.label = label.clone();
+                config.run_at_load = Some(false);
+                config.keep_alive = Some(false);
+                plist_util::write_plist(&path, &config).unwrap();
+                use std::os::unix::fs::PermissionsExt;
+                std::fs::set_permissions(&path, std::fs::Permissions::from_mode(0o644)).unwrap();
+                assert!(
+                    enable_job(label.clone(), path.clone(), source.clone())
+                        .await
+                        .unwrap()
+                );
+                start_job(path.clone()).await.unwrap();
+                assert_eq!(
+                    get_job_detail(path.clone()).await.unwrap().status,
+                    JobStatus::Loaded
+                );
+                kickstart_job(label.clone(), path.clone()).await.unwrap();
+                let pid = get_job_detail(path.clone()).await.unwrap().pid.unwrap();
+                assert!(
+                    !disable_job(label.clone(), path.clone(), source.clone())
+                        .await
+                        .unwrap()
+                );
+                assert_eq!(get_job_detail(path.clone()).await.unwrap().pid, Some(pid));
+                restart_job(path.clone()).await.unwrap();
+                assert_ne!(
+                    get_job_detail(path.clone()).await.unwrap().pid.unwrap(),
+                    pid
+                );
+                let jobs = list_jobs().await.unwrap();
+                let job = jobs.iter().find(|job| job.plist_path == path).unwrap();
+                assert_eq!(job.source, source);
+                assert_eq!(job.status, JobStatus::Running);
+                assert!(!job.enabled);
+                assert!(save_job(path.clone(), config.clone()).await.is_err());
+                assert!(
+                    save_raw_plist(path.clone(), "<plist/>".to_string())
+                        .await
+                        .is_err()
+                );
+                assert!(delete_job(path.clone(), label.clone()).await.is_err());
+                assert_eq!(
+                    get_job_detail(path.clone()).await.unwrap().status,
+                    JobStatus::Running
+                );
+                stop_job(path.clone()).await.unwrap();
+                assert_eq!(
+                    get_job_detail(path.clone()).await.unwrap().status,
+                    JobStatus::Unloaded
+                );
+                assert!(start_job(path.clone()).await.is_err());
+                assert!(restart_job(path.clone()).await.is_err());
+                assert!(kickstart_job(label.clone(), path.clone()).await.is_err());
+                enable_job(label.clone(), path.clone(), source)
+                    .await
+                    .unwrap();
+                start_job(path.clone()).await.unwrap();
+                stop_job(path.clone()).await.unwrap();
+                eprintln!(
+                    "Verified administrator lifecycle, enablement, inventory/detail and protected-file rejection for {domain}/{label}."
+                );
+            }
+        });
+    }
+
+    #[test]
+    #[ignore = "Creates and removes a disposable user agent on this Mac"]
+    fn real_native_feature_check() {
+        tauri::async_runtime::block_on(async {
+            let label = format!("com.launchpane.commandcheck.{}", std::process::id());
+            let path = plist_util::get_user_agents_dir()
+                .unwrap()
+                .join(format!("{label}.plist"));
+            assert!(!path.exists(), "Refusing to overwrite an existing agent");
+            let path = path.to_str().unwrap().to_string();
+            struct Cleanup(String, String);
+            impl Drop for Cleanup {
+                fn drop(&mut self) {
+                    let domain = launchctl::gui_domain();
+                    if let Err(error) = launchctl::bootout(&domain, &self.1) {
+                        eprintln!("Fixture bootout cleanup failed: {error}");
+                    }
+                    if let Err(error) = launchctl::enable(&domain, &self.1) {
+                        eprintln!("Fixture enable cleanup failed: {error}");
+                    }
+                    if std::path::Path::new(&self.0).exists() {
+                        std::fs::remove_file(&self.0).expect("Fixture plist cleanup failed");
+                    }
+                }
+            }
+            let _cleanup = Cleanup(path.clone(), label.clone());
+            let logs = tempfile::tempdir().unwrap();
+            let log_path = logs.path().join("stdout.log").to_str().unwrap().to_string();
+            let mut config = cfg(Some("/bin/sleep"), Some(vec!["/bin/sleep", "60"]));
+            config.label = label.clone();
+            config.run_at_load = Some(false);
+            config.keep_alive = Some(false);
+            config.standard_out_path = Some(log_path.clone());
+            assert_eq!(
+                create_job(label.clone(), config.clone()).await.unwrap(),
+                path
+            );
+            save_job(path.clone(), config).await.unwrap();
+            let detail = get_job_detail(path.clone()).await.unwrap();
+            assert_eq!(detail.source, JobSource::UserAgent);
+            assert_eq!(detail.status, JobStatus::Unloaded);
+            save_raw_plist(path.clone(), detail.plist.raw_xml)
+                .await
+                .unwrap();
+            assert!(
+                enable_job(
+                    "wrong.label".to_string(),
+                    path.clone(),
+                    JobSource::UserAgent
+                )
+                .await
+                .is_err()
+            );
+            assert!(
+                enable_job(label.clone(), path.clone(), JobSource::SystemDaemon)
+                    .await
+                    .is_err()
+            );
+            assert!(
+                enable_job(label.clone(), path.clone(), JobSource::UserAgent)
+                    .await
+                    .unwrap()
+            );
+            start_job(path.clone()).await.unwrap();
+            assert_eq!(
+                get_job_detail(path.clone()).await.unwrap().status,
+                JobStatus::Loaded
+            );
+            assert!(start_job(path.clone()).await.is_err());
+            kickstart_job(label.clone(), path.clone()).await.unwrap();
+            let pid = get_job_detail(path.clone()).await.unwrap().pid.unwrap();
+            assert!(
+                !disable_job(label.clone(), path.clone(), JobSource::UserAgent)
+                    .await
+                    .unwrap()
+            );
+            let entries = list_jobs().await.unwrap();
+            let entry = entries.iter().find(|entry| entry.label == label).unwrap();
+            assert_eq!(entry.status, JobStatus::Running);
+            assert!(!entry.enabled);
+            restart_job(path.clone()).await.unwrap();
+            assert_ne!(
+                get_job_detail(path.clone()).await.unwrap().pid.unwrap(),
+                pid
+            );
+            stop_job(path.clone()).await.unwrap();
+            assert_eq!(
+                get_job_detail(path.clone()).await.unwrap().status,
+                JobStatus::Unloaded
+            );
+            assert!(start_job(path.clone()).await.is_err());
+            assert!(restart_job(path.clone()).await.is_err());
+            assert!(kickstart_job(label.clone(), path.clone()).await.is_err());
+            enable_job(label.clone(), path.clone(), JobSource::UserAgent)
+                .await
+                .unwrap();
+            start_job(path.clone()).await.unwrap();
+            std::fs::write(&log_path, "first\nsecond\nthird\n").unwrap();
+            let log = read_log_file(log_path.clone(), Some(2)).await.unwrap();
+            assert_eq!(log.content, "second\nthird");
+            assert!(log.modified_at.is_some());
+            clear_log_file(log_path.clone()).await.unwrap();
+            assert_eq!(read_log_file(log_path, None).await.unwrap().content, "");
+            for entry in entries
+                .iter()
+                .filter(|entry| entry.source == JobSource::SystemDaemon)
+            {
+                let detail = get_job_detail(entry.plist_path.clone()).await.unwrap();
+                let loaded = launchctl::list_loaded("system").unwrap();
+                assert_eq!(
+                    detail.status == JobStatus::Unloaded,
+                    !loaded.iter().any(|s| s.label == entry.label)
+                );
+            }
+            delete_job(path.clone(), label.clone()).await.unwrap();
+            assert!(!std::path::Path::new(&path).exists());
+            assert!(
+                !list_jobs()
+                    .await
+                    .unwrap()
+                    .iter()
+                    .any(|entry| entry.label == label)
+            );
+            eprintln!(
+                "Verified native inventory/detail, create/save/raw edit, label/source guards, lifecycle, enable/disable, log read/tail/clear, daemon-domain status, and removal on macOS."
+            );
+        });
     }
 }
