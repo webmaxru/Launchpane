@@ -31,23 +31,17 @@ real disposable user agents, a real login helper, the native editor and actual
 log output; personal file paths are privacy-masked. They are not an exact-build
 TestFlight walkthrough or the latest-macOS review recording.
 
-Build `202610100953` is attached to this version and assigned to the existing
-Launchpane Internal QA TestFlight group. The invited tester has not accepted
-the invitation, so exact-build TestFlight installation and physical-device QA
-are not yet verified.
+Build `202610100953` is attached to this version. The supplied TestFlight video
+confirms that it launches and loads its live inventory.
 
-A local automated walkthrough of a native development build was recorded on
-macOS 12.7.6. It is not evidence of the attached App Store build and does not
-satisfy the latest-macOS requirement. The locally installed production-signed
-build could not launch because macOS found no eligible provisioning profile.
-Installation through TestFlight and successful execution of that exact build
-must be verified before resubmission. macOS 27.0.1 is available for this Mac,
-but has not been installed.
-
-The required replacement recording must begin with launching the exact
-submitted build on a physical Mac running the latest macOS, then show
-inventory loading, search/source filtering, user-agent details, temporary
-`/usr/bin/true` agent creation and removal, and system read-only behavior.
+The attached recording, `Screen Recording 2026-10-10 at 17.30.33.mov`, shows
+Launchpane 1.2.1 (`202610100953`) in TestFlight, native launch, live inventory,
+system-service inspection, search/source interaction, the New Agent form,
+and appearance controls. It is a 55.55-second screen capture, not a browser
+simulation. The recording does not establish the macOS version and does not
+demonstrate saving or removing an agent. We are not claiming that it verifies
+the latest-macOS requirement or the complete write flow. Instructions for
+safely exercising that flow on the review Mac are provided above.
 
 3. External services
 
@@ -90,6 +84,6 @@ distribution. Launchpane does not download, install, update, or unlock external
 code. No purchase, license, or external payment flow is provided by the link.
 The Store edition works independently and does not require another edition.
 
-These changes have not been uploaded or attached to the build identified above.
-Replace these local status notes with verified exact-build evidence before
-resubmission; local checks do not establish App Review approval.
+These candidate-build changes are not present in the attached build
+`202610100953` or in the recording. Do not treat local checks as evidence of
+App Review approval.
