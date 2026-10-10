@@ -147,13 +147,36 @@ jobs:
             exit 1
           fi
 
-      - name: Build, sign, notarize, and staple standalone app and DMG
+      - name: Build standalone bundles and notarize the app
         env:
           TARGET: ${{ matrix.target }}
           APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
           APPLE_API_KEY: ${{ secrets.APPLE_API_KEY }}
           APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
         run: pnpm exec tauri build --target "$TARGET" --bundles app,dmg --ci
+      - name: Sign, notarize, and staple the DMG container
+        env:
+          TARGET: ${{ matrix.target }}
+          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+          APPLE_API_KEY: ${{ secrets.APPLE_API_KEY }}
+          APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
+        run: |
+          set -euo pipefail
+          images=(src-tauri/target/"$TARGET"/release/bundle/dmg/*.dmg)
+          test "${#images[@]}" -eq 1
+          test -f "${images[0]}"
+          image="${images[0]}"
+          codesign --force --sign "$APPLE_SIGNING_IDENTITY" --timestamp "$image"
+          result="$RUNNER_TEMP/dmg-notarization.json"
+          xcrun notarytool submit "$image" \
+            --key "$APPLE_API_KEY_PATH" --key-id "$APPLE_API_KEY" \
+            --issuer "$APPLE_API_ISSUER" --wait --output-format json > "$result"
+          if ! jq -e '.status == "Accepted"' "$result" >/dev/null; then
+            cat "$result"
+            echo "::error::Apple did not accept the DMG notarization submission"
+            exit 1
+          fi
+          xcrun stapler staple "$image"
       - name: Verify signature and notarization, then package assets
         env:
           TARGET: ${{ matrix.target }}
