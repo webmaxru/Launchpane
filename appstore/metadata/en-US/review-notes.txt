@@ -23,14 +23,23 @@ save it, select it, then remove it. The app writes only to the user's
 
 2. Physical-device QA and recording
 
-Before resubmission, a screen recording will be attached from a physical Mac
-running the latest macOS release. The recording will begin with
-launching Launchpane and show: inventory loading, search/source filtering,
-opening a user-agent detail view, creating the temporary `/usr/bin/true`
-agent, verifying it in the list, and removing it. It should also show that
-system entries are read-only. Replacement build `202610092309` corrects the
-App Sandbox entitlements required for Tauri's WebKit process and is attached
-to this version.
+Build `202610100953` is attached to this version and assigned to the existing
+Launchpane Internal QA TestFlight group. The invited tester has not accepted
+the invitation, so exact-build TestFlight installation and physical-device QA
+are not yet verified.
+
+A local automated walkthrough of a native development build was recorded on
+macOS 12.7.6. It is not evidence of the attached App Store build and does not
+satisfy the latest-macOS requirement. The locally installed production-signed
+build could not launch because macOS found no eligible provisioning profile.
+Installation through TestFlight and successful execution of that exact build
+must be verified before resubmission. macOS 27.0.1 is available for this Mac,
+but has not been installed.
+
+The required replacement recording must begin with launching the exact
+submitted build on a physical Mac running the latest macOS, then show
+inventory loading, search/source filtering, user-agent details, temporary
+`/usr/bin/true` agent creation and removal, and system read-only behavior.
 
 3. External services
 

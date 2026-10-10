@@ -39,7 +39,34 @@ test plan for that recording; it is intentionally not a simulated recording.
 Login Items can be shown when the review Mac has registered helpers. They are
 not required for the main flow and must only expose Enable/Disable controls.
 
-## QA checks before recording
+## Fail-closed recording gate
+
+Do not upload a recording or submit the version unless every requirement below
+has passed. A valid video file, a valid package signature, Apple's build
+processing status, or a successful upload is not evidence that the app works.
+
+- Confirm the exact build number and install it through TestFlight or another
+  appropriate Apple distribution path. Do not present a browser preview,
+  fake IPC inventory, or locally re-signed build as the submitted build.
+- Verify native launch and the full user flow before recording. A launch
+  rejection, blank window, unavailable inventory, failed create/remove action,
+  or permission prompt is a gate failure, not content to submit.
+- Confirm the physical device runs the latest macOS required by Apple.
+  Record the actual OS version; never describe an older OS as the latest.
+- Capture from before native launch through the final refreshed list. Show
+  search, source selection, details, safe temporary-agent creation, removal
+  confirmation, and system read-only behavior.
+- Decode the entire video and check its duration, resolution, and frame count.
+  Inspect the opening, every required action, and closing frames, and watch
+  the full recording at normal speed. Reject missing actions, unreadable text,
+  unrelated windows, sensitive information, errors, and simulated workflows.
+- Verify that the temporary agent is absent after recording.
+- Save a local gate result tied to the build and recording checksums. Missing,
+  failed, and blocked checks must remain explicit; do not mark them passed.
+- Keep the recording local for review. Uploading or resubmitting is a separate
+  action and must not happen while any gate requirement is unresolved.
+
+## Functional checks
 
 - [ ] The app launches without an account, login, or network connection.
 - [ ] Inventory loads without a crash on the review Mac.
@@ -75,3 +102,30 @@ Attach the finished physical-device recording to the App Store Connect
 message and paste the contents of `appstore/metadata/en-US/review-notes.txt`
 into the App Review Information Notes field. Do not claim the recording is
 complete until it has been captured and reviewed on the physical Mac.
+
+## Resubmission recheck: 2026-10-10
+
+Version 1.2.1 currently has build `202610100953` attached and remains
+`DEVELOPER_REJECTED`, with no review attachments. Local asset dimension,
+alpha-channel, version, and metadata-length checks pass, but they do not
+establish submission readiness.
+
+- The installed production-signed build still fails to launch because macOS
+  finds no eligible provisioning profile. Build `202610100953` is now assigned
+  to the existing internal QA TestFlight group, but its single tester remains
+  `INVITED`; exact-build TestFlight execution remains unverified.
+- `softwareupdate --list` offers macOS 27.0.1 (15.7 GB). It has not been
+  installed because installation requires a disruptive system upgrade and
+  restart, and approval was not available.
+- The local native walkthrough is an automated development-build demonstration
+  captured on macOS 12.7.6. It is not the requested exact-build recording on
+  the latest macOS, and its capture begins after the window has appeared.
+- The store screenshot sources are SVG UI reconstructions. They differ from
+  the current native interface and must be replaced with actual app captures
+  before submission.
+- Local review notes now identify the attached build and outstanding QA
+  accurately. The live App Store Connect notes still name the older build
+  `202610092309`; update them with verified final evidence before submission.
+
+The overall gate remains failed. Do not upload the local demonstration as
+compliant review evidence or resubmit while these requirements are unresolved.

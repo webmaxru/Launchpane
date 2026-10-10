@@ -57,6 +57,23 @@ import { errorMessage } from "@/lib/errors"
 import type { JobActionKind, PendingAction } from "@/types"
 
 const FEEDBACK_DISMISS_MS = 4000
+const REVIEW_DEMO_LABEL = "com.launchpane.review.demo"
+const REVIEW_DEMO_CONFIG: PlistConfig = {
+  label: REVIEW_DEMO_LABEL,
+  program: "/usr/bin/true",
+  program_arguments: ["/usr/bin/true"],
+  run_at_load: false,
+  keep_alive: false,
+  start_interval: null,
+  start_calendar_interval: null,
+  standard_out_path: null,
+  standard_error_path: null,
+  working_directory: null,
+  environment_variables: null,
+  disabled: false,
+  wake_system: false,
+  raw_xml: "",
+}
 
 type ActionFeedback = {
   id: number
@@ -155,6 +172,12 @@ function App() {
     setSourceFilter,
     refresh,
   } = useJobs()
+  const jobsRef = useRef(jobs)
+  jobsRef.current = jobs
+  const loadingRef = useRef(loading)
+  loadingRef.current = loading
+  const errorRef = useRef(error)
+  errorRef.current = error
 
   const [selectedPlistPath, setSelectedPlistPath] = useState<string | null>(null)
   const [detailOpen, setDetailOpen] = useState(false)
@@ -170,6 +193,9 @@ function App() {
   const [isAdministrator, setIsAdministrator] = useState(false)
   const [canStartAdministrator, setCanStartAdministrator] = useState(false)
   const [adminLaunching, setAdminLaunching] = useState(false)
+  const [reviewDemo, setReviewDemo] = useState(false)
+  const [reviewDemoConfig, setReviewDemoConfig] = useState<PlistConfig | undefined>()
+  const reviewDemoStartedRef = useRef(false)
 
   const showActionFeedback = useCallback(
     (kind: ActionFeedback["kind"], message: string, detail?: string) => {
@@ -184,6 +210,8 @@ function App() {
       .then((info) => {
         setIsAdministrator(info.is_administrator)
         setCanStartAdministrator(info.can_restart_as_administrator)
+        setReviewDemo(info.review_demo)
+        if (info.review_demo) setSearch(" ")
       })
       .catch((e) =>
         showActionFeedback(
@@ -339,6 +367,123 @@ function App() {
     setSearch("")
     setSourceFilter("All")
   }, [setSearch, setSourceFilter])
+
+  useEffect(() => {
+    if (!reviewDemo || reviewDemoStartedRef.current) return undefined
+    reviewDemoStartedRef.current = true
+    const wait = (milliseconds: number) =>
+      new Promise<void>((resolve) => window.setTimeout(resolve, milliseconds))
+
+    const run = async () => {
+      let demoPath: string | null = null
+      try {
+        while (loadingRef.current) await wait(150)
+        if (errorRef.current) {
+          throw new Error(`Could not load the service inventory: ${errorRef.current}`)
+        }
+        if (jobsRef.current.length === 0) {
+          throw new Error("The service inventory is empty.")
+        }
+        const systemJob =
+          jobsRef.current.find((job) => job.source === "SystemDaemon") ??
+          jobsRef.current.find((job) => job.source === "SystemAgent")
+        if (!systemJob) {
+          throw new Error("No system-owned service is available for the walkthrough.")
+        }
+
+        // Leave a clean opening state on screen before the guided review flow begins.
+        await wait(5000)
+        setSearch(systemJob.label)
+
+        await wait(4000)
+        setSearch("")
+        setSourceFilter(
+          systemJob.source === "SystemDaemon" ? "SystemDaemon" : "SystemAgent"
+        )
+
+        await wait(4000)
+        handleSelect(systemJob)
+
+        await wait(5000)
+        setDetailOpen(false)
+        setSourceFilter("All")
+        const existingDemo = jobsRef.current.find(
+          (job) => job.label === REVIEW_DEMO_LABEL
+        )
+        if (existingDemo) {
+          await deleteJob(existingDemo.plist_path, REVIEW_DEMO_LABEL)
+          await refresh()
+        }
+        setReviewDemoConfig(REVIEW_DEMO_CONFIG)
+        setEditingJob(null)
+        setFormKey((key) => key + 1)
+        setFormOpen(true)
+
+        await wait(6000)
+        demoPath = await createJob(REVIEW_DEMO_LABEL, REVIEW_DEMO_CONFIG)
+        setFormOpen(false)
+        setReviewDemoConfig(undefined)
+        await refresh()
+        setSearch(REVIEW_DEMO_LABEL)
+        showActionFeedback("success", `${REVIEW_DEMO_LABEL} created successfully.`)
+
+        await wait(4000)
+        setSelectedPlistPath(demoPath)
+        setDetailOpen(true)
+
+        await wait(6000)
+        setDetailOpen(false)
+        const demoJob = jobsRef.current.find(
+          (job) => job.plist_path === demoPath
+        )
+        if (!demoJob) {
+          throw new Error("The temporary review agent was not present for removal.")
+        }
+        setConfirmRequest({ kind: "delete", job: demoJob })
+        await wait(4000)
+        setConfirmRequest(null)
+        const removed = await handleAction("delete", "remove", "removed", demoJob, () =>
+          deleteJob(demoJob.plist_path, REVIEW_DEMO_LABEL)
+        )
+        if (!removed) {
+          throw new Error("The temporary review agent could not be removed.")
+        }
+        demoPath = null
+        await wait(5000)
+      } catch (cause) {
+        setFormOpen(false)
+        setConfirmRequest(null)
+        let cleanupError: unknown
+        if (demoPath) {
+          try {
+            await deleteJob(demoPath, REVIEW_DEMO_LABEL)
+            await refresh()
+          } catch (cleanupCause) {
+            cleanupError = cleanupCause
+          }
+        }
+        showActionFeedback(
+          "error",
+          cleanupError
+            ? "The walkthrough failed and the temporary agent could not be removed."
+            : "The App Review walkthrough could not finish.",
+          cleanupError
+            ? errorMessage(cleanupError)
+            : errorMessage(cause)
+        )
+      }
+    }
+
+    void run()
+  }, [
+    handleAction,
+    handleSelect,
+    refresh,
+    reviewDemo,
+    setSearch,
+    setSourceFilter,
+    showActionFeedback,
+  ])
 
   useEffect(() => {
     const handleShortcut = (event: KeyboardEvent) => {
@@ -669,6 +814,7 @@ function App() {
         }}
         onSave={handleSave}
         editingJob={editingJob}
+        initialConfig={reviewDemoConfig}
       />
 
       <Dialog

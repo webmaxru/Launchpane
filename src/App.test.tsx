@@ -6,6 +6,7 @@ import {
   resetFakeHandlers,
   setFakeHandler,
 } from "@/test-utils/tauri-mock"
+import type { JobListEntry } from "@/types"
 
 async function confirmAction(
   user: ReturnType<typeof userEvent.setup>,
@@ -58,6 +59,87 @@ describe("App action feedback", () => {
       "com.example.running-agent is now disabled."
     )
     expect(screen.getByTestId("feedback-region")).toHaveClass("fixed")
+  })
+
+  describe("App Review walkthrough", () => {
+    it("completes through inventory refreshes and removes the temporary agent", async () => {
+      const demoPath =
+        "/Users/test/Library/LaunchAgents/com.launchpane.review.demo.plist"
+      let jobs: JobListEntry[] = [
+        {
+          label: "com.apple.system-agent",
+          pid: 5678,
+          last_exit_code: 0,
+          plist_path: "/Library/LaunchAgents/com.apple.system-agent.plist",
+          source: "SystemAgent" as const,
+          status: "Running" as const,
+          enabled: true,
+          last_run_at: String(Date.now()),
+          is_home_agent: false,
+        },
+      ]
+      setFakeHandler("get_runtime_info", () => ({
+        is_administrator: false,
+        can_restart_as_administrator: true,
+        review_demo: true,
+      }))
+      setFakeHandler("list_jobs", () => [...jobs])
+      setFakeHandler("create_job", ({ label }) => {
+        jobs = [
+          ...jobs,
+          {
+            label: String(label),
+            pid: null,
+            last_exit_code: null,
+            plist_path: demoPath,
+            source: "UserAgent" as const,
+            status: "Unloaded" as const,
+            enabled: true,
+            last_run_at: null,
+            is_home_agent: true,
+          },
+        ]
+        return demoPath
+      })
+      setFakeHandler("delete_job", ({ plistPath }) => {
+        jobs = jobs.filter((job) => job.plist_path !== plistPath)
+      })
+
+      vi.useFakeTimers()
+      render(<App />)
+      const advance = async (milliseconds: number) => {
+        await act(async () => {
+          await vi.advanceTimersByTimeAsync(milliseconds)
+        })
+      }
+
+      await advance(150)
+      await advance(5000)
+      expect(
+        screen.getByPlaceholderText("Search by label (/)")
+      ).toHaveValue("com.apple.system-agent")
+      await advance(4000)
+      await advance(4000)
+      await advance(5000)
+      expect(screen.getByRole("dialog")).toBeVisible()
+      await advance(6000)
+      expect(jobs.some((job) => job.label === "com.launchpane.review.demo")).toBe(
+        true
+      )
+      await advance(4000)
+      await advance(6000)
+      expect(screen.getByRole("dialog")).toHaveTextContent("Remove agent")
+      expect(screen.getByRole("dialog")).toHaveTextContent(
+        "com.launchpane.review.demo"
+      )
+      await advance(4000)
+      expect(jobs.some((job) => job.label === "com.launchpane.review.demo")).toBe(
+        false
+      )
+      expect(screen.getByRole("status")).toHaveTextContent(
+        "com.launchpane.review.demo removed successfully."
+      )
+    }, 20000)
   })
 
   it("shows failure feedback when enabling a job fails", async () => {
