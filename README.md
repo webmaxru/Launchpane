@@ -43,27 +43,33 @@ See the [App Store action and review-policy tables](docs/app-store-actions.md).
 
 ## Install
 
-The existing **v1.2.1** downloads are unsigned. Download and install that
-version via CLI:
+Download the latest [signed release](https://github.com/webmaxru/Launchpane/releases/latest).
+Standalone builds from **v1.2.2** are signed with Developer ID and notarized
+by Apple.
 
-```bash
-# Download and extract (Apple Silicon)
-curl -L "https://github.com/webmaxru/Launchpane/releases/latest/download/Launchpane_aarch64.app.tar.gz" | tar xz -C /Applications
-# Remove quarantine attribute (required for unsigned apps)
-xattr -cr /Applications/Launchpane.app
-```
+Choose the Apple Silicon (`aarch64`), Intel (`x64`), or Universal DMG, open it,
+and drag Launchpane to Applications. Follow the normal macOS installation
+prompts—do not remove quarantine attributes.
 
-For Intel Macs, replace `aarch64` with `x64`.
+App archives are also available, including `Launchpane_universal.app.tar.gz`.
+Each release includes `SHA256SUMS` for all six downloads. Standalone builds
+are separate from the sandboxed Mac App Store edition. The older v1.2.1
+assets remain unsigned and are not replaced.
 
-DMG installers are also available on the [Releases](https://github.com/webmaxru/Launchpane/releases) page.
-Universal builds are available as `Launchpane_universal.app.tar.gz` and a
-versioned Universal DMG. Releases include `SHA256SUMS` for all six downloads.
-These standalone builds are unsigned and unnotarized; they are separate from
-the sandboxed Mac App Store edition. New tagged releases are signed and
-notarized after the `macos-distribution` GitHub environment is configured;
-the existing v1.2.1 assets are not replaced. For a signed release, download
-the DMG and follow the normal macOS installation prompts—do not remove
-quarantine attributes.
+## Product website
+
+The [Launchpane website](https://webmaxru.github.io/Launchpane/) is hosted on
+this repository's GitHub Pages. Source pages and assets live in `docs/`.
+
+- `pnpm site:test` checks the dependency-free website builder.
+- `pnpm site:build` validates local links, assets, and anchors, then writes
+  the deployable site to `dist/site/`.
+
+**Publish product pages** builds website changes on pull requests without
+deploying them. Changes merged into `main` build and deploy automatically;
+the workflow can also be run manually. GitHub Pages must be enabled with
+**GitHub Actions** as its source in repository settings. The workflow uses
+the `github-pages` environment and deploys only after the build succeeds.
 
 ## GitHub release pipeline
 

@@ -37,7 +37,7 @@ Users should be able to scan the list before opening detail, distinguish source 
 - Shared GUI agents support lifecycle controls without root; system daemons require administrator mode. Shared plist editing/removal stays hidden even as root. Privileged behavior must be explicit and must never look equivalent to ordinary user-agent editing.
 - State changes must be verified after execution. Errors, partial success, permission limits, stale data, and refresh failures must be shown plainly rather than collapsed into success-shaped feedback.
 - Launchpane is macOS-only. The `web` platform value describes the rendered interface layer for Impeccable tooling, not a browser-distributed product.
-- The app is currently distributed unsigned for direct download; installation requires removing macOS quarantine. App Store distribution is constrained by sandbox restrictions around `launchctl` and writes to `~/Library/LaunchAgents/`.
+- Standalone releases from v1.2.2 are Developer ID signed and Apple notarized; install from the DMG using normal macOS prompts. The older v1.2.1 downloads remain unsigned. App Store distribution is constrained by sandbox restrictions around `launchctl` and writes to `~/Library/LaunchAgents/`.
 - Product claims, security guarantees, performance benchmarks, user counts, and distribution commitments must not be invented without evidence.
 
 ## Brand Commitments
