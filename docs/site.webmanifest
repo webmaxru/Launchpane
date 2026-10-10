@@ -1,0 +1,14 @@
+{
+  "name": "Launchpane",
+  "short_name": "Launchpane",
+  "description": "A native macOS workspace for launch agents, daemons, and login items.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "browser",
+  "background_color": "#242a9e",
+  "theme_color": "#242a9e",
+  "icons": [
+    { "src": "assets/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "assets/icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}

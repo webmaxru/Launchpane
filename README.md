@@ -2,11 +2,33 @@
   <img src="branding/store/launchpane-wordmark-1600x400.png" alt="Launchpane" width="640">
 </p>
 
-# Launchpane
+<p align="center">
+  <strong>Know what starts on your Mac.</strong><br>
+  A native macOS app for managing launch agents, daemons, and login items.
+</p>
 
-A native macOS app for managing launch agents, daemons and login items. Built with Tauri v2.
+<p align="center">
+  <a href="https://github.com/webmaxru/Launchpane/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/webmaxru/Launchpane/actions/workflows/ci.yml/badge.svg"></a>
+  <a href="https://github.com/webmaxru/Launchpane/actions/workflows/release.yml"><img alt="Standalone release" src="https://github.com/webmaxru/Launchpane/actions/workflows/release.yml/badge.svg"></a>
+  <a href="https://github.com/webmaxru/Launchpane/actions/workflows/pages.yml"><img alt="Publish product pages" src="https://github.com/webmaxru/Launchpane/actions/workflows/pages.yml/badge.svg"></a>
+  <a href="https://github.com/webmaxru/Launchpane/releases/latest"><img alt="Latest release" src="https://img.shields.io/github/v/release/webmaxru/Launchpane?sort=semver&amp;label=release"></a>
+  <a href="LICENSE"><img alt="MIT license" src="https://img.shields.io/github/license/webmaxru/Launchpane"></a>
+  <img alt="macOS" src="https://img.shields.io/badge/macOS-Apple%20Silicon%20%2B%20Intel-242a9e?logo=apple&amp;logoColor=white">
+  <img alt="Developer ID signed and notarized" src="https://img.shields.io/badge/Developer%20ID-signed%20%26%20notarized-2ea44f">
+</p>
 
-Browse user LaunchAgents (`~/Library/LaunchAgents/`), system agents/daemons, and app login items. Start, stop, restart, view/edit plist files, and create new agents.
+<p align="center">
+  <a href="https://github.com/webmaxru/Launchpane/releases/latest"><strong>Download</strong></a> ·
+  <a href="https://salnikov.no/Launchpane/">Website</a> ·
+  <a href="https://salnikov.no/Launchpane/support/">Support</a> ·
+  <a href="https://salnikov.no/Launchpane/privacy/">Privacy</a>
+</p>
+
+<p align="center">
+  <img src="docs/assets/launchpane-overview.png" alt="Launchpane listing launch agents, daemons, and login items" width="860">
+</p>
+
+Browse user LaunchAgents (`~/Library/LaunchAgents/`), system agents/daemons, and app login items. Start, stop, restart, view/edit plist files, and create new agents. Built with Tauri v2.
 
 ## Features
 
@@ -58,12 +80,16 @@ assets remain unsigned and are not replaced.
 
 ## Product website
 
-The [Launchpane website](https://webmaxru.github.io/Launchpane/) is hosted on
+The [Launchpane website](https://salnikov.no/Launchpane/) is hosted on
 this repository's GitHub Pages. Source pages and assets live in `docs/`.
 
 - `pnpm site:test` checks the dependency-free website builder.
 - `pnpm site:build` validates local links, assets, and anchors, then writes
   the deployable site to `dist/site/`.
+- `pnpm site:assets` regenerates the favicon, touch/PWA icons, and the 1200×630
+  social card (`docs/assets/og-image.png`) from `branding/`. It needs macOS
+  and Google Chrome or Microsoft Edge. Edit the card in
+  `branding/social/og.html`.
 
 **Publish product pages** builds website changes on pull requests without
 deploying them. Changes merged into `main` build and deploy automatically;
@@ -124,11 +150,10 @@ The workflow checks the imported identity, signed app, notarization tickets,
 stapling, and Gatekeeper assessments before it uploads anything. A missing
 secret or failed Apple notarization stops the release before publication.
 
-The existing **v1.2.1** release was created before these credentials were
-configured and remains unsigned and unnotarized. It is not silently replaced.
-After adding the secrets, publish a new version tag (for example `v1.2.2`) to
-produce signed downloads. App Store distribution continues to use its separate
-manual workflow and credentials.
+The older **v1.2.1** release predates the signing credentials and remains
+unsigned and unnotarized; it is not silently replaced. Releases from **v1.2.2**
+onward are signed and notarized. App Store distribution continues to use its
+separate manual workflow and credentials.
 
 To publish a subsequent version, configure the distribution secrets above,
 bump the synchronized versions, commit all intended app changes, push the

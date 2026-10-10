@@ -7,6 +7,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
+    "site:assets": "node scripts/make-site-assets.mjs",
     "site:build": "node scripts/build-site.mjs",
     "site:test": "node --test scripts/build-site.test.mjs",
     "lint": "oxlint src/",

@@ -81,6 +81,13 @@ pnpm store:screenshots
 `pnpm icons` also emits `src-tauri/icons/ios` and `src-tauri/icons/android`;
 Launchpane is a macOS-only app, so those folders are removed from the repository.
 
+### Website and social assets
+
+`branding/social/og.html` is the 1200×630 social card template. Run
+`pnpm site:assets` (macOS, with Chrome or Edge) to render it to
+`docs/assets/og-image.png` and regenerate the favicon, Apple touch icon, and
+PWA icons in `docs/` from the master artwork. Commit the generated files.
+
 ## Screenshots
 
 Store screenshots now come from actual native windows of the `app-store`

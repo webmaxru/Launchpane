@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Launchpane social card</title>
+<style>
+  * { box-sizing: border-box; margin: 0; }
+  html, body { width: 1200px; height: 630px; overflow: hidden; background: #242a9e; }
+  body {
+    position: relative;
+    color: #fbfcff;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  .brand { position: absolute; left: 72px; top: 58px; display: flex; align-items: center; gap: 14px; }
+  .brand img { width: 56px; height: 56px; }
+  .brand b { font-size: 28px; font-weight: 700; letter-spacing: -.025em; }
+  .brand span { color: #c9d1ff; font-size: 18px; margin-left: 2px; }
+  h1 {
+    position: absolute; left: 72px; top: 178px; width: 520px;
+    font-size: 84px; line-height: .98; font-weight: 680; letter-spacing: -.055em;
+  }
+  p {
+    position: absolute; left: 72px; top: 440px; width: 470px;
+    color: #e0e5ff; font-size: 26px; line-height: 1.4;
+  }
+  .trust {
+    position: absolute; left: 72px; bottom: 54px; display: flex; gap: 14px;
+    font-size: 17px; font-weight: 600; color: #7df9d0;
+  }
+  .trust i { color: rgba(255,255,255,.4); font-style: normal; }
+  .shot {
+    position: absolute; left: 628px; top: 122px; width: 700px;
+    border: 1px solid rgba(255,255,255,.4); border-radius: 12px;
+    box-shadow: 0 30px 60px rgba(0,0,0,.35);
+    overflow: hidden;
+  }
+  .shot img { display: block; width: 100%; }
+  svg { position: absolute; left: 0; top: 0; }
+</style>
+</head>
+<body>
+  <svg width="1200" height="630" viewBox="0 0 1200 630" fill="none" aria-hidden="true">
+    <g stroke="#7df9d0" stroke-width="2" stroke-linecap="round">
+      <path d="M520 20 C 560 20 580 70 628 118"/>
+      <path d="M600 20 C 640 20 650 60 700 108" opacity=".55"/>
+    </g>
+    <circle cx="628" cy="118" r="6" fill="#ffd36b"/>
+  </svg>
+  <div class="brand"><img src="../launchpane-icon-1024.png" alt=""><b>Launchpane</b><span>for macOS</span></div>
+  <h1>Know what starts on your Mac.</h1>
+  <p>Launch agents, daemons, and login items in one native workspace.</p>
+  <div class="trust">Open source <i>·</i> Developer ID signed <i>·</i> Notarized by Apple</div>
+  <div class="shot"><img src="../../docs/assets/launchpane-overview.png" alt=""></div>
+</body>
+</html>
