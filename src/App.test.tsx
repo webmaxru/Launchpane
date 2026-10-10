@@ -47,6 +47,47 @@ afterEach(() => {
 })
 
 describe("App action feedback", () => {
+  it("shows Store edition limits and opens the neutral project link without requesting root", async () => {
+    const admin = vi.fn()
+    const openProject = vi.fn()
+    setFakeHandler("get_runtime_info", () => ({
+      is_app_store: true,
+      is_administrator: false,
+      can_restart_as_administrator: false,
+      review_demo: false,
+    }))
+    setFakeHandler("restart_as_administrator", admin)
+    setFakeHandler("open_project_page", openProject)
+    const user = userEvent.setup()
+    render(<App />)
+    const limits = await screen.findByRole("complementary", { name: "Mac App Store edition limits" })
+    expect(limits).toHaveTextContent("shared services are read-only")
+    const button = screen.getByRole("button", { name: "Open Administrator Window" })
+    expect(button).toBeDisabled()
+    expect(button).toHaveAttribute("title", expect.stringContaining("Mac App Store edition"))
+    await user.click(button)
+    expect(admin).not.toHaveBeenCalled()
+    const link = within(limits).getByRole("link", { name: "Project documentation and source on GitHub" })
+    expect(link).toHaveAttribute("href", "https://github.com/webmaxru/Launchpane")
+    await user.click(link)
+    expect(openProject).toHaveBeenCalledOnce()
+    expect(screen.getByRole("button", { name: "Create a user agent" })).toBeEnabled()
+    const row = screen.getByRole("row", { name: "View details for com.apple.system-agent" })
+    expect(within(row).getByRole("button", { name: "Stop" })).toBeDisabled()
+  })
+
+  it("reports a project-link launch failure instead of silently ignoring it", async () => {
+    setFakeHandler("get_runtime_info", () => ({
+      is_app_store: true, is_administrator: false,
+      can_restart_as_administrator: false, review_demo: false,
+    }))
+    setFakeHandler("open_project_page", () => { throw new Error("Browser launch denied") })
+    const user = userEvent.setup()
+    render(<App />)
+    await user.click(await screen.findByRole("link", { name: "Project documentation and source on GitHub" }))
+    expect(await screen.findByRole("alert")).toHaveTextContent("Browser launch denied")
+  })
+
   it("shows success feedback after disabling a job", async () => {
     setFakeHandler("disable_job", () => false)
     const user = userEvent.setup()
@@ -219,7 +260,7 @@ describe("App action feedback", () => {
     act(() => {
       vi.advanceTimersByTime(3000)
     })
-    fireEvent.click(screen.getByRole("button", { name: "Stop" }))
+    fireEvent.click(within(screen.getByRole("row", { name: "View details for com.example.running-agent" })).getByRole("button", { name: "Stop" }))
     expect(screen.getByRole("status")).toHaveTextContent(
       "Unloading com.example.running-agent…"
     )
@@ -253,7 +294,8 @@ describe("App action feedback", () => {
     })
     render(<App />)
 
-    const stopButton = await screen.findByRole("button", { name: "Stop" })
+    const row = await screen.findByRole("row", { name: "View details for com.example.running-agent" })
+    const stopButton = within(row).getByRole("button", { name: "Stop" })
     vi.useFakeTimers()
 
     await act(async () => {
@@ -327,6 +369,8 @@ describe("App action feedback", () => {
   it("shows feedback after starting administrator mode", async () => {
     const user = userEvent.setup()
     render(<App />)
+    await screen.findByText("com.example.running-agent")
+    expect(screen.queryByRole("complementary", { name: "Mac App Store edition limits" })).not.toBeInTheDocument()
 
     await user.click(
       await screen.findByRole("button", { name: "Open Administrator Window" })
@@ -402,6 +446,35 @@ describe("App workspace navigation", () => {
 })
 
 describe("App action confirmation", () => {
+  it.each(["Unload", "Cancel"])(
+    "warns about login-item re-registration before %s",
+    async (decision) => {
+      const label = "com.example.login-helper"
+      const path = "/Applications/Example.app/Contents/Library/LoginItems/Helper.app"
+      setFakeHandler("list_jobs", () => [{
+        label, plist_path: path, source: "LoginItem", status: "Loaded",
+        enabled: true, pid: null, last_exit_code: null,
+        last_run_at: null, is_home_agent: false,
+      }])
+      const stop = vi.fn()
+      setFakeHandler("stop_job", stop)
+      const user = userEvent.setup()
+      render(<App />)
+      await chooseRowAction(user, label, "Unload")
+      const dialog = await screen.findByRole("dialog")
+      expect(dialog).toHaveTextContent("Enable will not reload it")
+      expect(dialog).toHaveTextContent("parent app")
+      expect(stop).not.toHaveBeenCalled()
+      await user.click(within(dialog).getByRole("button", { name: decision }))
+      if (decision === "Unload") {
+        await waitFor(() => expect(stop).toHaveBeenCalledOnce())
+        expect(stop).toHaveBeenCalledWith({ plistPath: path })
+      } else {
+        expect(stop).not.toHaveBeenCalled()
+      }
+    }
+  )
+
   it.each([
     ["enable", "Enable", "enable_job", "Enable agent"],
     ["disable", "Disable", "disable_job", "Disable agent"],

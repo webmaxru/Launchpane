@@ -5,17 +5,12 @@ use std::collections::HashMap;
 use std::io::Cursor;
 use std::path::{Path, PathBuf};
 
-pub fn get_user_agents_dir() -> PathBuf {
-    dirs::home_dir()
-        .expect("could not find home directory")
-        .join("Library/LaunchAgents")
+pub fn get_user_agents_dir() -> Result<PathBuf, AppError> {
+    Ok(crate::user_paths::home_dir()?.join("Library/LaunchAgents"))
 }
 
-fn plist_dirs() -> Vec<(PathBuf, JobSource)> {
-    let mut dirs = Vec::new();
-    if let Some(home) = dirs::home_dir() {
-        dirs.push((home.join("Library/LaunchAgents"), JobSource::UserAgent));
-    }
+fn plist_dirs() -> Result<Vec<(PathBuf, JobSource)>, AppError> {
+    let mut dirs = vec![(get_user_agents_dir()?, JobSource::UserAgent)];
     let system_agents = PathBuf::from("/Library/LaunchAgents");
     if system_agents.exists() {
         dirs.push((system_agents, JobSource::SystemAgent));
@@ -24,12 +19,12 @@ fn plist_dirs() -> Vec<(PathBuf, JobSource)> {
     if system_daemons.exists() {
         dirs.push((system_daemons, JobSource::SystemDaemon));
     }
-    dirs
+    Ok(dirs)
 }
 
-pub fn scan_plist_files() -> Vec<(String, JobSource)> {
+pub fn scan_plist_files() -> Result<Vec<(String, JobSource)>, AppError> {
     let mut results = Vec::new();
-    for (dir, source) in plist_dirs() {
+    for (dir, source) in plist_dirs()? {
         if let Ok(entries) = std::fs::read_dir(&dir) {
             for entry in entries.flatten() {
                 let path = entry.path();
@@ -41,7 +36,7 @@ pub fn scan_plist_files() -> Vec<(String, JobSource)> {
             }
         }
     }
-    results
+    Ok(results)
 }
 
 fn extract_string(dict: &plist::Dictionary, key: &str) -> Option<String> {

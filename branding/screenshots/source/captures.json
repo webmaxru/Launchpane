@@ -1,0 +1,37 @@
+{
+  "version": "1.2.1",
+  "buildNumber": "202610101605",
+  "distribution": "app-store",
+  "sourceDigest": "7f4247f4cba082329cb8f7af3e29ca4ffaa6e37131210b774c4cfe58aa9573c6",
+  "captureMethod": "native-local-sandbox",
+  "submittedBuildQA": false,
+  "macOS": "12.7.6",
+  "captureSize": "2560x1566",
+  "sourceCanvas": "2560x1600",
+  "processing": "Native window captures without shadows; narrow solid-color padding preserves the 16:10 canvas without distorting the app. Personal file paths in logs are covered by explicit privacy masks.",
+  "screenshots": {
+    "overview": {
+      "sha256": "7d10875770df56ca73b20fb0d63cd92f6e69ec70e0fb723082ac5a316632fa5a",
+      "description": "Current sandboxed Store inventory filtered to three disposable real user agents: running, loaded and disabled/unloaded.",
+      "privacyRedactions": []
+    },
+    "detail": {
+      "sha256": "7f79e8168002ceea10d21d715eb6c854c3fbc9a250b01a9c786b3e4ead1bd5b3",
+      "description": "Native plist editor for the disposable cleanup user agent, showing its command and daily schedule. No change was saved during capture.",
+      "privacyRedactions": []
+    },
+    "login-items": {
+      "sha256": "bc04d01e5ababe17c3f5a30439d67d5ef0f64062a0b6c42ef71add5e680c13e2",
+      "description": "Real registered login helper with Store-specific lifecycle restrictions and an eligible Disable action. The vendor service was not changed.",
+      "privacyRedactions": []
+    },
+    "logs": {
+      "sha256": "cbded70577643e1961214c85a5e7b309bed875f378198841a1c29663fd44163b",
+      "description": "Actual stdout written by launchd's disposable preview service and read by the sandboxed Store app through its LaunchAgents exception.",
+      "privacyRedactions": [
+        "Full user plist path in the details header",
+        "User home prefixes in stdout and stderr path labels"
+      ]
+    }
+  }
+}

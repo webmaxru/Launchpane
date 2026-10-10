@@ -11,10 +11,6 @@ on:
         description: Release automatically after approval
         type: boolean
         default: false
-  push:
-    tags:
-      - "v*"
-
 concurrency:
   group: mac-app-store-${{ github.ref }}
   cancel-in-progress: false

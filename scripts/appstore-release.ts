@@ -8,6 +8,7 @@ import {
   writeFileSync,
 } from "node:fs"
 import { join } from "node:path"
+import { readCaptureManifest } from "./store-screenshot-source.ts"
 
 const ROOT = process.cwd()
 const OUTPUT_DIR = join(ROOT, "release", "appstore")
@@ -37,6 +38,7 @@ function required(path: string): void {
 }
 
 function main(): void {
+  const captures = readCaptureManifest(ROOT)
   const packageJson = readJson<{ name: string; version: string }>(join(ROOT, "package.json"))
   const tauriConfig = readJson<{ version: string; identifier: string; productName: string }>(
     join(ROOT, "src-tauri", "tauri.conf.json"),
@@ -48,7 +50,7 @@ function main(): void {
     )
   }
 
-  rmSync(OUTPUT_DIR, { recursive: true, force: true })
+  rmSync(join(OUTPUT_DIR, "fastlane"), { recursive: true, force: true })
   const metadataTarget = join(OUTPUT_DIR, "fastlane", "metadata", "en-US")
   const screenshotsTarget = join(OUTPUT_DIR, "fastlane", "screenshots", "en-US")
   mkdirSync(metadataTarget, { recursive: true })
@@ -73,18 +75,23 @@ function main(): void {
   cpSync(join(SOURCE_METADATA, "review-response.txt"), join(OUTPUT_DIR, "review-response.txt"))
   cpSync(join(ROOT, "appstore", "age-rating.json"), join(OUTPUT_DIR, "age-rating.json"))
   cpSync(join(ROOT, "appstore", "app-privacy.json"), join(OUTPUT_DIR, "app-privacy.json"))
+  cpSync(join(ROOT, "branding", "screenshots", "source", "captures.json"), join(OUTPUT_DIR, "screenshot-captures.json"))
 
   const manifest = {
     appName: tauriConfig.productName,
     packageName: packageJson.name,
     version: packageJson.version,
     bundleIdentifier: tauriConfig.identifier,
-    buildNumber: process.env.APP_BUILD_NUMBER ?? "set-by-release-workflow",
+    buildNumber: process.env.APP_BUILD_NUMBER ?? captures.buildNumber,
     platform: "macOS",
-    package: "Launchpane.pkg",
+    package: existsSync(join(OUTPUT_DIR, "Launchpane.pkg")) ? "Launchpane.pkg"
+      : existsSync(join(OUTPUT_DIR, "Launchpane-unsigned.pkg")) ? "Launchpane-unsigned.pkg" : null,
     metadata: "fastlane/metadata",
     screenshots: "fastlane/screenshots",
     generatedAt: new Date().toISOString(),
+    screenshotSourceDigest: captures.sourceDigest,
+    screenshotCaptureBuildNumber: captures.buildNumber,
+    exactSubmittedBuildQA: false,
   }
 
   writeFileSync(join(OUTPUT_DIR, "manifest.json"), `${JSON.stringify(manifest, null, 2)}\n`)

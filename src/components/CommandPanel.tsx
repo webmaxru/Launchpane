@@ -7,6 +7,7 @@ import type { LaunchdJob } from "@/types"
 
 type CommandPanelProps = {
   job: LaunchdJob
+  isAppStore?: boolean
 }
 
 type CommandRow = {
@@ -26,7 +27,7 @@ function domainFor(job: LaunchdJob): string {
 }
 
 function sudoPrefix(job: LaunchdJob): string {
-  return job.source === "UserAgent" || job.source === "LoginItem" ? "" : "sudo "
+  return job.source === "SystemDaemon" ? "sudo " : ""
 }
 
 export function buildCommands(job: LaunchdJob): CommandRow[] {
@@ -35,31 +36,30 @@ export function buildCommands(job: LaunchdJob): CommandRow[] {
   const target = `${domain}/${shellQuote(job.label)}`
   const plistPath = shellQuote(job.plist_path)
 
-  // Login items are owned by their parent app: only the launchd enable override is
-  // safe to change, so loading, running and removing are intentionally omitted.
+  const runtime = [
+    { label: "Run now", command: `${prefix}launchctl kickstart ${target}` },
+    { label: "Restart", command: `${prefix}launchctl kickstart -k ${target}` },
+    { label: "Stop / Unload", command: `${prefix}launchctl bootout ${target}` },
+    { label: "Enable", command: `${prefix}launchctl enable ${target}` },
+    { label: "Disable", command: `${prefix}launchctl disable ${target}` },
+    { label: "Status", command: `launchctl print ${target}` },
+  ]
   if (job.source === "LoginItem") {
-    return [
-      { label: "Enable", command: `launchctl enable ${target}` },
-      { label: "Disable", command: `launchctl disable ${target}` },
-      { label: "Status", command: `launchctl print ${target}` },
-    ]
+    return runtime
   }
 
   return [
-    { label: "Start", command: `${prefix}launchctl bootstrap ${domain} ${plistPath}` },
-    { label: "Stop", command: `${prefix}launchctl bootout ${domain} ${plistPath}` },
-    { label: "Kickstart", command: `${prefix}launchctl kickstart -k ${target}` },
-    { label: "Enable", command: `${prefix}launchctl enable ${target}` },
-    { label: "Disable", command: `${prefix}launchctl disable ${target}` },
-    {
+    { label: "Load", command: `${prefix}launchctl bootstrap ${domain} ${plistPath}` },
+    ...runtime,
+    ...(job.source === "UserAgent" ? [{
       label: "Remove",
-      command: `${prefix}rm ${plistPath}`,
+      command: `launchctl bootout ${target} && rm ${plistPath}`,
       destructive: true,
-    },
+    }] : []),
   ]
 }
 
-export function CommandPanel({ job }: CommandPanelProps) {
+export function CommandPanel({ job, isAppStore = false }: CommandPanelProps) {
   const [copied, setCopied] = useState<string | null>(null)
   const commands = buildCommands(job)
 
@@ -83,7 +83,15 @@ export function CommandPanel({ job }: CommandPanelProps) {
         <h4 className="text-sm font-semibold">Terminal commands</h4>
         <p className="mt-0.5 text-xs text-muted-foreground">
           Equivalent launchctl commands for this agent.
+          {" "}Run and restart require a loaded service; load requires enablement.
+          {" "}Disable does not stop an existing service. Unloading a login item requires its parent app to register it again.
         </p>
+        {isAppStore && (
+          <p className="mt-2 text-xs text-muted-foreground">
+            Mac App Store edition: these commands are reference only and are not executed by Launchpane.
+            Copying a command does not grant sandbox access or enable administrator controls.
+          </p>
+        )}
       </div>
       <div className="overflow-hidden rounded-xl border bg-card">
         {commands.map((item) => (

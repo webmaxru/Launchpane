@@ -24,6 +24,7 @@ type JobDetailProps = {
   open: boolean
   onClose: () => void
   onEdit: (job: LaunchdJob) => void
+  isAppStore?: boolean
 }
 
 const SOURCE_LABELS: Record<JobSource, string> = {
@@ -121,7 +122,7 @@ function EmptyState({ children }: { children: ReactNode }) {
   )
 }
 
-export function JobDetail({ plistPath, open, onClose, onEdit }: JobDetailProps) {
+export function JobDetail({ plistPath, open, onClose, onEdit, isAppStore = false }: JobDetailProps) {
   const [job, setJob] = useState<LaunchdJob | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -412,7 +413,7 @@ export function JobDetail({ plistPath, open, onClose, onEdit }: JobDetailProps) 
               value="commands"
               className="min-h-0 flex-1 overflow-y-auto px-6 py-5"
             >
-              <CommandPanel job={job} />
+              <CommandPanel job={job} isAppStore={isAppStore} />
             </TabsContent>
           </Tabs>
         )}

@@ -5,6 +5,7 @@
 //! launchd tracks them by their `CFBundleIdentifier` with no plist file on disk, so
 //! `plist_util::scan_plist_files` cannot see them.
 
+use crate::error::AppError;
 use std::path::{Path, PathBuf};
 
 /// Path fragment that marks a bundle as an embedded login item helper.
@@ -24,16 +25,14 @@ pub fn is_login_item_path(path: &str) -> bool {
     path.contains(LOGIN_ITEMS_FRAGMENT) && path.ends_with(".app")
 }
 
-fn app_roots() -> Vec<PathBuf> {
+fn app_roots() -> Result<Vec<PathBuf>, AppError> {
     let mut roots = vec![
         PathBuf::from("/Applications"),
         PathBuf::from("/Applications/Utilities"),
     ];
-    if let Some(home) = dirs::home_dir() {
-        roots.push(home.join("Applications"));
-    }
+    roots.push(crate::user_paths::home_dir()?.join("Applications"));
     roots.retain(|root| root.is_dir());
-    roots
+    Ok(roots)
 }
 
 fn bundle_identifier(app_bundle: &Path) -> Option<String> {
@@ -83,9 +82,9 @@ fn login_items_in_app(app_bundle: &Path) -> Vec<LoginItemBundle> {
 
 /// Enumerates every login item helper bundle installed under the known application roots.
 /// Discovery is filesystem-based; callers decide which of these launchd actually knows about.
-pub fn scan_login_items() -> Vec<LoginItemBundle> {
+pub fn scan_login_items() -> Result<Vec<LoginItemBundle>, AppError> {
     let mut results = Vec::new();
-    for root in app_roots() {
+    for root in app_roots()? {
         let Ok(entries) = std::fs::read_dir(&root) else {
             continue;
         };
@@ -98,7 +97,7 @@ pub fn scan_login_items() -> Vec<LoginItemBundle> {
     }
     results.sort_by(|a, b| a.label.cmp(&b.label));
     results.dedup_by(|a, b| a.bundle_path == b.bundle_path);
-    results
+    Ok(results)
 }
 
 #[cfg(test)]

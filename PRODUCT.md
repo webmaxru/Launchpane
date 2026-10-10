@@ -20,7 +20,7 @@ Launchpane is a purpose-built control surface for macOS launch agents, launch da
 
 ## Operating Context
 
-Launchpane is a resizable macOS desktop app built with Tauri, React, and Rust. Its primary workspace is a dense, searchable inventory of background services, followed by detail, log, command, and editing surfaces. Most users operate on their own user agents in `~/Library/LaunchAgents/`; system agents and daemons provide important context but remain read-only unless the app is explicitly relaunched with administrator privileges for supported operations.
+Launchpane is a resizable macOS desktop app built with Tauri, React, and Rust. Its primary workspace is a dense, searchable inventory of background services, followed by detail, log, command, and editing surfaces. Most users operate on their own user agents in `~/Library/LaunchAgents/`. The standalone build also controls shared `/Library/LaunchAgents` in the user's GUI session; system daemons require an explicit administrator window. Shared plist editing and removal remain protected.
 
 Users should be able to scan the list before opening detail, distinguish source and state at a glance, and see clear feedback for every action. Destructive or consequential operations require explicit confirmation. The interface must behave like a dependable macOS utility: keyboard-accessible, compact, calm, and precise under both light and dark system appearances.
 
@@ -33,8 +33,8 @@ Users should be able to scan the list before opening detail, distinguish source 
 - Inspect plist configuration, command arguments, schedules, environment variables, working directories, and raw XML.
 - Preview interval and calendar schedules and expose stdout and stderr logs when configured.
 - Reveal the relevant plist or helper bundle in Finder.
-- Login items have no standalone plist; only enable and disable are supported, and the parent app may register them again.
-- System agents and daemons are read-only in the ordinary app experience. Privileged behavior must be explicit and must never look equivalent to ordinary user-agent editing.
+- Login items have no standalone plist; enable and disable plus registered-service run, restart and unload are supported. Unload warns that only the parent app can register the helper again.
+- Shared GUI agents support lifecycle controls without root; system daemons require administrator mode. Shared plist editing/removal stays hidden even as root. Privileged behavior must be explicit and must never look equivalent to ordinary user-agent editing.
 - State changes must be verified after execution. Errors, partial success, permission limits, stale data, and refresh failures must be shown plainly rather than collapsed into success-shaped feedback.
 - Launchpane is macOS-only. The `web` platform value describes the rendered interface layer for Impeccable tooling, not a browser-distributed product.
 - The app is currently distributed unsigned for direct download; installation requires removing macOS quarantine. App Store distribution is constrained by sandbox restrictions around `launchctl` and writes to `~/Library/LaunchAgents/`.
@@ -58,7 +58,7 @@ The product and its communication must avoid:
 
 ## Evidence on Hand
 
-- `README.md` documents the supported service sources, lifecycle actions, editing behavior, logs, schedules, and read-only system boundaries.
+- `README.md` and `docs/native-actions.md` document service sources, lifecycle actions, state dependencies, logs, schedules, privilege boundaries and protected shared files.
 - `src/App.tsx` implements the primary inventory workflow, confirmations, action feedback, privilege state, creation, editing, and detail navigation.
 - `src/components/JobList.tsx`, `JobRow.tsx`, `JobDetail.tsx`, `LogViewer.tsx`, and `CommandPanel.tsx` establish the current operational surfaces and terminology.
 - `src/types.ts` defines the product's service sources, statuses, actions, schedule model, plist configuration, and runtime data.

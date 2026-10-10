@@ -23,6 +23,14 @@ save it, select it, then remove it. The app writes only to the user's
 
 2. Physical-device QA and recording
 
+Local candidate build `202610101605` includes the edition-specific hints and
+correct account-home resolution inside App Sandbox. It has not been uploaded
+or attached to this version. Native screenshots now come from this updated
+Store-feature binary run locally with an ad-hoc sandbox signature. They show
+real disposable user agents, a real login helper, the native editor and actual
+log output; personal file paths are privacy-masked. They are not an exact-build
+TestFlight walkthrough or the latest-macOS review recording.
+
 Build `202610100953` is attached to this version and assigned to the existing
 Launchpane Internal QA TestFlight group. The invited tester has not accepted
 the invitation, so exact-build TestFlight installation and physical-device QA
@@ -66,3 +74,22 @@ exceptions for the standard launchd locations. It writes only user-owned
 agents in `~/Library/LaunchAgents/`; system agents and daemons are read-only.
 Temporary sandbox exception details and assessment steps are documented in
 `appstore/sandbox-exceptions.md`.
+
+6. Edition limits and project reference (candidate not yet submitted)
+
+The updated Store-feature build keeps applicable unavailable controls visible
+but disabled with an explicit "Unavailable in the Mac App Store edition"
+explanation. Administrator access cannot be enabled; shared agents and daemons
+are read-only. Login-helper lifecycle controls are disabled; Enable/Disable
+remain the only permitted changes.
+
+An optional "Project documentation and source on GitHub" link opens
+https://github.com/webmaxru/Launchpane in the system browser. It supplies project
+documentation and source; the repository also describes separate standalone
+distribution. Launchpane does not download, install, update, or unlock external
+code. No purchase, license, or external payment flow is provided by the link.
+The Store edition works independently and does not require another edition.
+
+These changes have not been uploaded or attached to the build identified above.
+Replace these local status notes with verified exact-build evidence before
+resubmission; local checks do not establish App Review approval.

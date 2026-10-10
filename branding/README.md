@@ -15,7 +15,9 @@ or Apple-owned assets are included.
 | `launchpane-icon-1024.png` | Rasterised master icon **with alpha** — input for icon generation |
 | `launchpane-wordmark.svg` | Horizontal lockup (icon + wordmark + tagline), rebuilt from the selection |
 | `../src/assets/app-icon.svg` | Generated — the in-app header mark, kept in sync with the selected concept |
-| `screenshots/source/*.svg` | Store screenshot mockups; `<g data-app-icon …/>` is replaced with the live mark at render time |
+| `screenshots/source/*.png` | Current native Store-edition window captures, using disposable real agents and privacy-redacted log paths |
+| `screenshots/source/captures.json` | Capture provenance, app-source fingerprint, build number, image hashes and privacy disclosures |
+| `screenshots/source/*.svg` | Historical mockup artwork; excluded from Store screenshot generation |
 
 Every icon concept has a fully transparent background. Nothing in the pipeline
 flattens the app icon onto a solid colour; the single exception is the App Store
@@ -63,7 +65,7 @@ The palette below tracks the shipping mark (`04-daemon-pulse`).
 | `icon-{16,32,64,128,256,512,1024}.png` | Reference PNG sizes |
 | `Launchpane.icns` | macOS bundle icon (mirrors `src-tauri/icons/icon.icns`) |
 | `launchpane-wordmark-1600x400.png` | Marketing lockup for listings, README and web |
-| `screenshots/<size>/` | Submission-ready screenshots (generated, see below) |
+| `screenshots/<size>/` | Dimension-checked native screenshots (not a substitute for submission QA) |
 
 ## Regenerating
 
@@ -72,7 +74,7 @@ The palette below tracks the shipping mark (`04-daemon-pulse`).
 # and branding/store/)
 pnpm icons
 
-# Render the marketing screenshot sources at every accepted macOS size
+# Resize verified native capture sources at every accepted macOS size
 pnpm store:screenshots
 ```
 
@@ -81,9 +83,21 @@ Launchpane is a macOS-only app, so those folders are removed from the repository
 
 ## Screenshots
 
-The editable SVG compositions in `branding/screenshots/source/` accurately
-represent the Launchpane interface with non-personal sample data. Update those
-sources when the UI changes, then run `pnpm store:screenshots`.
+Store screenshots now come from actual native windows of the `app-store`
+feature build, run locally with the Store sandbox entitlements. The old SVG
+reconstructions are historical artwork and are never used by the generation
+script. Capture the current native edition again when app sources change.
+
+The capture manifest ties each PNG to its app-source fingerprint and documents
+its local build number, environment and explicit privacy masks. The sample user
+agents are real disposable launchd services, not fake IPC or a browser replica.
+The log image contains actual service output; personal path labels are covered
+by solid privacy masks. The editor image is an unsaved native edit form.
+
+`pnpm store:screenshots` fails if provenance is missing, source/image hashes
+change, or captures belong to another app version. `pnpm appstore:verify` checks
+all four sizes, not only the largest. Locally ad-hoc signed captures are not
+exact submitted-build QA or Apple's requested latest-macOS recording.
 
 Output is written to `branding/store/screenshots/` at every size App Store Connect
 accepts for macOS: `1280x800`, `1440x900`, `2560x1600` and `2880x1800`.
@@ -94,7 +108,8 @@ Generated PNGs are opaque and contain no alpha channel.
 - [ ] `appstore-icon-1024.png` uploaded — must stay free of an alpha channel.
 - [ ] At least one screenshot per supported display size.
 - [ ] Bundle identifier `com.webmaxru.launchpane` registered in App Store Connect.
-- [ ] App sandbox impact reviewed — Launchpane drives `launchctl` and writes to
-      `~/Library/LaunchAgents`, which sandboxed apps cannot do. A notarised direct
-      download is the lower-friction distribution route.
+- [ ] App sandbox impact and requested temporary file exceptions reviewed.
+      The Store edition resolves the account home rather than container HOME;
+      shared services stay read-only and root escalation is unavailable.
+      Apple must assess the exceptions and exact submitted build.
 - [ ] `LICENSE` shipped with the source distribution and inside the `.app` bundle.

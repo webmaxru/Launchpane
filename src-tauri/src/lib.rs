@@ -5,6 +5,7 @@ mod login_items;
 mod menu;
 mod plist_util;
 mod types;
+mod user_paths;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -30,6 +31,7 @@ pub fn run() {
             commands::open_log_in_editor,
             commands::get_home_dir,
             commands::reveal_in_finder,
+            commands::open_project_page,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
