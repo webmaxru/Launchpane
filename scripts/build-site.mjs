@@ -1,5 +1,5 @@
 import { cp, mkdir, readFile, readdir, writeFile } from "node:fs/promises"
-import { dirname, relative, resolve, sep } from "node:path"
+import { relative, resolve, sep } from "node:path"
 import { fileURLToPath } from "node:url"
 
 async function htmlFiles(directory) {
@@ -47,7 +47,7 @@ export async function buildSite(source = "docs", output = "dist/site") {
   await mkdir(output, { recursive: true })
   await cp(root, output, { recursive: true })
   await writeFile(resolve(output, ".nojekyll"), "")
-  console.log(`Built ${pages.length} pages; validated ${references.length} references → ${output}`)
+  console.log(`Built ${pages.length} pages; validated ${references.length} references -> ${output}`)
 }
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
