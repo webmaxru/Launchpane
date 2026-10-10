@@ -73,6 +73,15 @@ the `github-pages` environment and deploys only after the build succeeds.
 
 ## GitHub release pipeline
 
+The repository includes the Copilot agent skill
+[`release-up`](.github/skills/release-up/SKILL.md). Prompt **"release up"** to
+coordinate standalone and Store release preparation. It resolves patch/minor/
+major or same-version retries, pins both channels to one source/version, and
+checks credentials, native assets, signing and review gates. Store upload,
+App Review submission and public availability are separate stages; a generic
+release request does not authorize review submission or guarantee simultaneous
+availability. Creating the skill does not itself trigger a release.
+
 Pushing a `v<version>` tag runs **Standalone release**. The tag must match
 `package.json`, both Rust version records, and `src-tauri/tauri.conf.json`.
 The pipeline checks the frontend and both backend editions, then builds
