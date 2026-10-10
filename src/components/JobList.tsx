@@ -32,6 +32,7 @@ type JobListProps = {
   emptyDescription?: string
   hasActiveFilters?: boolean
   isAdministrator?: boolean
+  isAppStore?: boolean
   pendingAction?: PendingAction | null
   onStart: (job: JobListEntry) => void
   onStop: (job: JobListEntry) => void
@@ -55,6 +56,7 @@ export function JobList({
   emptyDescription = "Refresh the list or create a user agent.",
   hasActiveFilters = false,
   isAdministrator = false,
+  isAppStore = false,
   pendingAction = null,
   onStart,
   onStop,
@@ -236,6 +238,7 @@ export function JobList({
               key={job.plist_path}
               job={job}
               isAdministrator={isAdministrator}
+              isAppStore={isAppStore}
               pendingAction={pendingAction}
               onStart={onStart}
               onStop={onStop}

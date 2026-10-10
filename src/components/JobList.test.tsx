@@ -73,6 +73,38 @@ async function openActions(user: ReturnType<typeof userEvent.setup>, label: stri
 }
 
 describe("JobList", () => {
+  it.each(["SystemAgent", "SystemDaemon"] as const)(
+    "keeps every %s runtime action visible with a Store-specific explanation",
+    async (source) => {
+      const user = userEvent.setup()
+      const job = { ...mockJobs[0], source }
+      renderJobList([job], { isAppStore: true, isAdministrator: true })
+      const stop = screen.getByRole("button", { name: "Stop" })
+      expect(stop).toBeDisabled()
+      expect(stop).toHaveAttribute("title", expect.stringContaining("Mac App Store edition"))
+      const menu = await openActions(user, job.label)
+      for (const name of ["Load", "Run now", "Unload", "Restart", "Enable", "Disable"]) {
+        const item = within(menu).getByRole("menuitem", { name })
+        expect(item).toHaveAttribute("aria-disabled", "true")
+        expect(item).toHaveTextContent("Mac App Store edition")
+        expect(item).not.toHaveTextContent("Open Administrator Window")
+      }
+    }
+  )
+
+  it("disables login-helper lifecycle controls in Store without disabling eligible toggles", async () => {
+    const user = userEvent.setup()
+    renderJobList([loginItemJob], { isAppStore: true })
+    expect(screen.getByRole("button", { name: "Run now" })).toBeDisabled()
+    const menu = await openActions(user, loginItemJob.label)
+    expect(within(menu).queryByRole("menuitem", { name: "Load" })).not.toBeInTheDocument()
+    for (const name of ["Run now", "Unload", "Restart"]) {
+      expect(within(menu).getByRole("menuitem", { name })).toHaveAttribute("aria-disabled", "true")
+      expect(within(menu).getByRole("menuitem", { name })).toHaveTextContent("Mac App Store edition")
+    }
+    expect(within(menu).getByRole("menuitem", { name: "Disable" })).not.toHaveAttribute("aria-disabled")
+  })
+
   it("renders loading state before the first result", () => {
     renderJobList([], { loading: true })
 
@@ -247,7 +279,7 @@ describe("JobList", () => {
     })).not.toHaveAttribute("tabindex", "0")
   })
 
-  it("allows system enablement only from an administrator menu", async () => {
+  it("shows daemon actions disabled with a reason until administrator mode", async () => {
     const user = userEvent.setup()
     const onDisable = vi.fn()
     const systemJob: JobListEntry = {
@@ -260,7 +292,8 @@ describe("JobList", () => {
     const { rerender } = renderJobList([systemJob], props)
 
     let menu = await openActions(user, systemJob.label)
-    expect(within(menu).queryByRole("menuitem", { name: "Disable" })).toBeNull()
+    expect(within(menu).getByRole("menuitem", { name: "Disable" })).toHaveAttribute("aria-disabled", "true")
+    expect(within(menu).getByRole("menuitem", { name: "Disable" })).toHaveTextContent("Open Administrator Window")
     await user.keyboard("{Escape}")
 
     rerender(
@@ -284,6 +317,24 @@ describe("JobList", () => {
     expect(onDisable).toHaveBeenCalledWith(systemJob)
   })
 
+  it("constrains expanded action hints to the space available inside the native window", async () => {
+    const user = userEvent.setup()
+    renderJobList([mockJobs[1]])
+    const viewport = vi.spyOn(document.documentElement, "clientHeight", "get")
+      .mockReturnValue(700)
+    const trigger = screen.getByRole("button", { name: `Actions for ${mockJobs[1].label}` })
+    const bounds = vi.spyOn(trigger, "getBoundingClientRect")
+      .mockReturnValue(new DOMRect(880, 400, 32, 32))
+    try {
+      const menu = await openActions(user, mockJobs[1].label)
+      expect(menu).toHaveClass("overflow-y-auto")
+      expect(menu).toHaveStyle({ maxHeight: "388px" })
+    } finally {
+      bounds.mockRestore()
+      viewport.mockRestore()
+    }
+  })
+
   it("keeps login item actions plist-free and non-destructive", async () => {
     const user = userEvent.setup()
     const onDisable = vi.fn()
@@ -292,9 +343,44 @@ describe("JobList", () => {
     expect(screen.queryByRole("button", { name: "Stop" })).not.toBeInTheDocument()
     const menu = await openActions(user, loginItemJob.label)
     expect(within(menu).getByRole("menuitem", { name: "Disable" })).toBeVisible()
+    expect(within(menu).getByRole("menuitem", { name: "Run now" })).not.toHaveAttribute("aria-disabled")
+    expect(within(menu).getByRole("menuitem", { name: "Unload" })).not.toHaveAttribute("aria-disabled")
+    expect(within(menu).queryByRole("menuitem", { name: "Load" })).not.toBeInTheDocument()
     expect(
       within(menu).queryByRole("menuitem", { name: /Remove/ })
     ).not.toBeInTheDocument()
+  })
+
+  it("explains why disabled, unloaded agents cannot load, run or restart", async () => {
+    const user = userEvent.setup()
+    const onStart = vi.fn()
+    renderJobList([mockJobs[1]], { onStart })
+    expect(screen.getByRole("button", { name: "Load" })).toBeDisabled()
+    const menu = await openActions(user, mockJobs[1].label)
+    expect(within(menu).getByRole("menuitem", { name: "Load" })).toHaveTextContent("Enable this service")
+    expect(within(menu).getByRole("menuitem", { name: "Restart" })).toHaveTextContent("Load this service first")
+    expect(within(menu).getByRole("menuitem", { name: "Disable" })).toHaveTextContent("Already disabled")
+    expect(within(menu).getByRole("menuitem", { name: "Enable" })).not.toHaveAttribute("aria-disabled")
+    expect(onStart).not.toHaveBeenCalled()
+  })
+
+  it("allows Library agent controls without administrator mode", async () => {
+    const user = userEvent.setup()
+    renderJobList([{ ...mockJobs[0], source: "SystemAgent" }])
+    expect(screen.getByRole("button", { name: "Stop" })).toBeEnabled()
+    const menu = await openActions(user, mockJobs[0].label)
+    for (const action of ["Restart", "Unload", "Disable"]) {
+      expect(within(menu).getByRole("menuitem", { name: action })).not.toHaveAttribute("aria-disabled")
+    }
+    expect(within(menu).getByRole("menuitem", { name: "Run now" })).toHaveTextContent("Already running")
+    expect(within(menu).queryByRole("menuitem", { name: "Remove agent…" })).not.toBeInTheDocument()
+  })
+
+  it("does not let keyboard activation of an action open the detail row", () => {
+    const onSelect = vi.fn()
+    renderJobList([mockJobs[0]], { onSelect })
+    fireEvent.keyDown(screen.getByRole("button", { name: "Stop" }), { key: "Enter" })
+    expect(onSelect).not.toHaveBeenCalled()
   })
 
   it("always displays explicit status and enabled state", () => {

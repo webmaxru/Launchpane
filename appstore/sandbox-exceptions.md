@@ -6,6 +6,11 @@ the standard locations where macOS and third-party software install these
 definitions. The Mac App Store build has no administrator mode; system agents
 and daemons remain read-only.
 
+Applicable unavailable controls stay visible but disabled with a Store-specific
+reason; login helpers permit only Enable/Disable. These are build-enforced
+boundaries, not claims that file exceptions grant launchd control rights. See
+the [edition action table](../docs/app-store-actions.md) for every restriction.
+
 ## WebKit runtime entitlements
 
 `com.apple.security.network.client` and

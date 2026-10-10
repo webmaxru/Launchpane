@@ -45,6 +45,7 @@ export const disableJob = (
 ) => invoke<boolean>("disable_job", { label, plistPath, source })
 
 export type RuntimeInfo = {
+  is_app_store: boolean
   is_administrator: boolean
   can_restart_as_administrator: boolean
   review_demo: boolean
@@ -54,6 +55,8 @@ export const getRuntimeInfo = () => invoke<RuntimeInfo>("get_runtime_info")
 
 export const restartAsAdministrator = () =>
   invoke<void>("restart_as_administrator")
+
+export const openProjectPage = () => invoke<void>("open_project_page")
 
 export const saveJob = (plistPath: string, config: PlistConfig) =>
   invoke<void>("save_job", { plistPath, config })

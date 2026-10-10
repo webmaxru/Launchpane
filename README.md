@@ -12,19 +12,34 @@ Browse user LaunchAgents (`~/Library/LaunchAgents/`), system agents/daemons, and
 
 - List User Agents (`~/Library/LaunchAgents/`), System Agents, System Daemons, and Login Items
 - Search by label and filter by source (User / Home / System / Daemon / Login Items)
-- Start / Stop / Restart / Test Run (immediate execution) for User Agents
+- Load / Run now / Stop (Unload) / Restart / Enable / Disable for user and shared GUI agents; administrator controls for system daemons
 - Create new agents, edit and delete existing ones
 - Schedule configuration (interval / calendar) with next run time preview
 - View stdout / stderr logs
 - Inspect plist configuration details
 - Reveal plist file in Finder
 
-System Agents and Daemons are read-only. Modification operations are limited to User Agents.
+In the standalone build, `/Library/LaunchAgents` can be controlled in the current
+user's GUI session without root. `/Library/LaunchDaemons` require **Open
+Administrator Window**. Shared system plist files remain protected from editing
+and removal, including in administrator mode.
 
 Login Items are the background helpers that apps register with macOS ServiceManagement
 (`<App>.app/Contents/Library/LoginItems/<Helper>.app`). They have no plist file of their own, so the
-only supported action is Enable / Disable; load, unload, run and remove controls are intentionally
-left empty for them. A parent app may re-register its helper the next time it launches.
+supported actions are Enable / Disable and, while registered, Run now / Restart /
+Unload. Load, Edit and Remove are hidden. Unloading requires confirmation because
+only the parent app can register the helper again; Enable alone does not reload
+it. A parent app may re-register its helper the next time it launches.
+
+See the [standalone action availability tables](docs/native-actions.md) for every
+action's privilege requirements, state dependencies, reasons for disabling or
+hiding it, and real-Mac verification limits. Enable does not load or start;
+Disable does not stop an already loaded service.
+
+The Mac App Store edition has no administrator access: shared agents and daemons
+are read-only, and login helpers retain Enable/Disable only. Edition-specific
+limits stay visible with explanations and a project documentation/source link.
+See the [App Store action and review-policy tables](docs/app-store-actions.md).
 
 ## Install
 
@@ -40,6 +55,33 @@ xattr -cr /Applications/Launchpane.app
 For Intel Macs, replace `aarch64` with `x64`.
 
 DMG installers are also available on the [Releases](https://github.com/webmaxru/Launchpane/releases) page.
+Universal builds are available as `Launchpane_universal.app.tar.gz` and a
+versioned Universal DMG. Releases include `SHA256SUMS` for all six downloads.
+These standalone builds are unsigned and unnotarized; they are separate from
+the sandboxed Mac App Store edition.
+
+## GitHub release pipeline
+
+Pushing a `v<version>` tag runs **Standalone release**. The tag must match
+`package.json`, both Rust version records, and `src-tauri/tauri.conf.json`.
+The pipeline checks the frontend and both backend editions, then builds
+Apple Silicon, Intel, and Universal standalone apps and DMGs. It verifies
+bundle versions, CPU architectures, license inclusion, and DMG integrity,
+packages the `.app` archives, and generates SHA-256 checksums.
+
+Only after all builds succeed does it upload all seven assets to a draft
+GitHub release and publish it as latest. A failed build publishes nothing;
+a failed upload leaves a draft, never a partial public release. Signing keys
+and App Store credentials are not needed or used.
+
+To publish a subsequent version, bump the synchronized versions, commit all
+intended app changes, push the commit, and push its matching version tag.
+The workflow also supports manual dispatch with an existing tag. If a failed
+publication left a draft, inspect and delete that draft before retrying;
+the workflow does not overwrite existing releases.
+
+**Publish to Mac App Store** is manual-only and is not triggered by standalone
+tags. Its signing, upload, and review requirements remain separate.
 
 ## Tech Stack
 

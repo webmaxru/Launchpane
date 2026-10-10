@@ -91,10 +91,13 @@ const handlers: Record<string, CommandHandler> = {
   enable_job: () => undefined,
   disable_job: () => undefined,
   get_runtime_info: () => ({
+    is_app_store: false,
     is_administrator: false,
     can_restart_as_administrator: true,
+    review_demo: false,
   }),
   restart_as_administrator: () => undefined,
+  open_project_page: () => undefined,
   save_job: () => undefined,
   create_job: () => "/Users/test/Library/LaunchAgents/new-job.plist",
   delete_job: () => undefined,

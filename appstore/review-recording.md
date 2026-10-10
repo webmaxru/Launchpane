@@ -37,7 +37,10 @@ test plan for that recording; it is intentionally not a simulated recording.
 10. Stop recording after the final refreshed state is visible.
 
 Login Items can be shown when the review Mac has registered helpers. They are
-not required for the main flow and must only expose Enable/Disable controls.
+not required for the main flow. Only Enable/Disable can be activated; applicable
+lifecycle controls remain visible but disabled with a Store-specific reason.
+Also show the disabled Administrator control and the edition notice's optional
+GitHub documentation/source link. Neither can unlock additional Store features.
 
 ## Fail-closed recording gate
 
@@ -73,7 +76,8 @@ processing status, or a successful upload is not evidence that the app works.
 - [ ] Search and source filtering return and clear results correctly.
 - [ ] User-agent create, refresh, detail, and remove flow completes.
 - [ ] System Agents and System Daemons remain read-only.
-- [ ] Login Items, when present, expose only Enable/Disable.
+- [ ] Login Items, when present, permit only Enable/Disable; lifecycle controls show Store-specific disabled reasons.
+- [ ] Administrator is disabled with a Store-specific hint; the optional GitHub project link opens the browser and does not download/install/unlock anything.
 - [ ] Errors remain visible and provide a recovery action.
 - [ ] Light and dark macOS appearances render the main flow legibly.
 - [ ] The temporary plist is removed after the test.
@@ -129,3 +133,23 @@ establish submission readiness.
 
 The overall gate remains failed. Do not upload the local demonstration as
 compliant review evidence or resubmit while these requirements are unresolved.
+
+## Updated local assets: candidate 202610101605
+
+The updated universal Store-feature candidate fixes account-home discovery:
+App Sandbox's container HOME must not replace the real user's LaunchAgents and
+Applications paths. The local sandboxed app now finds real user agents and reads
+the disposable service's log through the requested LaunchAgents exception.
+
+The active Store screenshot sources are now four native PNG captures, not the
+historical SVG reconstructions. All accepted screenshot sizes are generated from
+these PNGs. The capture manifest records the code fingerprint, image hashes,
+build number, local sandbox signing and privacy masks; generation refuses stale
+captures after app-source changes.
+
+Distribution signing was attempted with the matching installed profile and
+certificates, but macOS required keychain approval and the user was unavailable.
+The request was canceled rather than bypassing authentication. The local app
+and installer are explicitly labeled unsigned; an ad-hoc sandbox preview is
+only for local inspection. No updated build, assets or recording were uploaded.
+The exact submitted-build and latest-macOS recording gate is still unresolved.

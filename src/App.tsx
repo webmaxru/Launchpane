@@ -18,6 +18,7 @@ import {
   revealInFinder,
   getRuntimeInfo,
   restartAsAdministrator,
+  openProjectPage,
 } from "@/lib/invoke"
 import type { JobListEntry, LaunchdJob, PlistConfig } from "@/types"
 import {
@@ -55,6 +56,7 @@ import {
 import { useTheme } from "@/hooks/useTheme"
 import { errorMessage } from "@/lib/errors"
 import type { JobActionKind, PendingAction } from "@/types"
+import { STORE_ADMIN_REASON } from "@/lib/job-actions"
 
 const FEEDBACK_DISMISS_MS = 4000
 const REVIEW_DEMO_LABEL = "com.launchpane.review.demo"
@@ -82,7 +84,7 @@ type ActionFeedback = {
   detail?: string
 }
 
-type ConfirmKind = "enable" | "disable" | "delete"
+type ConfirmKind = "enable" | "disable" | "delete" | "unload"
 
 type ConfirmRequest = {
   kind: ConfirmKind
@@ -98,17 +100,24 @@ const CONFIRM_COPY: Record<
     destructive: boolean
   }
 > = {
+  unload: {
+    title: "Unload login item",
+    description:
+      "Stop and unregister this helper from launchd. Enable will not reload it; open the parent app and use its login-item settings to register it again. The parent app may also register it automatically.",
+    confirmLabel: "Unload",
+    destructive: false,
+  },
   enable: {
     title: "Enable agent",
     description:
-      "Allow launchd to load and run this agent at login or on its schedule.",
+      "Allow future registration with launchd. This does not load or start the service now; use Load, then Run now if needed.",
     confirmLabel: "Enable",
     destructive: false,
   },
   disable: {
     title: "Disable agent",
     description:
-      "Prevent launchd from loading this agent again until you enable it.",
+      "Prevent future registration until you enable this service again. This does not stop a loaded or running service; use Stop or Unload separately.",
     confirmLabel: "Disable",
     destructive: false,
   },
@@ -127,14 +136,14 @@ const LOGIN_ITEM_CONFIRM_COPY: Partial<Record<ConfirmKind, ConfirmCopy>> = {
   enable: {
     title: "Enable login item",
     description:
-      "Allow this app’s background helper to launch at login.",
+      "Allow future registration of this app’s helper. This does not register or start it now; the parent app controls registration.",
     confirmLabel: "Enable",
     destructive: false,
   },
   disable: {
     title: "Disable login item",
     description:
-      "macOS will stop launching this app’s background helper at login. The parent app may turn it back on from its own settings.",
+      "Prevent future registration of this app’s helper. This does not stop an already loaded helper. The parent app may turn it back on from its own settings.",
     confirmLabel: "Disable",
     destructive: false,
   },
@@ -191,6 +200,7 @@ function App() {
   const editOpenTimerRef = useRef<number | null>(null)
   const feedbackIdRef = useRef(0)
   const [isAdministrator, setIsAdministrator] = useState(false)
+  const [isAppStore, setIsAppStore] = useState(false)
   const [canStartAdministrator, setCanStartAdministrator] = useState(false)
   const [adminLaunching, setAdminLaunching] = useState(false)
   const [reviewDemo, setReviewDemo] = useState(false)
@@ -208,6 +218,7 @@ function App() {
   useEffect(() => {
     getRuntimeInfo()
       .then((info) => {
+        setIsAppStore(info.is_app_store)
         setIsAdministrator(info.is_administrator)
         setCanStartAdministrator(info.can_restart_as_administrator)
         setReviewDemo(info.review_demo)
@@ -343,6 +354,10 @@ function App() {
       void handleAction("disable", "disable", "disabled", job, () =>
         disableJob(job.label, job.plist_path, job.source)
       )
+      return
+    }
+    if (kind === "unload") {
+      void handleAction("stop", "unload", "unloaded", job, () => stopJob(job.plist_path))
       return
     }
     void handleAction("delete", "remove", "removed", job, () =>
@@ -603,21 +618,24 @@ function App() {
                 <ShieldCheck className="h-4 w-4" />
                 Administrator
               </div>
-            ) : canStartAdministrator ? (
+            ) : canStartAdministrator || isAppStore ? (
               <Hint
                 label="Start an administrator window"
                 description={
-                  adminLaunching
+                  isAppStore
+                    ? STORE_ADMIN_REASON
+                    : adminLaunching
                     ? "Authentication succeeded and the privileged app window is starting."
-                    : "Authenticate with macOS and open a separate privileged window for changing system job enablement."
+                    : "Authenticate with macOS and open a privileged window for loading, running, restarting, unloading, enabling and disabling system daemons."
                 }
-                disabled={adminLaunching}
+                disabled={adminLaunching || isAppStore}
               >
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => void handleRestartAsAdministrator()}
-                  disabled={adminLaunching}
+                  disabled={adminLaunching || isAppStore}
+                  title={isAppStore ? STORE_ADMIN_REASON : undefined}
                   className="rounded-lg bg-card"
                   aria-label="Open Administrator Window"
                 >
@@ -672,6 +690,29 @@ function App() {
       </header>
 
       <main className="p-4">
+        {isAppStore && (
+          <aside
+            aria-label="Mac App Store edition limits"
+            className="mb-3 flex flex-wrap items-center justify-between gap-x-4 gap-y-2 rounded-lg border bg-muted/35 px-3 py-2.5 text-xs text-muted-foreground"
+          >
+            <p className="min-w-0 flex-1">
+              <strong className="text-foreground">Mac App Store edition.</strong>{" "}
+              No administrator access; shared services are read-only. Login helpers support Enable and Disable only.
+            </p>
+            <a
+              href="https://github.com/webmaxru/Launchpane"
+              className="shrink-0 rounded-sm underline underline-offset-4 hover:text-foreground focus-visible:outline-2 focus-visible:outline-ring"
+              onClick={(event) => {
+                event.preventDefault()
+                void openProjectPage().catch((e) =>
+                  showActionFeedback("error", "Couldn’t open the project page.", errorMessage(e))
+                )
+              }}
+            >
+              Project documentation and source on GitHub
+            </a>
+          </aside>
+        )}
         <section
           className="overflow-hidden rounded-xl border bg-card shadow-sm"
           aria-label="Background services"
@@ -703,6 +744,7 @@ function App() {
                 : "Refresh the list or create a user agent."
             }
             isAdministrator={isAdministrator}
+            isAppStore={isAppStore}
             pendingAction={pendingAction}
             onStart={(job) =>
               handleAction("start", "load", "loaded", job, () =>
@@ -710,17 +752,19 @@ function App() {
               )
             }
             onStop={(job) =>
-              handleAction("stop", "unload", "unloaded", job, () =>
-                stopJob(job.plist_path)
-              )
+              job.source === "LoginItem"
+                ? setConfirmRequest({ kind: "unload", job })
+                : handleAction("stop", "unload", "unloaded", job, () =>
+                    stopJob(job.plist_path)
+                  )
             }
             onRestart={(job) =>
-              handleAction("restart", "restart", "restarted", job, () =>
+              handleAction("restart", "restart", "restart requested", job, () =>
                 restartJob(job.plist_path)
               )
             }
             onKickstart={(job) =>
-              handleAction("kickstart", "start", "started", job, () =>
+              handleAction("kickstart", "start", "run requested", job, () =>
                 kickstartJob(job.label, job.plist_path)
               )
             }
@@ -799,6 +843,7 @@ function App() {
       )}
 
       <JobDetail
+        isAppStore={isAppStore}
         plistPath={selectedPlistPath}
         open={detailOpen}
         onClose={() => setDetailOpen(false)}
