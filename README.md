@@ -43,7 +43,8 @@ See the [App Store action and review-policy tables](docs/app-store-actions.md).
 
 ## Install
 
-This app is not code-signed. Download and install via CLI:
+The existing **v1.2.1** downloads are unsigned. Download and install that
+version via CLI:
 
 ```bash
 # Download and extract (Apple Silicon)
@@ -58,7 +59,11 @@ DMG installers are also available on the [Releases](https://github.com/webmaxru/
 Universal builds are available as `Launchpane_universal.app.tar.gz` and a
 versioned Universal DMG. Releases include `SHA256SUMS` for all six downloads.
 These standalone builds are unsigned and unnotarized; they are separate from
-the sandboxed Mac App Store edition.
+the sandboxed Mac App Store edition. New tagged releases are signed and
+notarized after the `macos-distribution` GitHub environment is configured;
+the existing v1.2.1 assets are not replaced. For a signed release, download
+the DMG and follow the normal macOS installation prompts—do not remove
+quarantine attributes.
 
 ## GitHub release pipeline
 
@@ -67,15 +72,52 @@ Pushing a `v<version>` tag runs **Standalone release**. The tag must match
 The pipeline checks the frontend and both backend editions, then builds
 Apple Silicon, Intel, and Universal standalone apps and DMGs. It verifies
 bundle versions, CPU architectures, license inclusion, and DMG integrity,
-packages the `.app` archives, and generates SHA-256 checksums.
+imports a Developer ID certificate into a temporary keychain, signs with
+Hardened Runtime, notarizes and staples the apps and DMGs, verifies
+Gatekeeper acceptance, packages the `.app` archives, and generates SHA-256
+checksums. It fails rather than silently publishing unsigned or unstapled
+artifacts.
 
 Only after all builds succeed does it upload all seven assets to a draft
 GitHub release and publish it as latest. A failed build publishes nothing;
-a failed upload leaves a draft, never a partial public release. Signing keys
-and App Store credentials are not needed or used.
+a failed upload leaves a draft, never a partial public release.
 
-To publish a subsequent version, bump the synchronized versions, commit all
-intended app changes, push the commit, and push its matching version tag.
+### Configure macOS distribution credentials
+
+Before running a signed release, create a **Developer ID Application**
+certificate in the Apple Developer account, export its certificate and private
+key as a password-protected `.p12`, and create an App Store Connect API key
+with access to submit software for notarization. The separate **Developer ID
+Installer** certificate is not needed for the app archives and DMGs.
+
+In GitHub **Settings → Environments**, configure the `macos-distribution`
+environment with these secrets:
+
+| Secret | Value |
+| --- | --- |
+| `DEVELOPER_ID_CERTIFICATE_BASE64` | Base64-encoded Developer ID Application `.p12`, including its private key |
+| `DEVELOPER_ID_CERTIFICATE_PASSWORD` | Password used when exporting the `.p12` |
+| `APPLE_SIGNING_IDENTITY` | Full `Developer ID Application: … (TEAMID)` identity shown by `security find-identity -v -p codesigning` |
+| `APPLE_API_KEY` | App Store Connect API key ID |
+| `APPLE_API_ISSUER` | App Store Connect issuer ID |
+| `APPLE_API_PRIVATE_KEY_BASE64` | Base64-encoded API `.p8` private key |
+
+Protect these secrets; never commit them or paste them into source files.
+Each macOS build runner imports the certificate into a temporary keychain,
+writes the API key to a temporary file, and removes both after the build.
+The workflow checks the imported identity, signed app, notarization tickets,
+stapling, and Gatekeeper assessments before it uploads anything. A missing
+secret or failed Apple notarization stops the release before publication.
+
+The existing **v1.2.1** release was created before these credentials were
+configured and remains unsigned and unnotarized. It is not silently replaced.
+After adding the secrets, publish a new version tag (for example `v1.2.2`) to
+produce signed downloads. App Store distribution continues to use its separate
+manual workflow and credentials.
+
+To publish a subsequent version, configure the distribution secrets above,
+bump the synchronized versions, commit all intended app changes, push the
+commit, and push its matching version tag.
 The workflow also supports manual dispatch with an existing tag. If a failed
 publication left a draft, inspect and delete that draft before retrying;
 the workflow does not overwrite existing releases.

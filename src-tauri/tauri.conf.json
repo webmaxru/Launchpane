@@ -27,6 +27,9 @@
     "active": true,
     "targets": "all",
     "copyright": "Copyright © 2026 Launchpane contributors. MIT licensed.",
+    "macOS": {
+      "hardenedRuntime": true
+    },
     "resources": {
       "../LICENSE": "LICENSE"
     },
