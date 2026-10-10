@@ -1,6 +1,6 @@
 [package]
 name = "launchpane"
-version = "1.2.1"
+version = "1.2.2"
 description = "A GUI for managing macOS launchd agents and daemons"
 authors = ["Launchpane contributors"]
 license = "MIT"
