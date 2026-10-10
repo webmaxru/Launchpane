@@ -6,6 +6,15 @@ the standard locations where macOS and third-party software install these
 definitions. The Mac App Store build has no administrator mode; system agents
 and daemons remain read-only.
 
+## WebKit runtime entitlements
+
+`com.apple.security.network.client` and
+`com.apple.security.network.server` are enabled so Tauri's embedded WebKit
+process can start inside the App Sandbox. Without both entitlements on
+supported older macOS releases, the WebKit child process is terminated and
+the app window remains blank. Launchpane does not contact external endpoints
+or expose a network service; its product data and operations remain local.
+
 ## `com.apple.security.temporary-exception.files.home-relative-path.read-write`
 
 Value: `/Library/LaunchAgents/`

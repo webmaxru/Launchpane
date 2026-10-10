@@ -22,8 +22,8 @@ A native macOS app for managing launch agents, daemons and login items (Tauri v2
 - `pnpm appstore:verify` — Validate App Store metadata, versions, icons, and screenshots
 - `pnpm appstore:prepare` — Build the Fastlane metadata/screenshots payload
 - `pnpm appstore:build` — Build, sign, and package the universal Mac App Store app (requires Apple credentials)
-- `pnpm appstore:validate` — Validate the signed package with App Store Connect
-- `pnpm appstore:upload` — Upload package, metadata, and screenshots with Fastlane
+- `pnpm appstore:validate` — Verify the signed package locally
+- `pnpm appstore:upload` — Upload the package, metadata, and screenshots over the App Store Connect API
 - `pnpm dev` — Vite dev server only (frontend)
 - `pnpm build` — TypeScript check + Vite build
 - `pnpm lint` — oxlint

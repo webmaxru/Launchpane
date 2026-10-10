@@ -1,0 +1,54 @@
+Hello App Review,
+
+Thank you for the guidance. We have added the requested information to App
+Review Information and uploaded replacement build 202610092309 after
+physical-device QA identified and corrected a Mac App Store sandbox
+entitlement issue affecting Tauri's embedded WebKit process.
+
+1. Recording
+
+A physical-device recording will be attached before resubmission. It begins
+with launching Launchpane and demonstrates inventory loading, search and
+source filtering, inspecting a user agent, creating and removing a temporary
+agent that runs /usr/bin/true, and confirming that system agents and daemons
+are read-only.
+
+2. Purpose and audience
+
+Launchpane is a local macOS utility for developers, power users, and Mac
+support professionals. It makes launch agents, launch daemons, and login
+items visible in one interface so users can diagnose startup behavior,
+inspect configuration and logs, and safely manage user-owned agents without
+remembering launchctl commands or plist locations.
+
+3. Access and setup
+
+No account, login, network connection, paid feature, sample file, or demo
+credential is required. Launch the app and its inventory loads from the Mac.
+For a safe write-flow test, create an agent named
+com.launchpane.review.demo with /usr/bin/true as the program, leave Run at
+Login and Keep Alive disabled, save it, inspect it, and then remove it.
+
+4. External services
+
+Launchpane uses no external service, authentication provider, analytics,
+advertising, payment processor, cloud storage, AI service, or remote data
+provider. It reads local launchd state, plist files, logs, and
+ServiceManagement login-item metadata. Tauri's sandboxed WebKit runtime uses
+local network client/server entitlements to start its child process, but the
+app does not contact external endpoints or expose a network service.
+
+5. Regional behavior
+
+The app functions consistently in every region and has no regional feature
+or content differences.
+
+6. Regulated or protected content
+
+The app is not a regulated-industry service and contains no protected
+third-party material or user-generated content. System-owned agents and
+daemons are shown read-only; Launchpane writes only user-owned agents in
+~/Library/LaunchAgents/.
+
+There is no registration, account deletion, user-generated content, paid
+content, or In-App Purchase flow.

@@ -33,6 +33,7 @@ type JobFormProps = {
   onClose: () => void
   onSave: (config: PlistConfig, plistPath?: string) => Promise<void>
   editingJob?: LaunchdJob | null
+  initialConfig?: PlistConfig
 }
 
 function parseArguments(input: string): string[] {
@@ -109,16 +110,23 @@ function detectHourMode(config: PlistConfig): HourMode {
 
 const weekdayLabels = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
 
-export function JobForm({ open, onClose, onSave, editingJob }: JobFormProps) {
+export function JobForm({
+  open,
+  onClose,
+  onSave,
+  editingJob,
+  initialConfig,
+}: JobFormProps) {
+  const startingConfig = editingJob?.plist ?? initialConfig ?? emptyConfig()
   const [config, setConfig] = useState<PlistConfig>(
-    editingJob?.plist ?? emptyConfig()
+    startingConfig
   )
   const [args, setArgs] = useState(
-    editingJob?.plist.program_arguments
-      ? formatArguments(editingJob.plist.program_arguments)
+    startingConfig.program_arguments
+      ? formatArguments(startingConfig.program_arguments)
       : ""
   )
-  const initPlist = editingJob?.plist ?? emptyConfig()
+  const initPlist = startingConfig
   const [scheduleType, setScheduleType] = useState<ScheduleType>(
     detectScheduleType(initPlist)
   )

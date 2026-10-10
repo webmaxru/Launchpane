@@ -47,6 +47,7 @@ export const disableJob = (
 export type RuntimeInfo = {
   is_administrator: boolean
   can_restart_as_administrator: boolean
+  review_demo: boolean
 }
 
 export const getRuntimeInfo = () => invoke<RuntimeInfo>("get_runtime_info")

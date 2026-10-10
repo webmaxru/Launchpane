@@ -459,6 +459,7 @@ pub async fn disable_job(
 pub struct RuntimeInfo {
     is_administrator: bool,
     can_restart_as_administrator: bool,
+    review_demo: bool,
 }
 
 #[tauri::command]
@@ -466,6 +467,8 @@ pub async fn get_runtime_info() -> RuntimeInfo {
     RuntimeInfo {
         is_administrator: launchctl::is_administrator(),
         can_restart_as_administrator: !cfg!(feature = "app-store"),
+        review_demo: !cfg!(feature = "app-store")
+            && std::env::var_os("LAUNCHPANE_REVIEW_DEMO").is_some(),
     }
 }
 
