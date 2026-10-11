@@ -81,7 +81,10 @@ describe("JobList", () => {
       renderJobList([job], { isAppStore: true, isAdministrator: true })
       const stop = screen.getByRole("button", { name: "Stop" })
       expect(stop).toBeDisabled()
-      expect(stop).toHaveAttribute("title", expect.stringContaining("Mac App Store edition"))
+      expect(stop).not.toHaveAttribute("title")
+      expect(
+        screen.getByLabelText(/Stop\. .*Mac App Store edition/)
+      ).toBeInTheDocument()
       const menu = await openActions(user, job.label)
       for (const name of ["Load", "Run now", "Unload", "Restart", "Enable", "Disable"]) {
         const item = within(menu).getByRole("menuitem", { name })
@@ -206,6 +209,7 @@ describe("JobList", () => {
 
     expect(screen.getByRole("button", { name: "Stop" })).toBeInTheDocument()
     expect(screen.getByRole("button", { name: "Load" })).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "Load" })).not.toHaveAttribute("title")
     expect(screen.queryByRole("button", { name: "Restart" })).not.toBeInTheDocument()
     expect(screen.queryByRole("button", { name: "Remove" })).not.toBeInTheDocument()
   })
@@ -317,22 +321,14 @@ describe("JobList", () => {
     expect(onDisable).toHaveBeenCalledWith(systemJob)
   })
 
-  it("constrains expanded action hints to the space available inside the native window", async () => {
+  it("lets the complete action menu use the full window height beside the trigger", async () => {
     const user = userEvent.setup()
     renderJobList([mockJobs[1]])
-    const viewport = vi.spyOn(document.documentElement, "clientHeight", "get")
-      .mockReturnValue(700)
-    const trigger = screen.getByRole("button", { name: `Actions for ${mockJobs[1].label}` })
-    const bounds = vi.spyOn(trigger, "getBoundingClientRect")
-      .mockReturnValue(new DOMRect(880, 400, 32, 32))
-    try {
-      const menu = await openActions(user, mockJobs[1].label)
-      expect(menu).toHaveClass("overflow-y-auto")
-      expect(menu).toHaveStyle({ maxHeight: "388px" })
-    } finally {
-      bounds.mockRestore()
-      viewport.mockRestore()
-    }
+    const menu = await openActions(user, mockJobs[1].label)
+    expect(menu).toHaveAttribute("data-side", "left")
+    expect(menu).toHaveClass("w-[28rem]", "max-w-[calc(100vw-1rem)]", "max-h-[calc(100vh-1rem)]")
+    expect(within(menu).getByRole("menuitem", { name: "Reveal in Finder" })).toBeVisible()
+    expect(within(menu).getByRole("menuitem", { name: "Remove agent…" })).toBeVisible()
   })
 
   it("keeps login item actions plist-free and non-destructive", async () => {

@@ -6,9 +6,9 @@ export type ActionAvailability = { hidden: boolean; reason: string | null }
 export const STORE_ADMIN_REASON =
   "Unavailable in the Mac App Store edition: administrator access is not supported."
 export const STORE_SHARED_REASON =
-  "Unavailable in the Mac App Store edition: shared agents and system daemons are read-only."
+  "Mac App Store edition: shared services are read-only."
 export const STORE_LOGIN_REASON =
-  "Unavailable in the Mac App Store edition: login helpers support Enable and Disable only; their parent app manages their lifecycle."
+  "Mac App Store edition: Enable or Disable only; the parent app controls this helper."
 
 export function actionAvailability(
   job: JobListEntry,
@@ -29,13 +29,13 @@ export function actionAvailability(
   } else if (isAppStore && job.source === "LoginItem" && action !== "enable" && action !== "disable") {
     reason = STORE_LOGIN_REASON
   } else if (busy) {
-    reason = "Wait for the current action to finish and its state to be verified."
+    reason = "Wait for the current action to finish and verify its state."
   } else if (job.source === "SystemDaemon" && !isAdministrator) {
-    reason = "Open Administrator Window to change a service in the system launchd domain."
+    reason = "Open Administrator Window to control system daemons."
   } else if (action === "enable" && job.enabled === true) {
-    reason = "Already enabled. Enabling does not load or start a service."
+    reason = "Already enabled. This does not load or start it."
   } else if (action === "disable" && job.enabled === false) {
-    reason = "Already disabled. Disabling does not stop an already loaded service."
+    reason = "Already disabled. A loaded service can still run."
   } else if (["load", "unload", "run", "restart"].includes(action)) {
     if (job.status === "Unknown") {
       reason = "Refresh to verify whether this service is registered with launchd."
@@ -45,14 +45,14 @@ export function actionAvailability(
         : job.enabled === false
           ? "Enable this service before loading it."
           : job.enabled === null
-            ? "Refresh or enable this service to verify its enabled state before loading."
+            ? "Refresh or enable to verify its state before loading."
             : null
     } else if (job.status === "Unloaded") {
       reason = job.source === "LoginItem"
-        ? "The parent app must register this helper again before it can run, restart or unload."
-        : "Load this service first. Enabling alone does not register it with launchd."
+        ? "Register this helper in its parent app first."
+        : "Load this service first. Enable alone does not load it."
     } else if (action === "run" && job.status === "Running") {
-      reason = "Already running. Use Restart to terminate and start a new instance."
+      reason = "Already running. Use Restart for a new instance."
     }
   }
   return { hidden: false, reason }

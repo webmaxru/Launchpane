@@ -156,6 +156,20 @@ pub fn list_disabled(domain: &str) -> Result<HashMap<String, bool>, AppError> {
     )))
 }
 
+// launchctl already appends its own root hint and prefixes "Bootstrap failed:",
+// so strip both to avoid repeating them in the combined message.
+fn bootstrap_failure_detail(stderr: &str) -> String {
+    stderr
+        .lines()
+        .map(str::trim)
+        .filter(|line| !line.is_empty() && !line.starts_with("Try re-running"))
+        .map(|line| line.strip_prefix("Bootstrap failed: ").unwrap_or(line))
+        .collect::<Vec<_>>()
+        .join(" ")
+        .trim_end_matches('.')
+        .to_string()
+}
+
 pub fn bootstrap(domain: &str, plist_path: &str) -> Result<(), AppError> {
     let output = Command::new("launchctl")
         .args(["bootstrap", domain, plist_path])
@@ -168,13 +182,14 @@ pub fn bootstrap(domain: &str, plist_path: &str) -> Result<(), AppError> {
         if stderr.contains("already loaded") || stderr.contains("service already loaded") {
             return Ok(());
         }
-        let hint = if stderr.contains("Input/output error") {
+        let detail = bootstrap_failure_detail(&stderr);
+        let hint = if detail.contains("Input/output error") {
             " Try re-running the command as root for richer errors."
         } else {
             ""
         };
         return Err(AppError::Launchctl(format!(
-            "Bootstrap failed for {plist_path}: {stderr}{hint}"
+            "Bootstrap failed for {plist_path}: {detail}.{hint}"
         )));
     }
     Ok(())
@@ -255,6 +270,12 @@ pub fn disable(domain: &str, label: &str) -> Result<(), AppError> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn bootstrap_failure_detail_drops_repeated_launchctl_hints() {
+        let stderr = "Bootstrap failed: 5: Input/output error\nTry re-running the command as root for richer errors.\nTry re-running the command as root for richer errors.\n";
+        assert_eq!(bootstrap_failure_detail(stderr), "5: Input/output error");
+    }
 
     #[test]
     fn test_parse_domain_output_scopes_services_and_handles_pid_zero() {

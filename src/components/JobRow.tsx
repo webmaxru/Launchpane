@@ -24,7 +24,7 @@ import {
   Loader2,
 } from "lucide-react"
 import type { PendingAction } from "@/types"
-import { useRef, useState, type SyntheticEvent } from "react"
+import type { SyntheticEvent } from "react"
 import { actionAvailability, type RuntimeAction } from "@/lib/job-actions"
 
 function formatRelativeTime(epochMillis: string): string {
@@ -196,22 +196,6 @@ export function JobRow({
   onSelect,
   onRevealInFinder,
 }: JobRowProps) {
-  const menuTriggerRef = useRef<HTMLButtonElement>(null)
-  const [menuPlacement, setMenuPlacement] = useState<{
-    side: "top" | "bottom"
-    maxHeight: number
-  } | null>(null)
-  const placeMenu = (open: boolean) => {
-    if (!open || !menuTriggerRef.current) return
-    const viewportHeight = document.documentElement.clientHeight || window.innerHeight
-    const rect = menuTriggerRef.current.getBoundingClientRect()
-    const above = Math.max(0, Math.min(viewportHeight, rect.top) - 12)
-    const below = Math.max(0, viewportHeight - Math.max(0, rect.bottom) - 12)
-    setMenuPlacement({
-      side: above > below ? "top" : "bottom",
-      maxHeight: Math.min(viewportHeight * 0.7, Math.max(above, below)),
-    })
-  }
   const isUserAgent = job.source === "UserAgent"
   const isLoginItem = job.source === "LoginItem"
   const isPending = pendingAction?.plistPath === job.plist_path
@@ -278,7 +262,7 @@ export function JobRow({
         <span>
           {label}
           {availability.reason && (
-            <span className="mt-0.5 block text-xs leading-relaxed">{availability.reason}</span>
+            <span className="mt-0.5 block text-xs leading-4">{availability.reason}</span>
           )}
         </span>
       </DropdownMenuItem>
@@ -343,7 +327,6 @@ export function JobRow({
                   primaryAction.run(job)
                 }}
                 disabled={primaryState?.reason != null}
-                title={primaryState?.reason ?? primaryAction.description}
               >
                 {isPending ? (
                   <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -354,7 +337,7 @@ export function JobRow({
               </Button>
             </Hint>
           )}
-          <DropdownMenu onOpenChange={placeMenu}>
+          <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
                 variant="ghost"
@@ -362,17 +345,16 @@ export function JobRow({
                 className="h-8 w-8"
                 disabled={isPending}
                 aria-label={`Actions for ${job.label}`}
-                ref={menuTriggerRef}
               >
                 <MoreHorizontal className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent
               align="end"
-              side={menuPlacement?.side}
+              side="left"
+              sticky="always"
               collisionPadding={8}
-              style={{ maxHeight: menuPlacement?.maxHeight }}
-              className="w-80 max-h-[min(70vh,var(--radix-dropdown-menu-content-available-height))] overflow-y-auto"
+              className="w-[28rem] max-w-[calc(100vw-1rem)] max-h-[calc(100vh-1rem)]"
             >
               <DropdownMenuLabel className="truncate" title={job.label}>
                 {job.label}
