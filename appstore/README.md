@@ -3,8 +3,8 @@
 Launchpane's App Store pipeline builds a universal macOS app, embeds its Mac App
 Store provisioning profile, signs it with Apple distribution certificates,
 creates a signed installer package, then uploads the binary, metadata, and
-screenshots through the App Store Connect REST API. No Xcode, Transporter, or
-Fastlane installation is required.
+screenshots through the App Store Connect REST API. GitHub's macOS runner uses
+`altool` for package validation before REST upload; no Fastlane setup is used.
 
 ## Apple account prerequisites
 
@@ -53,19 +53,44 @@ rule if publishing must be reviewed by a human. Configure these secrets:
 | `APP_REVIEW_PHONE` | App Review contact phone, including country code |
 | `APP_REVIEW_EMAIL` | App Review contact email |
 
-Encode files without line wrapping:
+Also configure environment variable `ASC_APP_ID` with the verified Apple app
+record ID. Restrict deployment branches to a **tag** policy named `v*`.
+The standalone `macos-distribution` environment uses the same tag policy, but
+different Developer ID certificates and secret names.
 
-```bash
-base64 < certificate.p12 | pbcopy
-base64 < Launchpane.provisionprofile | pbcopy
-base64 < AuthKey_KEYID.p8 | pbcopy
-```
+### Verified environment provisioning
+
+`pnpm store:environment --check` validates existing credential backups and Apple
+API access without changing GitHub. `pnpm store:environment --apply` then creates
+or updates the environment, preserves existing reviewer rules, uploads the
+12 secrets without printing values, sets the tag policy, and records `ASC_APP_ID`
+from the matching bundle. Existing App Review contact details are read from Apple,
+not invented or hard-coded.
+
+The commands require `STORE_CREDENTIAL_DIRECTORY` (containing `app.p12`,
+`installer.p12`, matching `.cert.pem` and `.key.pem` files, and
+`Launchpane.provisionprofile`), `STORE_CERTIFICATE_PASSWORD_FILE` (a protected
+password file for both exports), `APP_STORE_CONNECT_API_KEY_ID`,
+`APP_STORE_CONNECT_API_ISSUER_ID`, and `APP_STORE_CONNECT_API_KEY_PATH`.
+They do not issue certificates or recover secret values from GitHub.
+
+Run `node scripts/check-release-environments.mjs` to check both channel
+environments. After bumping the version and recapturing the Store UI, run
+`pnpm release:preflight` to also verify screenshot provenance before tagging.
+Secret-name presence alone is not evidence of signing or upload readiness.
 
 ## Automated release
 
-Run **Publish to Mac App Store** from GitHub Actions. By default it uploads the
-build without submitting it for review. The dispatch form can also submit for
-review and choose automatic release after approval.
+Run **Publish to Mac App Store** from GitHub Actions **on the immutable release
+tag**. Supply the same `release_tag` and an explicit, unused `build_number`
+greater than existing Apple builds/uploads. Reruns must not reuse an uploaded
+number. `upload=true` uploads a validated build and prepares manual release;
+`upload=false` builds/signs/validates and archives artifacts only.
+
+The workflow always sets `ASC_SUBMIT=false` and
+`ASC_AUTOMATIC_RELEASE=false`. It cannot submit for review or select automatic
+publication. Those are separate, explicitly authorized stages after exact-build
+native QA.
 
 Version tags publish only the standalone GitHub distribution. Store publishing
 is manual-only: dispatch **Publish to Mac App Store** for the intended source
@@ -81,7 +106,13 @@ The workflow:
 6. verifies code and installer signatures;
 7. uploads the package through the App Store Connect build upload API;
 8. writes metadata, screenshots, age rating, and review details over the API;
-9. optionally submits the version for App Review.
+9. stops before App Review with manual release configured.
+
+The uploader never renames an unrelated editable version. It rejects mismatched
+app IDs, non-editable target versions, reused build numbers, invalid processing,
+and package/source receipt mismatches. Upload processing succeeds before live
+metadata changes, and replacement screenshots complete processing before the
+previous screenshots are deleted.
 
 The age-rating declaration is uploaded from [`age-rating.json`](age-rating.json).
 The App Review recording shot list and test checklist are maintained in
@@ -105,7 +136,7 @@ export APP_BUILD_NUMBER=1
 export ASC_KEY_ID="$APP_STORE_CONNECT_API_KEY_ID"
 export ASC_ISSUER_ID="$APP_STORE_CONNECT_API_ISSUER_ID"
 export ASC_KEY_PATH="$APP_STORE_CONNECT_API_KEY_PATH"
-export ASC_APP_ID=6820735995
+export ASC_APP_ID=... # Verified Apple app record ID, not the bundle identifier
 export ASC_CONTACT_FIRST_NAME=...
 export ASC_CONTACT_LAST_NAME=...
 export ASC_CONTACT_EMAIL=...
@@ -114,7 +145,11 @@ export ASC_CONTACT_PHONE='+4700000000'
 export ASC_REVIEW_RECORDING_PATH=/secure/launchpane-review.mov
 ```
 
-Set `ASC_SUBMIT=false` to prepare everything without submitting for review.
+Both `ASC_SUBMIT` and `ASC_AUTOMATIC_RELEASE` default to false. Explicitly set
+them to `true` only for user-authorized stages with the required evidence.
+`node scripts/appstore-submit.mjs --status` is read-only.
+`node scripts/appstore-submit.mjs --preflight` additionally checks the explicit
+`APP_BUILD_NUMBER` for freshness before building or uploading.
 
 Then run:
 
@@ -123,6 +158,9 @@ pnpm appstore:release
 ```
 
 The signed package is placed in `release/appstore/`.
+CI archives the signed `.app` and `.pkg`, `build.json` (source commit, version,
+build number, package hash), and `SHA256SUMS`. Package receipt validation protects
+source alignment but is not a substitute for TestFlight QA.
 
 ### Local build and asset outputs
 

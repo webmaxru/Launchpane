@@ -1,6 +1,6 @@
 ---
 name: release-up
-description: "Release Launchpane end to end. Use for release up, ship it, publish a release, prepare a release, bump patch/minor/major, a breaking release, same-version rebuild or retry, signed GitHub downloads, TestFlight, and Mac App Store submission. Coordinates one version and source commit across standalone and Store builds while keeping signing, upload, review submission, and public availability separate."
+description: "Release Launchpane end to end and configure its GitHub signing environments. Use for release up, ship it, publish/prepare a release, patch/minor/major bumps, release workflow/environment setup, same-version retries, signed GitHub downloads, TestFlight, and Mac App Store submission. Coordinates one version and immutable source across standalone and Store, with verified credentials, native captures, safe upload defaults, and separate review/publication gates."
 ---
 
 # Launchpane release coordinator
@@ -36,10 +36,9 @@ Apple processing/review may take longer or reject a build.
 
 If the user requests simultaneous availability, prepare a GitHub draft and use
 manual Store release; obtain approval before making either public after Apple
-approval. The current GitHub workflow publishes immediately and the Store
-uploader has an automatic-release setting: adapt and validate those paths before
-using them for coordinated public release. Never promise atomic cross-platform
-publication.
+approval. The Store workflow always prepares manual release. Adapt and validate the GitHub
+publication step to retain a draft for coordinated availability; the default
+GitHub workflow publishes immediately. Never promise atomic cross-platform publication.
 
 ## Resolve the version before modifying files
 
@@ -94,6 +93,30 @@ source or explicitly disclose an approved channel exception.
    issuance/revocation, service mutation, or new paid action without appropriate
    user authorization.
 
+### Mandatory two-channel readiness gate
+
+Before a version bump, run `node scripts/check-release-environments.mjs` and
+read current Apple state with `node scripts/appstore-submit.mjs --status`
+using authorized existing credentials. These are read-only checks. The first
+checks names/policies, not certificate validity or Apple permissions.
+Use the verified credential validation/provisioning path in the runbook when
+environment setup is explicitly requested; never conclude credentials are
+missing merely because the current shell has no `ASC_*` exports.
+
+After the bump and native recapture, run `pnpm release:preflight`. It must pass
+before treating both channels as ready or pushing a publication-triggering tag.
+Resolve missing environments, credentials, stale captures, pending Apple
+versions, and build-number conflicts in preparation, not after publishing.
+If a channel cannot pass, disclose the blocker and seek a narrower channel
+decision when possible. Never label a one-channel release as a completed
+two-channel release; retain blocked todos and do not mark the whole task complete.
+
+The Store workflow requires `release_tag`, an explicit fresh `build_number`,
+and `upload` (default true). Dispatch it **on that same tag**, not `main`.
+`upload=false` builds/signs/validates only. There are no review/automatic-release
+dispatch inputs: both are forced false. Explicit review authorization is a
+separate exact-build QA stage, not a reason to change workflow defaults.
+
 ## Prepare and freeze
 
 Use the existing version bump implementation. Prefer
@@ -112,7 +135,7 @@ is the submitted binary. Follow the runbook's capture and review gates.
 Run the smallest applicable gates; the standard release gate is:
 
 ```bash
-pnpm lint && pnpm test && pnpm build
+pnpm lint && pnpm test && pnpm site:test && pnpm release:test && pnpm build
 RUSTUP_HOME="$HOME/.rustup" PATH="$HOME/.cargo/bin:$PATH" cargo fmt --manifest-path src-tauri/Cargo.toml --check
 RUSTUP_HOME="$HOME/.rustup" PATH="$HOME/.cargo/bin:$PATH" cargo clippy --manifest-path src-tauri/Cargo.toml -- -D warnings
 RUSTUP_HOME="$HOME/.rustup" PATH="$HOME/.cargo/bin:$PATH" cargo test --manifest-path src-tauri/Cargo.toml
@@ -132,7 +155,9 @@ user/host approval requirements for commits, merges, and publication. Use native
 PR tools when provided; include required commit trailers. Re-read merged source
 and CI before tagging. Freeze the release commit and dispatch both channels on
 its tag/ref, never a moving `main`. Any further app change requires a new
-candidate and rerunning affected gates.
+candidate and rerunning affected gates. Never add commits to a merged PR and
+describe it as newly reviewed; land preparation/automation changes through a
+new PR. Use `functions.update_pull_request` for open PR metadata, not `gh pr edit`.
 
 ## Execute, observe, and recover
 
@@ -145,6 +170,18 @@ Observe known run IDs to completion, read failed logs, and repair the actual
 cause. No unsigned fallback, skipped notarization, invented QA, blind duplicate
 uploads, or overwritten releases. If source changes after a tag, do not move
 that tag; prepare a new version or explicitly approved retry strategy.
+
+Use bounded command output, e.g. `gh run watch <run-id> --exit-status --interval 30`
+redirected to a session log, then read the result and failures. Do not launch
+multiple watchers for the same run, repeatedly rediscover a known run ID, or
+claim `gh run watch` success without checking the final conclusion.
+
+After public standalone publication, download all seven assets into a named
+temporary directory; verify SHA256SUMS, DMG integrity/staples, archive version,
+architecture, license, signature/staple, and Gatekeeper. Clean the temporary
+directory. Preserve a failure result rather than suggesting users disable
+Gatekeeper. Store artifacts include `build.json` and `SHA256SUMS`; compare their
+source/version/build/package hash before any retry.
 
 One blocked channel must not be labeled successful because the other passed.
 With the default independent-publication policy, continue safe work on the

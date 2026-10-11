@@ -3,16 +3,21 @@ name: Publish to Mac App Store
 on:
   workflow_dispatch:
     inputs:
-      submit_for_review:
-        description: Submit the uploaded build for App Review
+      release_tag:
+        description: Immutable release tag containing this workflow and current native captures
+        type: string
+        required: true
+      build_number:
+        description: New Apple build number, greater than every existing build/upload number
+        type: string
+        required: true
+      upload:
+        description: Upload the validated package and metadata (never submit for review)
         type: boolean
-        default: false
-      automatic_release:
-        description: Release automatically after approval
-        type: boolean
-        default: false
+        default: true
+
 concurrency:
-  group: mac-app-store-${{ github.ref }}
+  group: mac-app-store
   cancel-in-progress: false
 
 permissions:
@@ -20,55 +25,64 @@ permissions:
 
 jobs:
   publish:
-    name: Sign, validate, and upload
+    name: Sign, validate, and prepare Store release
     runs-on: macos-latest
     environment: mac-app-store
-    timeout-minutes: 60
+    timeout-minutes: 90
     env:
-      APP_BUILD_NUMBER: ${{ github.run_number }}
+      RELEASE_TAG: ${{ inputs.release_tag }}
+      APP_BUILD_NUMBER: ${{ inputs.build_number }}
+      ASC_APP_ID: ${{ vars.ASC_APP_ID }}
+      ASC_KEY_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}
+      ASC_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_API_ISSUER_ID }}
       APP_STORE_CONNECT_API_KEY_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}
       APP_STORE_CONNECT_API_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_API_ISSUER_ID }}
-      APP_REVIEW_FIRST_NAME: ${{ secrets.APP_REVIEW_FIRST_NAME }}
-      APP_REVIEW_LAST_NAME: ${{ secrets.APP_REVIEW_LAST_NAME }}
-      APP_REVIEW_PHONE: ${{ secrets.APP_REVIEW_PHONE }}
-      APP_REVIEW_EMAIL: ${{ secrets.APP_REVIEW_EMAIL }}
-      SUBMIT_FOR_REVIEW: ${{ inputs.submit_for_review || 'false' }}
-      AUTOMATIC_RELEASE: ${{ inputs.automatic_release || 'false' }}
+      ASC_CONTACT_FIRST_NAME: ${{ secrets.APP_REVIEW_FIRST_NAME }}
+      ASC_CONTACT_LAST_NAME: ${{ secrets.APP_REVIEW_LAST_NAME }}
+      ASC_CONTACT_PHONE: ${{ secrets.APP_REVIEW_PHONE }}
+      ASC_CONTACT_EMAIL: ${{ secrets.APP_REVIEW_EMAIL }}
+      ASC_SUBMIT: "false"
+      ASC_AUTOMATIC_RELEASE: "false"
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        with:
+          ref: ${{ inputs.release_tag }}
+          persist-credentials: false
+          fetch-depth: 0
+      - name: Verify immutable source and version
+        env:
+          WORKFLOW_REF: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          test "$WORKFLOW_REF" = "$RELEASE_TAG" || { echo "::error::Dispatch this workflow on the same release tag being built"; exit 1; }
+          git rev-parse --verify "refs/tags/$RELEASE_TAG"
+          test "$(git rev-parse HEAD)" = "$(git rev-parse "refs/tags/$RELEASE_TAG^{commit}")"
+          node scripts/verify-release-source.mjs
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: "22"
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: "10.28.2"
-
-      - name: Setup Rust
-        uses: dtolnay/rust-toolchain@stable
+      - uses: pnpm/action-setup@41ff72655975bd51cab0327fa583b6e92b6d3061 # v4.2.0
+      - uses: dtolnay/rust-toolchain@631a55b12751854ce901bb631d5902ceb48146f7 # stable
         with:
           targets: aarch64-apple-darwin,x86_64-apple-darwin
-
-      - name: Cache Rust build
-        uses: swatinem/rust-cache@v2
+          components: clippy, rustfmt
+      - uses: swatinem/rust-cache@779680da715d629ac1d338a641029a2f4372abb5 # v2.8.2
         with:
           workspaces: "./src-tauri -> target"
+      - run: pnpm install --frozen-lockfile
+      - name: Check both editions and Store assets before signing
+        run: |
+          pnpm lint && pnpm test && pnpm site:test && pnpm release:test && pnpm build
+          cargo fmt --manifest-path src-tauri/Cargo.toml --check
+          cargo clippy --manifest-path src-tauri/Cargo.toml -- -D warnings
+          cargo test --manifest-path src-tauri/Cargo.toml
+          cargo clippy --manifest-path src-tauri/Cargo.toml --features app-store -- -D warnings
+          cargo test --manifest-path src-tauri/Cargo.toml --features app-store
+          pnpm store:screenshots
+          pnpm appstore:verify
 
-      - name: Setup Ruby and Fastlane
-        uses: ruby/setup-ruby@v1
-        with:
-          ruby-version: "3.3"
-          bundler-cache: true
-
-      - name: Install JavaScript dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Import App Store signing credentials
+      - name: Import temporary Store signing credentials
         env:
           APPLICATION_CERTIFICATE_BASE64: ${{ secrets.MACOS_APPLICATION_CERTIFICATE_BASE64 }}
           APPLICATION_CERTIFICATE_PASSWORD: ${{ secrets.MACOS_APPLICATION_CERTIFICATE_PASSWORD }}
@@ -78,67 +92,63 @@ jobs:
           API_PRIVATE_KEY_BASE64: ${{ secrets.APP_STORE_CONNECT_API_PRIVATE_KEY_BASE64 }}
         run: |
           set -euo pipefail
-          for name in APPLICATION_CERTIFICATE_BASE64 APPLICATION_CERTIFICATE_PASSWORD INSTALLER_CERTIFICATE_BASE64 INSTALLER_CERTIFICATE_PASSWORD PROVISIONING_PROFILE_BASE64 API_PRIVATE_KEY_BASE64 APP_STORE_CONNECT_API_KEY_ID APP_STORE_CONNECT_API_ISSUER_ID APP_REVIEW_FIRST_NAME APP_REVIEW_LAST_NAME APP_REVIEW_PHONE APP_REVIEW_EMAIL; do
-            test -n "${!name:-}" || { echo "::error::$name is not configured"; exit 1; }
-          done
-
-          KEYCHAIN_PATH="$RUNNER_TEMP/launchpane-signing.keychain-db"
-          KEYCHAIN_PASSWORD="$(openssl rand -hex 24)"
-          APPLICATION_P12="$RUNNER_TEMP/application.p12"
-          INSTALLER_P12="$RUNNER_TEMP/installer.p12"
+          node --input-type=module <<'NODE'
+          for (const name of [
+            "APPLICATION_CERTIFICATE_BASE64", "APPLICATION_CERTIFICATE_PASSWORD",
+            "INSTALLER_CERTIFICATE_BASE64", "INSTALLER_CERTIFICATE_PASSWORD",
+            "PROVISIONING_PROFILE_BASE64", "API_PRIVATE_KEY_BASE64",
+            "ASC_KEY_ID", "ASC_ISSUER_ID", "ASC_APP_ID", "ASC_CONTACT_FIRST_NAME",
+            "ASC_CONTACT_LAST_NAME", "ASC_CONTACT_PHONE", "ASC_CONTACT_EMAIL",
+          ]) if (!process.env[name]) throw new Error(`${name} is not configured`);
+          NODE
+          KEYCHAIN_PATH="$RUNNER_TEMP/launchpane-store.keychain-db"
           PROFILE_PATH="$RUNNER_TEMP/Launchpane.provisionprofile"
-          API_KEY_DIR="$HOME/.appstoreconnect/private_keys"
-          API_KEY_PATH="$API_KEY_DIR/AuthKey_${APP_STORE_CONNECT_API_KEY_ID}.p8"
-
-          echo "$APPLICATION_CERTIFICATE_BASE64" | base64 --decode > "$APPLICATION_P12"
-          echo "$INSTALLER_CERTIFICATE_BASE64" | base64 --decode > "$INSTALLER_P12"
-          echo "$PROVISIONING_PROFILE_BASE64" | base64 --decode > "$PROFILE_PATH"
-          mkdir -p "$API_KEY_DIR"
-          echo "$API_PRIVATE_KEY_BASE64" | base64 --decode > "$API_KEY_PATH"
-          chmod 600 "$API_KEY_PATH"
-
+          API_KEY_PATH="$RUNNER_TEMP/AuthKey_${ASC_KEY_ID}.p8"
+          # Record cleanup locations before importing anything.
+          {
+            echo "SIGNING_KEYCHAIN_PATH=$KEYCHAIN_PATH"
+            echo "MACOS_PROVISIONING_PROFILE_PATH=$PROFILE_PATH"
+            echo "ASC_KEY_PATH=$API_KEY_PATH"
+            echo "APP_STORE_CONNECT_API_KEY_PATH=$API_KEY_PATH"
+          } >> "$GITHUB_ENV"
+          umask 077
+          printf '%s' "$APPLICATION_CERTIFICATE_BASE64" | base64 --decode > "$RUNNER_TEMP/application.p12"
+          printf '%s' "$INSTALLER_CERTIFICATE_BASE64" | base64 --decode > "$RUNNER_TEMP/installer.p12"
+          printf '%s' "$PROVISIONING_PROFILE_BASE64" | base64 --decode > "$PROFILE_PATH"
+          printf '%s' "$API_PRIVATE_KEY_BASE64" | base64 --decode > "$API_KEY_PATH"
+          KEYCHAIN_PASSWORD="$(openssl rand -hex 24)"
           security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
           security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
           security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
-          security import "$APPLICATION_P12" -P "$APPLICATION_CERTIFICATE_PASSWORD" -A -t cert -f pkcs12 -k "$KEYCHAIN_PATH"
-          security import "$INSTALLER_P12" -P "$INSTALLER_CERTIFICATE_PASSWORD" -A -t cert -f pkcs12 -k "$KEYCHAIN_PATH"
-          security set-key-partition-list -S apple-tool:,apple: -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security import "$RUNNER_TEMP/application.p12" -P "$APPLICATION_CERTIFICATE_PASSWORD" -T /usr/bin/codesign -k "$KEYCHAIN_PATH"
+          security import "$RUNNER_TEMP/installer.p12" -P "$INSTALLER_CERTIFICATE_PASSWORD" -T /usr/bin/productbuild -k "$KEYCHAIN_PATH"
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
           security list-keychains -d user -s "$KEYCHAIN_PATH" login.keychain-db
-
-          {
-            echo "MACOS_PROVISIONING_PROFILE_PATH=$PROFILE_PATH"
-            echo "APP_STORE_CONNECT_API_KEY_PATH=$API_KEY_PATH"
-            echo "SIGNING_KEYCHAIN_PATH=$KEYCHAIN_PATH"
-          } >> "$GITHUB_ENV"
-
-      - name: Generate and verify store assets
+      - name: Verify Apple app, target version, and fresh build number
+        run: node scripts/appstore-submit.mjs --preflight
+      - name: Prepare, sign, package, and validate
         run: |
-          pnpm store:screenshots
-          pnpm appstore:verify
           pnpm appstore:prepare
-
-      - name: Build, sign, and package universal app
-        run: pnpm appstore:build
-
-      - name: Validate package with App Store Connect
-        run: pnpm appstore:validate
-
-      - name: Upload package, metadata, and screenshots
+          pnpm appstore:build
+          pnpm appstore:validate
+      - name: Upload and prepare manual-release version
+        if: ${{ inputs.upload }}
         run: pnpm appstore:upload
-
-      - name: Archive submission package
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         if: always()
-        uses: actions/upload-artifact@v4
         with:
-          name: Launchpane-${{ github.run_number }}-app-store
-          path: |
-            release/appstore/
-          if-no-files-found: error
+          name: Launchpane-${{ inputs.build_number }}-app-store
+          path: release/appstore/
+          if-no-files-found: warn
           retention-days: 30
-
-      - name: Remove temporary signing keychain
+      - name: Remove temporary signing credentials
         if: always()
         run: |
-          if [[ -n "${SIGNING_KEYCHAIN_PATH:-}" ]]; then
-            security delete-keychain "$SIGNING_KEYCHAIN_PATH" || true
+          status=0
+          if [[ -n "${SIGNING_KEYCHAIN_PATH:-}" && -f "$SIGNING_KEYCHAIN_PATH" ]]; then
+            security delete-keychain "$SIGNING_KEYCHAIN_PATH" || status=$?
           fi
+          rm -f "$RUNNER_TEMP/application.p12" "$RUNNER_TEMP/installer.p12"
+          if [[ -n "${MACOS_PROVISIONING_PROFILE_PATH:-}" ]]; then rm -f "$MACOS_PROVISIONING_PROFILE_PATH"; fi
+          if [[ -n "${ASC_KEY_PATH:-}" ]]; then rm -f "$ASC_KEY_PATH"; fi
+          exit "$status"
