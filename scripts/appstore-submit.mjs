@@ -9,7 +9,8 @@
 // Optional:
 //   ASC_CONTACT_FIRST_NAME / ASC_CONTACT_LAST_NAME / ASC_CONTACT_EMAIL /
 //   ASC_CONTACT_PHONE   App Review contact details
-//   ASC_SUBMIT=false    Prepare everything but stop before submitting
+//   ASC_SUBMIT=true     Explicitly authorize App Review submission (default false)
+//   ASC_AUTOMATIC_RELEASE=true  Release after approval (default manual)
 //   ASC_REVIEW_RECORDING_PATH
 //                       Upload a physical-device recording to App Review
 //
@@ -22,6 +23,7 @@ import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { execFileSync } from "node:child_process";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const META_DIR = path.join(ROOT, "appstore/metadata/en-US");
@@ -29,11 +31,12 @@ const SCREENSHOT_DIR = path.join(ROOT, "branding/store/screenshots/2880x1800");
 const SCREENSHOTS = ["overview.png", "detail.png", "logs.png", "login-items.png"];
 const PKG_PATH = path.join(ROOT, "release/appstore/Launchpane.pkg");
 
-const KEY_ID = required("ASC_KEY_ID");
-const ISSUER_ID = required("ASC_ISSUER_ID");
-const KEY_PATH = process.env.ASC_KEY_PATH || `AuthKey_${KEY_ID}.p8`;
-const APP_ID = required("ASC_APP_ID");
-const SUBMIT = process.env.ASC_SUBMIT !== "false";
+const KEY_ID = process.env.ASC_KEY_ID || process.env.APP_STORE_CONNECT_API_KEY_ID;
+const ISSUER_ID = process.env.ASC_ISSUER_ID || process.env.APP_STORE_CONNECT_API_ISSUER_ID;
+const KEY_PATH = process.env.ASC_KEY_PATH || process.env.APP_STORE_CONNECT_API_KEY_PATH || `AuthKey_${KEY_ID}.p8`;
+const APP_ID = process.env.ASC_APP_ID;
+const SUBMIT = booleanSetting("ASC_SUBMIT");
+const AUTOMATIC_RELEASE = booleanSetting("ASC_AUTOMATIC_RELEASE");
 const REVIEW_RECORDING_PATH = process.env.ASC_REVIEW_RECORDING_PATH;
 
 const EDITABLE_STATES = [
@@ -43,10 +46,31 @@ const EDITABLE_STATES = [
   "METADATA_REJECTED",
 ];
 
+function selectVersion(versions) {
+  const selected = versions.find(version => version.attributes.versionString === appVersion);
+  if (selected && !EDITABLE_STATES.includes(selected.attributes.appStoreState)) {
+    throw new Error(`Version ${appVersion} is not editable (${selected.attributes.appStoreState})`);
+  }
+  if (!selected) {
+    const pending = versions.find(version => ![
+      "READY_FOR_SALE", "READY_FOR_DISTRIBUTION", "REMOVED_FROM_SALE",
+      "DEVELOPER_REMOVED_FROM_SALE", "REPLACED_WITH_NEW_VERSION",
+    ].includes(version.attributes.appStoreState));
+    if (pending) throw new Error(`Version ${pending.attributes.versionString} is still ${pending.attributes.appStoreState}; resolve it before creating ${appVersion}`);
+  }
+  return selected;
+}
+
 function required(name) {
   const value = process.env[name];
   if (!value) throw new Error(`${name} is required`);
   return value;
+}
+
+export function booleanSetting(name) {
+  const value = process.env[name] ?? "false";
+  if (!["true", "false"].includes(value)) throw new Error(`${name} must be true or false`);
+  return value === "true";
 }
 
 function read(name) {
@@ -77,13 +101,16 @@ async function api(method, endpoint, body) {
   const url = endpoint.startsWith("http")
     ? endpoint
     : `https://api.appstoreconnect.apple.com${endpoint}`;
+  if (new URL(url).origin !== "https://api.appstoreconnect.apple.com") {
+    throw new Error("Refusing to send Apple credentials to an unexpected API origin");
+  }
   const res = await fetch(url, {
     method,
     headers: {
       Authorization: `Bearer ${token()}`,
       "Content-Type": "application/json",
     },
-    body: body ? JSON.stringify(body) : undefined,
+    ...(body ? { body: JSON.stringify(body) } : {}),
   });
   const text = await res.text();
   const json = text ? JSON.parse(text) : null;
@@ -98,36 +125,39 @@ async function api(method, endpoint, body) {
   return json;
 }
 
+async function list(endpoint) {
+  const data = [];
+  let next = endpoint;
+  while (next) {
+    const page = await api("GET", next);
+    data.push(...page.data);
+    next = page.links?.next;
+  }
+  return data;
+}
+
 const appVersion = JSON.parse(
   fs.readFileSync(path.join(ROOT, "package.json"), "utf8"),
 ).version;
 
-async function editableVersion() {
-  const { data } = await api(
-    "GET",
-    `/v1/apps/${APP_ID}/appStoreVersions?filter[platform]=MAC_OS`,
-  );
-  const version = data.find((v) => EDITABLE_STATES.includes(v.attributes.appStoreState));
-  if (!version) throw new Error("No editable macOS version in App Store Connect");
-
+export async function editableVersion() {
+  const data = await list(`/v1/apps/${APP_ID}/appStoreVersions?filter[platform]=MAC_OS&limit=200`);
+  const version = selectVersion(data);
   const copyright = read("copyright.txt");
-  if (
-    version.attributes.versionString !== appVersion ||
-    version.attributes.copyright !== copyright
-  ) {
-    await api("PATCH", `/v1/appStoreVersions/${version.id}`, {
+  const attributes = { copyright, releaseType: AUTOMATIC_RELEASE ? "AFTER_APPROVAL" : "MANUAL" };
+  if (!version) {
+    const created = await api("POST", "/v1/appStoreVersions", {
       data: {
         type: "appStoreVersions",
-        id: version.id,
-        attributes: {
-          versionString: appVersion,
-          copyright,
-          releaseType: "AFTER_APPROVAL",
-        },
+        attributes: { ...attributes, versionString: appVersion, platform: "MAC_OS" },
+        relationships: { app: { data: { type: "apps", id: APP_ID } } },
       },
     });
-    log(`version ${appVersion} and copyright set`);
+    return created.data.id;
   }
+  await api("PATCH", `/v1/appStoreVersions/${version.id}`, {
+    data: { type: "appStoreVersions", id: version.id, attributes },
+  });
   return version.id;
 }
 
@@ -136,12 +166,15 @@ async function setVersionLocalization(versionId) {
     "GET",
     `/v1/appStoreVersions/${versionId}/appStoreVersionLocalizations`,
   );
+  const versions = await list(`/v1/apps/${APP_ID}/appStoreVersions?filter[platform]=MAC_OS&limit=200`);
+  const hasPublicVersion = versions.some(version => ["READY_FOR_SALE", "READY_FOR_DISTRIBUTION"].includes(version.attributes.appStoreState));
   const attributes = {
     description: read("description.txt"),
     keywords: read("keywords.txt"),
     marketingUrl: read("marketing-url.txt"),
     promotionalText: read("promotional-text.txt"),
     supportUrl: read("support-url.txt"),
+    ...(hasPublicVersion ? { whatsNew: read("release-notes.txt") } : {}),
   };
   const existing = data.find((l) => l.attributes.locale === "en-US");
 
@@ -164,13 +197,8 @@ async function setVersionLocalization(versionId) {
       data: { type: "appStoreVersionLocalizations", id: existing.id, attributes: attrs },
     });
 
-  // Release notes are rejected on an app's very first version.
-  try {
-    await patch({ ...attributes, whatsNew: read("release-notes.txt") });
-  } catch (error) {
-    if (error.status !== 409) throw error;
-    await patch(attributes);
-  }
+  // Apple rejects "What's New" on the first version, not every HTTP 409.
+  await patch(attributes);
   log("version localization updated");
   return existing.id;
 }
@@ -217,7 +245,7 @@ async function setAppInfo() {
 async function setAgeRating(appInfoId) {
   const { data } = await api("GET", `/v1/appInfos/${appInfoId}?include=ageRatingDeclaration`);
   const declarationId = data.relationships.ageRatingDeclaration?.data?.id;
-  if (!declarationId) return;
+  if (!declarationId) throw new Error("App information has no age rating declaration");
   const attributes = JSON.parse(
     fs.readFileSync(path.join(ROOT, "appstore/age-rating.json"), "utf8"),
   );
@@ -244,7 +272,10 @@ async function setContentRights() {
 }
 
 async function uploadAsset(reservation, buffer, label) {
+  if (!reservation.attributes.uploadOperations?.length) throw new Error(`${label} has no upload operations`);
   for (const [index, op] of (reservation.attributes.uploadOperations || []).entries()) {
+    if (!Number.isInteger(op.offset) || !Number.isInteger(op.length) || op.offset < 0 || op.length <= 0
+        || op.offset + op.length > buffer.length) throw new Error(`${label} has an invalid upload range`);
     const headers = Object.fromEntries(
       (op.requestHeaders || []).map((h) => [h.name, h.value]),
     );
@@ -282,9 +313,6 @@ async function uploadScreenshots(localizationId) {
   }
 
   const current = await api("GET", `/v1/appScreenshotSets/${setId}/appScreenshots`);
-  for (const shot of current.data) {
-    await api("DELETE", `/v1/appScreenshots/${shot.id}`);
-  }
 
   const ids = [];
   for (const fileName of SCREENSHOTS) {
@@ -313,6 +341,20 @@ async function uploadScreenshots(localizationId) {
     log(`uploaded ${fileName}`);
   }
 
+  for (const id of ids) {
+    let complete = false;
+    for (let attempt = 0; attempt < 60; attempt += 1) {
+      const { data } = await api("GET", `/v1/appScreenshots/${id}`);
+      const state = data.attributes.assetDeliveryState;
+      if (state?.state === "FAILED" || state?.errors?.length) throw new Error(`Screenshot ${id} failed processing`);
+      if (state?.state === "COMPLETE") { complete = true; break; }
+      await new Promise(resolve => setTimeout(resolve, 5000));
+    }
+    if (!complete) throw new Error(`Screenshot ${id} processing timed out; previous screenshots were preserved`);
+  }
+  for (const shot of current.data) {
+    await api("DELETE", `/v1/appScreenshots/${shot.id}`);
+  }
   await api("PATCH", `/v1/appScreenshotSets/${setId}/relationships/appScreenshots`, {
     data: ids.map((id) => ({ type: "appScreenshots", id })),
   });
@@ -329,26 +371,43 @@ function bundleVersion() {
   );
   const match = plist.match(/<key>CFBundleVersion<\/key>\s*<string>([^<]+)<\/string>/);
   if (!match) throw new Error("Could not read CFBundleVersion from the built app");
+  const marketing = plist.match(/<key>CFBundleShortVersionString<\/key>\s*<string>([^<]+)<\/string>/)?.[1];
+  const identifier = plist.match(/<key>CFBundleIdentifier<\/key>\s*<string>([^<]+)<\/string>/)?.[1];
+  if (marketing !== appVersion || identifier !== "com.webmaxru.launchpane") {
+    throw new Error("Built app version or bundle identifier does not match the release");
+  }
+  if (match[1] !== required("APP_BUILD_NUMBER")) {
+    throw new Error("Built app CFBundleVersion does not match APP_BUILD_NUMBER");
+  }
   return match[1];
 }
 
-async function uploadBuild(buildNumber) {
-  const existingBuilds = await api("GET", `/v1/apps/${APP_ID}/builds?limit=100`);
-  const done = existingBuilds.data.find((b) => b.attributes.version === buildNumber);
-  if (done) {
-    log(`build ${buildNumber} already uploaded (${done.attributes.processingState})`);
-    return done;
+export async function preflight(buildNumber) {
+  if (!KEY_ID || !ISSUER_ID || !APP_ID) throw new Error("Apple API key, issuer, and ASC_APP_ID are required");
+  const { data: app } = await api("GET", `/v1/apps/${APP_ID}`);
+  if (app.attributes.bundleId !== "com.webmaxru.launchpane") throw new Error("ASC_APP_ID belongs to a different bundle");
+  const versions = await list(`/v1/apps/${APP_ID}/appStoreVersions?filter[platform]=MAC_OS&limit=200`);
+  if (buildNumber !== undefined) selectVersion(versions);
+  const builds = await list(`/v1/apps/${APP_ID}/builds?limit=200`);
+  const uploads = await list(`/v1/apps/${APP_ID}/buildUploads?limit=200`);
+  if (buildNumber !== undefined) {
+    if (!/^[1-9]\d{0,17}$/.test(buildNumber)) throw new Error("APP_BUILD_NUMBER must be a positive integer of at most 18 digits");
+    const existingNumbers = [
+      ...builds.map(b => b.attributes.version),
+      ...uploads.map(u => u.attributes.cfBundleVersion),
+    ];
+    if (existingNumbers.some(n => /^\d+$/.test(n) && BigInt(n) >= BigInt(buildNumber))) {
+      throw new Error("APP_BUILD_NUMBER must exceed all existing Apple build/upload numbers; do not reuse an uploaded candidate");
+    }
   }
+  return { version: appVersion, versions: versions.map(v => ({
+    version: v.attributes.versionString, state: v.attributes.appStoreState,
+  })), builds: builds.map(b => ({ number: b.attributes.version, state: b.attributes.processingState })) };
+}
 
-  const uploads = await api("GET", `/v1/apps/${APP_ID}/buildUploads`);
-  let upload = uploads.data.find(
-    (u) =>
-      u.attributes.cfBundleVersion === buildNumber &&
-      u.attributes.state.state === "AWAITING_UPLOAD",
-  );
-
-  if (!upload) {
-    upload = (
+export async function uploadBuild(buildNumber, packagePath = PKG_PATH) {
+  await preflight(buildNumber);
+  const upload = (
       await api("POST", "/v1/buildUploads", {
         data: {
           type: "buildUploads",
@@ -361,19 +420,15 @@ async function uploadBuild(buildNumber) {
         },
       })
     ).data;
-  }
 
-  const buffer = fs.readFileSync(PKG_PATH);
-  const files = await api("GET", `/v1/buildUploads/${upload.id}/buildUploadFiles`);
-  let file = files.data.find((f) => f.attributes.assetType === "ASSET");
-  if (!file) {
-    file = (
+  const buffer = fs.readFileSync(packagePath);
+  const file = (
       await api("POST", "/v1/buildUploadFiles", {
         data: {
           type: "buildUploadFiles",
           attributes: {
             assetType: "ASSET",
-            fileName: path.basename(PKG_PATH),
+            fileName: path.basename(packagePath),
             fileSize: buffer.length,
             uti: "com.apple.pkg",
           },
@@ -383,9 +438,8 @@ async function uploadBuild(buildNumber) {
         },
       })
     ).data;
-  }
 
-  log(`uploading ${path.basename(PKG_PATH)} (${buffer.length} bytes)`);
+  log(`uploading ${path.basename(packagePath)} (${buffer.length} bytes)`);
   await uploadAsset(file, buffer, "package");
   await api("PATCH", `/v1/buildUploadFiles/${file.id}`, {
     data: {
@@ -396,25 +450,39 @@ async function uploadBuild(buildNumber) {
   });
   log("upload committed; waiting for Apple to process the build");
 
+  let complete = false;
   for (let attempt = 0; attempt < 120; attempt += 1) {
     const { data } = await api("GET", `/v1/buildUploads/${upload.id}`);
     const { state, errors } = data.attributes.state;
     if (errors?.length) {
       throw new Error(`Build rejected:\n${JSON.stringify(errors, null, 2)}`);
     }
-    if (state === "COMPLETE") break;
+    if (state === "FAILED") throw new Error(`Build upload ${upload.id} failed`);
+    if (state === "COMPLETE") { complete = true; break; }
     await new Promise((resolve) => setTimeout(resolve, 10000));
   }
+  if (!complete) throw new Error(`Build upload ${upload.id} timed out; inspect it before preparing a new candidate`);
 
-  const builds = await api("GET", `/v1/apps/${APP_ID}/builds?limit=100`);
-  const build = builds.data.find((b) => b.attributes.version === buildNumber);
-  if (!build) throw new Error(`Build ${buildNumber} never appeared`);
-  log(`build ${buildNumber} is ${build.attributes.processingState}`);
-  return build;
+  for (let attempt = 0; attempt < 120; attempt += 1) {
+    const builds = await list(`/v1/apps/${APP_ID}/builds?include=preReleaseVersion&limit=200`);
+    const build = builds.find(b => b.attributes.version === buildNumber);
+    if (build) {
+      const prereleaseId = build.relationships.preReleaseVersion?.data?.id;
+      if (!prereleaseId) throw new Error("Processed build has no marketing version relationship");
+      const { data: prerelease } = await api("GET", `/v1/preReleaseVersions/${prereleaseId}`);
+      if (prerelease.attributes.version !== appVersion || prerelease.attributes.platform !== "MAC_OS") {
+        throw new Error("Processed build belongs to a different marketing version or platform");
+      }
+      if (["INVALID", "FAILED"].includes(build.attributes.processingState)) throw new Error("Apple rejected the processed build");
+      if (build.attributes.processingState === "VALID") return build;
+    }
+    await new Promise(resolve => setTimeout(resolve, 10000));
+  }
+  throw new Error(`Build ${buildNumber} did not become VALID before the processing timeout`);
 }
 
 async function attachBuild(versionId, build) {
-  try {
+  if (build.attributes.processingState !== "VALID") throw new Error("Cannot attach a build before VALID processing");
     await api("PATCH", `/v1/builds/${build.id}`, {
       data: {
         type: "builds",
@@ -422,9 +490,6 @@ async function attachBuild(versionId, build) {
         attributes: { usesNonExemptEncryption: false },
       },
     });
-  } catch (error) {
-    if (error.status !== 409) throw error;
-  }
   await api("PATCH", `/v1/appStoreVersions/${versionId}/relationships/build`, {
     data: { type: "builds", id: build.id },
   });
@@ -443,7 +508,10 @@ async function setReviewDetail(versionId) {
   const existing = await api(
     "GET",
     `/v1/appStoreVersions/${versionId}/appStoreReviewDetail`,
-  ).catch(() => null);
+  ).catch(error => {
+    if (error.status !== 404) throw error;
+    return null;
+  });
 
   if (existing?.data?.id) {
     await api("PATCH", `/v1/appStoreReviewDetails/${existing.data.id}`, {
@@ -517,8 +585,7 @@ async function submit(versionId) {
     ["WAITING_FOR_REVIEW", "IN_REVIEW"].includes(s.attributes.state),
   );
   if (open) {
-    log(`already submitted (${open.attributes.state})`);
-    return;
+    throw new Error(`An existing review submission is ${open.attributes.state}; do not submit another version`);
   }
 
   let submission = submissions.data.find(
@@ -537,6 +604,9 @@ async function submit(versionId) {
   }
 
   const items = await api("GET", `/v1/reviewSubmissions/${submission.id}/items`);
+  if (items.data.some(item => item.relationships.appStoreVersion?.data?.id !== versionId)) {
+    throw new Error("Existing review submission contains another version; refusing to retarget it");
+  }
   if (!items.data.length) {
     await api("POST", "/v1/reviewSubmissionItems", {
       data: {
@@ -559,15 +629,48 @@ async function submit(versionId) {
   log(`submitted for review (${result.data.attributes.state})`);
 }
 
-const versionId = await editableVersion();
-const localizationId = await setVersionLocalization(versionId);
-const appInfoId = await setAppInfo();
-await setAgeRating(appInfoId);
-await setContentRights();
-await uploadScreenshots(localizationId);
-const build = await uploadBuild(bundleVersion());
-await attachBuild(versionId, build);
-const reviewDetailId = await setReviewDetail(versionId);
-await uploadReviewRecording(reviewDetailId);
-if (SUBMIT) await submit(versionId);
-else log("ASC_SUBMIT=false, stopping before submission");
+export async function main() {
+  const mode = process.argv[2];
+  if (mode && !["--preflight", "--status"].includes(mode)) throw new Error("Usage: appstore-submit.mjs [--preflight|--status]");
+  if (mode) {
+    console.log(JSON.stringify(await preflight(mode === "--status" ? undefined : required("APP_BUILD_NUMBER")), null, 2));
+    return;
+  }
+  for (const name of ["ASC_CONTACT_FIRST_NAME", "ASC_CONTACT_LAST_NAME", "ASC_CONTACT_EMAIL", "ASC_CONTACT_PHONE"]) required(name);
+  for (const name of SCREENSHOTS) fs.accessSync(path.join(SCREENSHOT_DIR, name), fs.constants.R_OK);
+  for (const name of ["copyright.txt", "description.txt", "keywords.txt", "marketing-url.txt", "promotional-text.txt", "support-url.txt", "name.txt", "subtitle.txt", "privacy-policy-url.txt", "release-notes.txt", "review-notes.txt"]) read(name);
+  const buildNumber = bundleVersion();
+  const manifest = JSON.parse(fs.readFileSync(path.join(ROOT, "release/appstore/manifest.json"), "utf8"));
+  if (manifest.version !== appVersion || manifest.buildNumber !== buildNumber) throw new Error("Store manifest version/build does not match the signed app");
+  const receipt = JSON.parse(fs.readFileSync(path.join(ROOT, "release/appstore/build.json"), "utf8"));
+  const sha256 = crypto.createHash("sha256").update(fs.readFileSync(PKG_PATH)).digest("hex");
+  const source = execFileSync("git", ["rev-parse", "HEAD"], { cwd: ROOT, encoding: "utf8" }).trim();
+  const changed = execFileSync("git", ["diff", "--name-only", "HEAD"], { cwd: ROOT, encoding: "utf8" }).trim().split("\n")
+    .filter(file => file && !file.startsWith("branding/store/screenshots/"));
+  // CI regenerates these derived PNGs from fingerprinted native sources; image
+  // encoders can differ across macOS versions without changing the app source.
+  if (changed.length) {
+    throw new Error("Release source has uncommitted tracked changes; freeze the candidate before uploading");
+  }
+  if (receipt.version !== appVersion || receipt.buildNumber !== buildNumber || receipt.sourceCommit !== source
+      || receipt.distribution !== "app-store" || receipt.packageSha256 !== sha256) throw new Error("Signed package receipt does not match the source, version, build, or package bytes");
+  const { readCaptureManifest } = await import("./store-screenshot-source.ts");
+  readCaptureManifest(ROOT);
+  // Upload/processing must pass before changing live metadata or screenshots.
+  const build = await uploadBuild(buildNumber);
+  const versionId = await editableVersion();
+  const localizationId = await setVersionLocalization(versionId);
+  const appInfoId = await setAppInfo();
+  await setAgeRating(appInfoId);
+  await setContentRights();
+  await uploadScreenshots(localizationId);
+  await attachBuild(versionId, build);
+  const reviewDetailId = await setReviewDetail(versionId);
+  await uploadReviewRecording(reviewDetailId);
+  if (SUBMIT) await submit(versionId);
+  else log(`Upload prepared with ${AUTOMATIC_RELEASE ? "automatic" : "manual"} release; stopping before App Review submission`);
+}
+
+if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  await main();
+}

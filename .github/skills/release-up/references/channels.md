@@ -11,11 +11,54 @@ Inspect these on every release; this skill does not replace their implementation
 | Store pipeline | `.github/workflows/appstore-release.yml`, `scripts/macos-app-store.sh`, `scripts/appstore-submit.mjs` |
 | Store assets | `scripts/store-screenshot-source.ts`, `scripts/make-store-screenshots.ts`, `scripts/verify-appstore.ts`, `scripts/appstore-release.ts`, `branding/screenshots/source/captures.json` |
 | Policy and review | `appstore/README.md`, `appstore/review-recording.md`, `appstore/sandbox-exceptions.md`, `docs/app-store-actions.md`, `appstore/metadata/en-US/` |
+| Environment setup and regressions | `scripts/configure-store-environment.mjs`, `scripts/check-release-environments.mjs`, `scripts/verify-release-source.mjs`, `scripts/appstore-submit.test.mjs`, `scripts/release-pipeline.test.mjs` |
 
 Use `gh` for current release/run/secret-name state. Use authenticated Apple APIs
 with existing authorized credentials for current versions/builds; never treat
 historical review notes as live status. Review API pagination and build/version
 relationships before selecting a record.
+
+## Environment bootstrap and preflight
+
+Both signing environments must restrict deployments to `v*` **tags**, not a
+branch named `v*`. `macos-distribution` and `mac-app-store` use separate
+certificate types and secret names. Store also needs environment variable
+`ASC_APP_ID`; discover/verify its app's bundle ID, never guess an Apple ID.
+
+Run `node scripts/check-release-environments.mjs` to check both environment
+secret/variable names and tag policies. Run `pnpm release:preflight` after the
+candidate version/source is frozen and native captures have been refreshed.
+The latter also checks current Store capture provenance. Neither verifies
+certificate validity merely from the existence of a secret name.
+
+When the user requests environment provisioning, use
+`pnpm store:environment --check` followed by `pnpm store:environment --apply`,
+with these local environment variables (paths, not private values in command arguments):
+
+- `STORE_CREDENTIAL_DIRECTORY`: approved signing backup directory containing
+  `app.p12`, `installer.p12`, their matching `.cert.pem`/`.key.pem` files, and
+  `Launchpane.provisionprofile`.
+- `STORE_CERTIFICATE_PASSWORD_FILE`: mode-0600 file containing the export
+  password for both PKCS12 files. Never print it or commit it.
+- `APP_STORE_CONNECT_API_KEY_ID`, `APP_STORE_CONNECT_API_ISSUER_ID`,
+  `APP_STORE_CONNECT_API_KEY_PATH`: existing authorized Apple API credentials.
+- Optional `GH_REPO`: repository to configure; default `webmaxru/Launchpane`.
+
+The script checks both certificate/private-key pairs and actual PKCS12 contents,
+expiry/team/profile matches, Apple API access and bundle identity, and reads
+approved review contact details from the existing Apple record. `--check`
+changes nothing; `--apply` preserves existing reviewer settings, sets the tag
+policy, uploads 12 secrets over encrypted GitHub secret APIs, and records the
+verified app ID. Run it end to end and re-read names/policies afterwards.
+It never issues/revokes Apple credentials, exports keychain keys, or reads secrets
+back from GitHub. Preserve private backups; temporary password files must be
+removed on success and failure.
+
+Approved existing backups on the release host have been located under
+`~/.appstoreconnect/signing/` and API config/key under `~/.appstoreconnect/`.
+Treat this as a locator to verify when authorized, not proof of validity. Do not
+read another worktree/main checkout to recover credentials. Do not execute
+arbitrary backup shell scripts or echo their secret assignments.
 
 ## Standalone GitHub channel
 
@@ -72,6 +115,11 @@ retrying; never delete or clobber a public release without explicit approval.
 The current workflow creates rather than overwrites releases. Check concurrency
 and notary submission status before duplicating work.
 
+For manual standalone retry, dispatch on the same immutable tag:
+`gh workflow run release.yml --ref vX.Y.Z -f tag=vX.Y.Z`.
+The workflow rejects a moving-branch dispatch. Do not rerun a published release
+or rely on scripts fixed only on a newer branch: an old tag uses old code.
+
 ## Store channel: credentials and build identity
 
 `mac-app-store` is separate from `macos-distribution`. Required names are listed
@@ -96,8 +144,9 @@ retry a permissions failure or silently issue/revoke certificates.
 
 Use the same marketing version/source as GitHub but a distinct, monotonically
 valid Apple `CFBundleVersion`. Query Apple and account for older local/CI build
-numbers; workflow `github.run_number` may be lower than timestamp-numbered
-previous uploads, and reruns reuse it. Do not dispatch until the selected build
+numbers. The workflow requires an explicit `build_number`, never
+`github.run_number`, and rejects numbers at or below any existing numeric
+Apple build/upload number. Do not dispatch until the selected build
 number reaches the bundle, upload request, manifest and QA notes consistently.
 Never reuse an uploaded build number for changed bytes. Store build numbers
 are not Git tags or semver bumps.
@@ -142,40 +191,53 @@ Default release scope can build/validate/upload a candidate before this final
 submission QA finishes, if accurately described. App Review submission and
 recording upload remain blocked until their gates and authorizations pass.
 
-## Store integration hazards to check before executing
+## Store execution contract
 
-At skill authoring, the workflow and uploader have mismatches. Recheck current
-code; if still present, fix and validate before invoking upload, or report that
-stage blocked. Do not describe configured secrets or workflow syntax as proof
-of end-to-end Store release readiness.
+Dispatch only after `pnpm release:preflight` and a read-only Apple preflight
+pass, on the same immutable tag whose code/captures will be built:
 
-1. Workflow exports `APP_STORE_CONNECT_API_*` and `APP_REVIEW_*`, but
-   `appstore-submit.mjs` requires `ASC_KEY_ID`, `ASC_ISSUER_ID`, `ASC_KEY_PATH`,
-   `ASC_APP_ID` and `ASC_CONTACT_*`. Explicitly map them and verify the app
-   record/bundle rather than relying on an undocumented hard-coded app ID.
-2. Workflow uses `SUBMIT_FOR_REVIEW`; uploader defaults `ASC_SUBMIT` to true.
-   Set `ASC_SUBMIT=false` explicitly for upload/prepare-only. Confirm no wrapper
-   overrides it. The `automatic_release` workflow input is not consumed by the
-   uploader, which sets `releaseType: AFTER_APPROVAL`. Implement and verify
-   `MANUAL` when requested; never promise manual release from an unused flag.
-3. Uploader chooses an editable version and can rename it. Select the intended
-   version, preserve another pending release, create a version if necessary,
-   and respect Apple editability/processing rules. Never retarget whatever record
-   happened to be first.
-4. Build lookup/reuse must match app, platform, marketing version and build number;
-   an existing uploaded number alone does not establish byte/source identity or
-   `VALID` processing. Wait for the exact build, inspect failures and export
-   compliance before attaching or submitting.
-5. Uploader replaces screenshots and changes metadata even with `ASC_SUBMIT=false`.
-   This flag is not a read-only dry run. Confirm intended version ownership and
-   upload authorization before invoking it.
+```bash
+gh workflow run appstore-release.yml --ref vX.Y.Z \
+  -f release_tag=vX.Y.Z -f build_number=<fresh-Apple-build-number> -f upload=true
+```
+
+Replace placeholders with verified values. `upload=false` stops after
+build/sign/package/Apple validation and archives artifacts without changing
+Apple metadata. The environment's tag restriction and the source/version check
+reject moving refs. Concurrency is app-wide, not per-branch, to avoid colliding
+uploads across candidates.
+
+The workflow maps `APP_STORE_CONNECT_*` secrets into `ASC_KEY_ID`,
+`ASC_ISSUER_ID`, `ASC_KEY_PATH`, and the `ASC_CONTACT_*` names. `ASC_APP_ID` is
+an environment variable for the app record. Temporary keys, both PKCS12 files,
+the profile, and keychain are cleaned even on failure.
+
+1. `node scripts/appstore-submit.mjs --status` is read-only: verify app bundle,
+   version state, and existing builds. `--preflight` additionally checks the
+   explicit `APP_BUILD_NUMBER` against all paginated builds/uploads.
+2. CLI defaults are `ASC_SUBMIT=false` and `ASC_AUTOMATIC_RELEASE=false`.
+   Workflow preparation forces both false and exposes neither submission flag.
+   Local explicit `true` settings do not replace review evidence/authorization.
+3. The uploader selects the exact marketing version or creates it. It never
+   renames another pending release; if Apple will not allow another version while
+   one is under review, report that conflict, do not cancel/retarget it.
+4. Uploading a number already recorded at Apple is rejected rather than silently
+   reusing another candidate. Wait for upload completion and exact build
+   `VALID` processing; verify its macOS marketing-version relationship before
+   attachment. Failures/timeouts are explicit and precede live metadata changes.
+5. Package `build.json`, `SHA256SUMS`, Store `manifest.json`, bundle version,
+   source commit, and package bytes must agree. Preserve the archived signed
+   package/receipt. Never claim receipt identity proves TestFlight/native QA.
+6. New screenshots must finish processing before deleting the previous set.
+   Upload mode still changes metadata/screenshots: neither `ASC_SUBMIT=false`
+   nor `--preflight` authorization is permission to upload to a different version.
 
 Separate stages are prepare, build/sign/package, Apple validation, upload,
 processing, attach to version/TestFlight, native QA, metadata/review readiness,
 review submission, approval, and public release. Dispatch the Store workflow
 against the release tag only after its inputs/environment mappings are verified.
-If build-only is requested, the existing publish workflow is not suitable unless
-adapted to stop before upload. Do not invoke `pnpm appstore:release` for build-only.
+If build-only is requested, set `upload=false`. Do not invoke
+`pnpm appstore:release` for build-only.
 
 ## Recovery and credential custody
 

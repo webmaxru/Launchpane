@@ -9,6 +9,7 @@ PKG_PATH="$OUTPUT_DIR/Launchpane.pkg"
 BASE_ENTITLEMENTS="$ROOT/src-tauri/entitlements/app-store.plist"
 PROFILE_PATH="${MACOS_PROVISIONING_PROFILE_PATH:-$ROOT/secrets/Launchpane.provisionprofile}"
 BUILD_NUMBER="${APP_BUILD_NUMBER:-$(date -u +%Y%m%d%H%M)}"
+[[ "$BUILD_NUMBER" =~ ^[1-9][0-9]{0,17}$ ]] || { echo "error: Invalid APP_BUILD_NUMBER" >&2; exit 1; }
 
 fail() {
   echo "error: $*" >&2
@@ -20,9 +21,8 @@ require_command() {
 }
 
 identity() {
-  local env_name="$1"
-  local pattern="$2"
-  local value="${!env_name:-}"
+  local pattern="$1"
+  local value="${MACOS_APPLICATION_SIGNING_IDENTITY:-}"
   if [[ -n "$value" ]]; then
     printf '%s' "$value"
     return
@@ -67,18 +67,35 @@ sign_app() {
   [[ -f "$PROFILE_PATH" ]] || fail "Provisioning profile not found: $PROFILE_PATH"
 
   local application_identity
-  application_identity="$(identity MACOS_APPLICATION_SIGNING_IDENTITY 'Apple Distribution:')"
+  application_identity="$(identity 'Apple Distribution:')"
   if [[ -z "$application_identity" ]]; then
-    application_identity="$(identity MACOS_APPLICATION_SIGNING_IDENTITY '3rd Party Mac Developer Application:')"
+    application_identity="$(identity '3rd Party Mac Developer Application:')"
   fi
   [[ -n "$application_identity" ]] || fail "Mac App Distribution signing identity not found"
 
   local profile_plist generated_entitlements application_identifier team_identifier
   profile_plist="$(mktemp)"
   generated_entitlements="$(mktemp)"
-  trap 'rm -f "$profile_plist" "$generated_entitlements"' RETURN
+  trap 'rm -f "$profile_plist" "$generated_entitlements"' EXIT
 
   security cms -D -i "$PROFILE_PATH" > "$profile_plist"
+  python3 - "$profile_plist" "$application_identity" <<'PY'
+import sys, plistlib, datetime, subprocess
+profile = plistlib.load(open(sys.argv[1], "rb"))
+entitlements = profile["Entitlements"]
+team = entitlements["com.apple.developer.team-identifier"]
+if (profile["ExpirationDate"] <= datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None)
+    or profile.get("ProvisionedDevices") or profile.get("ProvisionsAllDevices")
+    or "OSX" not in profile.get("Platform", [])
+    or entitlements.get("com.apple.security.get-task-allow")
+    or entitlements.get("com.apple.application-identifier") != f"{team}.com.webmaxru.launchpane"):
+    raise SystemExit("Invalid/expired Mac App Store distribution profile")
+pem = subprocess.check_output(["security", "find-certificate", "-c", sys.argv[2], "-p"])
+der = subprocess.check_output(["/usr/bin/openssl", "x509", "-outform", "DER"], input=pem)
+if der not in profile["DeveloperCertificates"]:
+    raise SystemExit("Application signing certificate does not match the profile")
+subprocess.run(["/usr/bin/openssl", "x509", "-checkend", "0", "-noout"], input=pem, check=True)
+PY
   application_identifier=$(/usr/libexec/PlistBuddy -c "Print :Entitlements:com.apple.application-identifier" "$profile_plist")
   team_identifier=$(/usr/libexec/PlistBuddy -c "Print :Entitlements:com.apple.developer.team-identifier" "$profile_plist")
   [[ "$application_identifier" == *".com.webmaxru.launchpane" ]] ||
@@ -94,6 +111,8 @@ sign_app() {
     --entitlements "$generated_entitlements" \
     --sign "$application_identity" \
     "$APP_PATH"
+  rm -f "$profile_plist" "$generated_entitlements"
+  trap - EXIT
 }
 
 package_app() {
@@ -109,11 +128,29 @@ package_app() {
     --sign "$installer_identity" \
     --timestamp \
     "$PKG_PATH"
+  rm -rf "$OUTPUT_DIR/Launchpane.app"
+  ditto "$APP_PATH" "$OUTPUT_DIR/Launchpane.app"
+  cd "$ROOT"
+  node --input-type=module <<'NODE'
+import { execFileSync } from "node:child_process";
+import { readFileSync, writeFileSync } from "node:fs";
+import { createHash } from "node:crypto";
+const sourceCommit = execFileSync("git", ["rev-parse", "HEAD"], { encoding: "utf8" }).trim();
+const version = JSON.parse(readFileSync("package.json", "utf8")).version;
+const packageSha256 = createHash("sha256").update(readFileSync("release/appstore/Launchpane.pkg")).digest("hex");
+const buildNumber = execFileSync("/usr/libexec/PlistBuddy", ["-c", "Print :CFBundleVersion", "release/appstore/Launchpane.app/Contents/Info.plist"], { encoding: "utf8" }).trim();
+writeFileSync("release/appstore/build.json", JSON.stringify({ sourceCommit, version, buildNumber, distribution: "app-store", packageSha256 }, null, 2) + "\n");
+writeFileSync("release/appstore/SHA256SUMS", `${packageSha256}  Launchpane.pkg\n`);
+NODE
 }
 
 verify_package() {
   [[ -f "$PKG_PATH" ]] || fail "Signed installer package not found: $PKG_PATH"
   codesign --verify --deep --strict --verbose=2 "$APP_PATH"
+  test "$(/usr/bin/lipo -archs "$APP_PATH/Contents/MacOS/launchpane")" = "x86_64 arm64" ||
+    fail "Store app must contain Intel and Apple Silicon architectures"
+  test "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleVersion' "$APP_PATH/Contents/Info.plist")" = "$BUILD_NUMBER" ||
+    fail "Store app build number mismatch"
   codesign --display --entitlements :- "$APP_PATH" > "$OUTPUT_DIR/signed-entitlements.plist"
   /usr/libexec/PlistBuddy -c "Print :com.apple.security.app-sandbox" "$OUTPUT_DIR/signed-entitlements.plist" |
     grep -qx true || fail "Signed app is missing the App Sandbox entitlement"
