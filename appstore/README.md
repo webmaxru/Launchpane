@@ -149,6 +149,6 @@ Nothing is uploaded by the screenshot, verification, or preparation commands.
 `.github/workflows/pages.yml` publishes `docs/` to GitHub Pages. Enable GitHub
 Pages with **GitHub Actions** as the source before submitting:
 
-- Marketing: `https://webmaxru.github.io/Launchpane/`
-- Privacy: `https://webmaxru.github.io/Launchpane/privacy/`
-- Support: `https://webmaxru.github.io/Launchpane/support/`
+- Marketing: `https://salnikov.no/projects/launchpane/`
+- Privacy: `https://salnikov.no/projects/launchpane/privacy/`
+- Support: `https://salnikov.no/projects/launchpane/support/`
