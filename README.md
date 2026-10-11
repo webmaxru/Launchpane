@@ -19,9 +19,9 @@
 
 <p align="center">
   <a href="https://github.com/webmaxru/Launchpane/releases/latest"><strong>Download</strong></a> ·
-  <a href="https://salnikov.no/Launchpane/">Website</a> ·
-  <a href="https://salnikov.no/Launchpane/support/">Support</a> ·
-  <a href="https://salnikov.no/Launchpane/privacy/">Privacy</a>
+  <a href="https://salnikov.no/projects/launchpane/">Website</a> ·
+  <a href="https://salnikov.no/projects/launchpane/support/">Support</a> ·
+  <a href="https://salnikov.no/projects/launchpane/privacy/">Privacy</a>
 </p>
 
 <p align="center">
@@ -80,7 +80,7 @@ assets remain unsigned and are not replaced.
 
 ## Product website
 
-The [Launchpane website](https://salnikov.no/Launchpane/) is hosted on
+The [Launchpane website](https://salnikov.no/projects/launchpane/) is hosted on
 this repository's GitHub Pages. Source pages and assets live in `docs/`.
 
 - `pnpm site:test` checks the dependency-free website builder.

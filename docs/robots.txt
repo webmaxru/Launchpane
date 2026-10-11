@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://salnikov.no/Launchpane/sitemap.xml
+Sitemap: https://salnikov.no/projects/launchpane/sitemap.xml
