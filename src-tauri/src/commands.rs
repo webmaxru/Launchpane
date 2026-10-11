@@ -417,8 +417,23 @@ pub async fn start_job(plist_path: String) -> Result<(), AppError> {
             "Already loaded. Use Run now or Restart.".to_string(),
         ));
     }
+    ensure_runnable_plist(&plist_path)?;
     launchctl::bootstrap(&domain, &plist_path)?;
     verify_loaded(&domain, &label, true)
+}
+
+fn ensure_runnable_plist(plist_path: &str) -> Result<(), AppError> {
+    let config = plist_util::parse_plist(plist_path)?;
+    let has_args = config
+        .program_arguments
+        .as_ref()
+        .is_some_and(|args| !args.is_empty());
+    if config.program.is_none() && !has_args {
+        return Err(AppError::Launchctl(
+            "This plist defines no Program or ProgramArguments, so launchd cannot load it. Its owner may have left it empty; reinstall or remove it.".to_string(),
+        ));
+    }
+    Ok(())
 }
 
 #[tauri::command]

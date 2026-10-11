@@ -127,12 +127,17 @@ GUI domain**, rather than silently targeting `gui/0`. Its action menu was also
 checked for a real disabled/unloaded daemon: **Enable** is available, while Load
 requires enablement and Run/Restart/Unload require registration. Shared-file
 Edit/Remove remain absent. Inspecting that menu exposed a native-window overflow:
-expanded reason text now uses a measured height limit based on the space above
-or below its trigger inside the viewport, capped at 70% viewport height. The menu
-opens on the roomier side, scrolls within that limit, and retains an 8-pixel
-collision inset rather than relying solely on WebKit's document-scroll geometry.
-The rebuilt native binary was checked in a 1000-by-700 window: the menu measured
-320-by-350 and stayed inside the visible window. The currently running,
+the earlier 320-pixel menu used a measured height limit above or below its trigger
+and scrolled when expanded reasons exceeded that space. The menu now opens to
+the left of the trigger, is 448 pixels wide (bounded by the window width), and
+uses the full window height with an 8-pixel collision inset. Concise disabled
+reasons keep all applicable actions visible without scrolling at ordinary
+desktop window sizes. Collision shifting keeps the menu inside the window even
+for rows near its top or bottom; scrolling remains a fallback for unusually
+short windows. Browser layout checks covered 63 combinations of source,
+service state, Store restrictions, pending actions, row position, light/dark
+appearance, and 1000-by-700, 560-by-600, and 560-by-500 viewports: every menu item
+stayed inside the window without menu scrolling. The currently running,
 already-authenticated window must be relaunched to pick up rebuilt UI assets.
 
 | Administrator-window check | Result |
