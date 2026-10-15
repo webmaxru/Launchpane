@@ -1,9 +1,14 @@
 # Mac App Store release
 
-The 1.3.1 Store edition is a service inspector and personal plist editor.
+The 1.3.2 Store candidate is a service inspector and personal plist editor.
 It removes all lifecycle, enable/disable, removal and administrator operations;
 the standalone edition retains them. The [edition comparison](../docs/app-store-actions.md)
 is authoritative. A sandboxed filesystem grant is not launchd-control permission.
+
+Screenshot derivatives are rendered into explicit opaque RGB bitmaps by the
+CoreGraphics helper, not round-tripped through BMP: recent ImageIO versions preserve
+alpha in that conversion. The release test checks the PNG color type as well
+as macOS's alpha inspection.
 
 Launchpane's App Store pipeline builds a universal macOS app, embeds its Mac App
 Store provisioning profile, signs it with Apple distribution certificates,

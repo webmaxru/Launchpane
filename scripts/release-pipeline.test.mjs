@@ -12,6 +12,19 @@ test("both release environments have separate required credential contracts", ()
   assert.deepEqual(environments["mac-app-store"].variables, ["ASC_APP_ID"]);
   assert.deepEqual(missingNames(["present", "missing"], [{ name: "present" }]), ["missing"]);
 });
+test("Store screenshot renderer emits RGB PNGs without an alpha channel", { skip: process.platform !== "darwin" }, t => {
+  const directory = mkdtempSync(join(tmpdir(), "launchpane-opaque-screenshot-"));
+  t.after(() => rmSync(directory, { recursive: true, force: true }));
+  const output = join(directory, "nested", "opaque.png");
+  execFileSync("/usr/bin/swift", [resolve("scripts/render-store-screenshots.swift")], {
+    input: JSON.stringify([{ source: resolve("branding/screenshots/source/overview.png"), output, width: 128, height: 80 }]),
+  });
+  const png = readFileSync(output);
+  assert.equal(png.readUInt32BE(16), 128);
+  assert.equal(png.readUInt32BE(20), 80);
+  assert.equal(png[25], 2, "PNG color type must be truecolor RGB, never RGBA");
+  assert.match(execFileSync("/usr/bin/sips", ["-g", "hasAlpha", output]).toString(), /hasAlpha: no/);
+});
 test("Store entitlements reject every rejected exception and either debug value", t => {
   const directory = mkdtempSync(join(tmpdir(), "launchpane-entitlements-"));
   t.after(() => rmSync(directory, { recursive: true, force: true }));

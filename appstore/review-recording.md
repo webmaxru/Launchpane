@@ -2,6 +2,17 @@
 
 ## Current edition: October 15, 2026
 
+The frozen 1.3.1 Store pipeline stopped before signing/upload because current
+macOS ImageIO preserved alpha during the previous BMP conversion. The parallel
+standalone run was canceled before publication; the immutable tag is retained.
+Candidate 1.3.2 fixes screenshot rendering using an explicitly opaque RGB
+CoreGraphics context, with a real-render regression checking PNG color type.
+All four native captures were refreshed from local sandbox preview
+`1.3.2 (202610160101)` after actual folder selection, disposable plist creation,
+editor inspection and selected sample-log reading. The plist was verified not
+registered. The manifest records new hashes and the new app-source fingerprint.
+These remain local preview evidence, not exact production-build QA.
+
 The user authorized removing unsupported Store functionality. This supersedes
 the historical shot list and holds below that require Store service control or
 in-app removal. The Store edition is now an inspector and personal plist editor;
