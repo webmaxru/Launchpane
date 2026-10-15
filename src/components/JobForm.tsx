@@ -29,6 +29,7 @@ import {
 } from "@/lib/calendar-utils"
 
 type JobFormProps = {
+  isAppStore?: boolean
   open: boolean
   onClose: () => void
   onSave: (config: PlistConfig, plistPath?: string) => Promise<void>
@@ -111,6 +112,7 @@ function detectHourMode(config: PlistConfig): HourMode {
 const weekdayLabels = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
 
 export function JobForm({
+  isAppStore = false,
   open,
   onClose,
   onSave,
@@ -155,10 +157,10 @@ export function JobForm({
   const isEditing = !!editingJob
 
   useEffect(() => {
-    if (!isEditing) {
+    if (!isEditing && !isAppStore) {
       getHomeDir().then(setHomeDir).catch(() => {})
     }
-  }, [isEditing])
+  }, [isEditing, isAppStore])
 
   const handleSave = async () => {
     setError(null)
@@ -231,7 +233,7 @@ export function JobForm({
               onChange={(e) => {
                 const label = e.target.value.replace(/\s/g, "")
                 const updates: Partial<PlistConfig> = { label }
-                if (!isEditing && homeDir && label.trim()) {
+                if (!isEditing && !isAppStore && homeDir && label.trim()) {
                   const logDir = `${homeDir}/Library/Logs/Launchpane`
                   updates.standard_out_path = `${logDir}/${label}.stdout.log`
                   updates.standard_error_path = `${logDir}/${label}.stderr.log`

@@ -14,6 +14,11 @@ test plan for that recording; it is intentionally not a simulated recording.
 - Begin recording before launching Launchpane.
 - Keep the recording at the Mac's native resolution and show the full app
   window and macOS menu bar.
+- Before inventory access, demonstrate **Choose folders…** and explicitly
+  select the test user's `~/Library/LaunchAgents`, shared LaunchAgents and
+  LaunchDaemons folders, and Applications when showing login helpers. Show
+  picker cancellation, successful selection, and re-selection after reopening.
+  Select a log's containing folder before demonstrating log access.
 
 ## Required flow
 
@@ -84,6 +89,40 @@ upload is not evidence that the app works.
 - [ ] Light and dark macOS appearances render the main flow legibly.
 - [ ] The temporary plist is removed after the test.
 - [ ] The exact submitted build number is shown in the recording notes.
+- [ ] Initial missing consent has a clear recovery action; cancellation grants no access.
+- [ ] Only selected inventory roots are shown, and reopening asks for consent again.
+- [ ] The final signed app omits get-task-allow and all temporary file exceptions.
+
+## October 15 replacement preparation
+
+Apple rejected 1.2.1 (`202610100953`) under guideline 2.4.5(i), submission
+`9249e9ef-0e6c-4043-9197-2bb9e2053b49`. The 1.3.1 source removes the rejected
+entitlements and replaces automatic external folder access with NSOpenPanel.
+Both distribution editions use the same four version manifests; previously
+published 1.3.0 standalone assets are not overwritten.
+
+The available local Mac runs macOS 12.7.6. No new exact-build TestFlight
+recording on current macOS is available. The prior user-directed waiver was
+for the October 10 submission only. A new build, upload, or entitlement
+validation must not be described as satisfying the outstanding recording gate.
+Do not submit the replacement until its current native QA evidence passes.
+
+Local native sandbox testing of candidate `202610152100` verified launch,
+initial permission error, picker cancellation, explicit LaunchAgents selection,
+inventory, fresh consent after reopening, and creation of a disposable
+`/usr/bin/true` agent. It exposed and corrected a coupled issue: new Store agents
+must not automatically populate logs under an unselected `~/Library/Logs` folder.
+Optional log paths now start empty; standalone keeps its normal defaults.
+
+**Functional gate failed:** Load on that disposable plist returned bootstrap
+error 5 (Input/output error) inside the ad-hoc sandbox preview. The identical
+valid plist successfully bootstrapped and booted out when tested outside the
+sandbox. User-selected file access is therefore insufficient evidence of
+working service control. These checks are not production-signed/TestFlight QA.
+Do not replace failed lifecycle checks with successful compilation or file
+creation. Preserve management features pending Apple/DTS guidance rather than
+silently converting the Store product to an inspector or resubmitting a broken
+workflow. The prior recording and screenshots do not establish readiness.
 
 ## Earlier replacement-build smoke test
 

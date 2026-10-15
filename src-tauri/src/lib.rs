@@ -4,6 +4,7 @@ mod launchctl;
 mod login_items;
 mod menu;
 mod plist_util;
+mod store_access;
 mod types;
 mod user_paths;
 
@@ -12,6 +13,7 @@ pub fn run() {
     tauri::Builder::default()
         .menu(menu::build)
         .invoke_handler(tauri::generate_handler![
+            store_access::choose_access_folders,
             commands::list_jobs,
             commands::get_job_detail,
             commands::start_job,

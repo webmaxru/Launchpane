@@ -4,7 +4,11 @@ This page covers the `app-store` build feature and
 [`tauri.app-store.conf.json`](../src-tauri/tauri.app-store.conf.json), not the
 [standalone edition](native-actions.md). The App Store edition is sandboxed,
 has no root escalation, and retains the documented read-only boundary for
-shared services. File exceptions do not grant launchd control rights.
+shared services. Native folder grants do not grant launchd control rights.
+Version 1.3.1 removes all temporary filesystem exceptions. Use **Choose folders…**
+to select inventory and log folders in the macOS picker on each app launch;
+only selected inventory roots are scanned. Missing initial consent is an
+explicit permission error, not an apparently complete empty inventory.
 
 ## Edition-specific limits
 
@@ -22,11 +26,11 @@ including direct IPC requests and a Store-feature process launched as root.
 | Login helper | Run now, Stop/Unload, Restart | Visible, disabled wherever applicable | “Unavailable in the Mac App Store edition: login helpers support Enable and Disable only; their parent app manages their lifecycle.” |
 | Login helper | Enable, Disable | Available subject to current enabled state and pending operation | Not an edition restriction. Enabling does not register or start a helper; disabling does not stop an existing process. Actual sandbox authorization must still be verified. |
 | User agent | Load, Run now, Stop/Unload, Restart, Enable, Disable | Retained with the normal launchd state dependencies | Not deliberately disabled by the build channel. Actual launchd access is subject to App Sandbox enforcement. |
-| User agent | Create, Edit, Remove | Retained | Uses the requested `~/Library/LaunchAgents/` write exception. Apple must approve this exception; compiling the feature is not evidence of sandbox access. |
+| User agent | Create, Edit, Remove | Retained after native folder selection | Requires explicit selection of `~/Library/LaunchAgents/`. No temporary filesystem exception is requested. Folder access is not launchd authorization. |
 | Shared services | Edit, Remove | Hidden in both editions | Protected configuration, not an App-Store-only limitation. Even standalone administrator mode does not edit/delete these plists. |
 | Login helper | Load, Edit, Remove, Logs tab | Hidden in both editions | No standalone launchd plist or plist-declared logs. The parent app owns registration and the bundle. Not an App-Store-only limitation. |
 | Detail Commands tab | View/copy Terminal command reference | Retained with an App Store explanation | The app does not execute these commands. Copying them grants no sandbox access and cannot enable administrator features. |
-| Details/logs | Read logs, Clear log, Open in editor, Reveal in Finder | Not deliberately disabled by the build channel | Arbitrary log paths are not covered by the launch-agent file exceptions. Runtime permission failures are not proof of an intentionally disabled feature; they must remain explicit. |
+| Details/logs | Read logs, Clear log, Open in editor, Reveal in Finder | Not deliberately disabled by the build channel | Read/clear requires selection of the log's containing folder. Runtime permission failures remain explicit; use Choose folders to grant access and retry. |
 | Automated review demo | Environment-triggered walkthrough | Compiled out of Store behavior | Development-only fixture automation, not a user feature. The submitted edition must be demonstrated using its actual inventory and controls. |
 
 Other disabled states (already enabled/disabled, missing registration, unknown
@@ -53,7 +57,7 @@ Checked against Apple's published
 
 | Rule | Requirement and assessment |
 | --- | --- |
-| 2.4.5(i), 2.5.2 | Appropriate sandboxing and filesystem boundaries are required. Narrow temporary file exceptions remain subject to Apple's assessment. They are not a blanket authorization for launchctl or arbitrary log access. |
+| 2.4.5(i), 2.5.2 | Appropriate sandboxing and filesystem boundaries are required. External filesystem access is user-selected through NSOpenPanel, with no temporary file exceptions. This is not blanket authorization for launchctl or arbitrary log access. |
 | 2.4.5(v) | Root escalation is prohibited. The administrator command is unavailable in the Store build, not merely hidden in the UI. |
 | 2.4.5(iv), (vii) | The Store app must not install standalone apps/additional code to change functionality or provide an alternative update mechanism. The link only opens a project webpage; no in-app download/install/update occurs. |
 | 2.2 | Demos, betas and trial versions do not belong on the Store. The edition must remain a useful finished product, not an advertisement for a “full” external build. |
@@ -69,6 +73,11 @@ launch-service management. Explain them in review notes. Only Apple can approve
 the submission.
 
 ## Verification boundaries
+
+The native checks below are historical evidence for the earlier exception-based
+candidate, **not verification of the 1.3.1 folder-consent implementation**.
+The replacement needs a sandboxed picker/inventory/create/remove walkthrough
+and exact distribution-build recording before submission.
 
 Frontend coverage exercises Store restrictions across every source, service
 state, enabled state and privilege level, plus visible hints and project-link

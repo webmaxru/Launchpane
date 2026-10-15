@@ -183,7 +183,9 @@ pub fn bootstrap(domain: &str, plist_path: &str) -> Result<(), AppError> {
             return Ok(());
         }
         let detail = bootstrap_failure_detail(&stderr);
-        let hint = if detail.contains("Input/output error") {
+        let hint = if detail.contains("Input/output error") && cfg!(feature = "app-store") {
+            " App Sandbox may deny launchd control even after folder access is granted."
+        } else if detail.contains("Input/output error") {
             " Try re-running the command as root for richer errors."
         } else {
             ""

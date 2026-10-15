@@ -1,4 +1,5 @@
-import { render, screen } from "@testing-library/react"
+import { render, screen, waitFor } from "@testing-library/react"
+import userEvent from "@testing-library/user-event"
 import { describe, expect, it, vi } from "vitest"
 import { JobForm } from "./JobForm"
 import type { LaunchdJob } from "@/types"
@@ -30,6 +31,27 @@ const editingJob: LaunchdJob = {
 }
 
 describe("JobForm", () => {
+  it.each([false, true])("uses only authorized log defaults for Store=%s", async (isAppStore) => {
+    const save = vi.fn()
+    const user = userEvent.setup()
+    render(<JobForm open isAppStore={isAppStore} onClose={vi.fn()} onSave={save} />)
+    await user.type(screen.getByLabelText(/^Label/), "com.example.consent")
+    await user.type(screen.getByLabelText(/^Command and arguments/), "/usr/bin/true")
+    if (isAppStore) {
+      expect(screen.getByLabelText(/^Standard Output Path/)).toHaveValue("")
+      expect(screen.getByLabelText(/^Standard Error Path/)).toHaveValue("")
+    } else {
+      await waitFor(() => expect(screen.getByLabelText(/^Standard Output Path/))
+        .toHaveValue("/Users/test/Library/Logs/Launchpane/com.example.consent.stdout.log"))
+    }
+    await user.click(screen.getByRole("button", { name: "Create" }))
+    expect(save).toHaveBeenCalledWith(expect.objectContaining({
+      label: "com.example.consent",
+      standard_out_path: isAppStore ? null : "/Users/test/Library/Logs/Launchpane/com.example.consent.stdout.log",
+      standard_error_path: isAppStore ? null : "/Users/test/Library/Logs/Launchpane/com.example.consent.stderr.log",
+    }), undefined)
+  })
+
   it("renders the edit window on an explicit opaque surface", () => {
     render(
       <JobForm

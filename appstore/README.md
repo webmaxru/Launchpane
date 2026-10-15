@@ -19,14 +19,16 @@ Create these items in the Apple Developer and App Store Connect portals:
 7. App privacy responses set to **No, we do not collect data from this app**,
    matching [`app-privacy.json`](app-privacy.json). Apple does not expose this
    setting through API-key authentication, so it is a one-time app-record setup.
-8. Temporary sandbox exception usage information copied from
-   [`sandbox-exceptions.md`](sandbox-exceptions.md), including a Feedback
-   Assistant ID if Apple requests one.
+8. Verify user-selected folder access as described in
+   [`sandbox-exceptions.md`](sandbox-exceptions.md). No temporary filesystem
+   exceptions or `com.apple.security.get-task-allow` key may be signed into the app.
 9. A physical-device recording and completed QA checklist prepared from
    [`review-recording.md`](review-recording.md) before each review submission.
 
-Mac App Store review is not guaranteed: launch-service management needs
-temporary sandbox exceptions that Apple evaluates case by case.
+Mac App Store review is not guaranteed. The Store edition must obtain folder
+access using the native macOS picker; saved paths do not grant access. The
+current implementation asks again after every app restart. File access does
+not grant permission to control launchd; verify both in the submitted binary.
 
 The [App Store action table and link-policy assessment](../docs/app-store-actions.md)
 documents disabled edition-specific controls, their hints, and the neutral
@@ -107,6 +109,11 @@ The workflow:
 7. uploads the package through the App Store Connect build upload API;
 8. writes metadata, screenshots, age rating, and review details over the API;
 9. stops before App Review with manual release configured.
+
+Entitlement validation runs before compilation, before signing, and on every
+signed Mach-O executable in the final app. It rejects temporary filesystem
+exceptions, any debug entitlement (including `get-task-allow=false`), missing
+sandbox/WebKit/user-selected access, and mismatched app/team identifiers.
 
 The uploader never renames an unrelated editable version. It rejects mismatched
 app IDs, non-editable target versions, reused build numbers, invalid processing,

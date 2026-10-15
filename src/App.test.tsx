@@ -47,6 +47,32 @@ afterEach(() => {
 })
 
 describe("App action feedback", () => {
+  it("refreshes inventory only after native folder consent and reports selection failures", async () => {
+    setFakeHandler("get_runtime_info", () => ({
+      is_app_store: true, is_administrator: false,
+      can_restart_as_administrator: false, review_demo: false,
+    }))
+    const list = vi.fn(() => [])
+    let choose: () => boolean = () => false
+    setFakeHandler("list_jobs", list)
+    setFakeHandler("choose_access_folders", () => choose())
+    const user = userEvent.setup()
+    render(<App />)
+    const button = await screen.findByRole("button", { name: "Choose folders…" })
+    expect(screen.getByText(/Access lasts until you quit/)).toBeInTheDocument()
+    await waitFor(() => expect(list).toHaveBeenCalledOnce())
+    await user.click(button)
+    expect(list).toHaveBeenCalledOnce()
+    choose = () => true
+    await user.click(button)
+    await waitFor(() => expect(list).toHaveBeenCalledTimes(2))
+    choose = () => { throw new Error("Folder permission denied") }
+    await user.click(button)
+    expect(await screen.findByRole("alert")).toHaveTextContent("Folder permission denied")
+    expect(button).toBeEnabled()
+    expect(list).toHaveBeenCalledTimes(2)
+  })
+
   it("shows Store edition limits and opens the neutral project link without requesting root", async () => {
     const admin = vi.fn()
     const openProject = vi.fn()

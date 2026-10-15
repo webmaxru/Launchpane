@@ -98,6 +98,7 @@ const handlers: Record<string, CommandHandler> = {
   }),
   restart_as_administrator: () => undefined,
   open_project_page: () => undefined,
+  choose_access_folders: () => false,
   save_job: () => undefined,
   create_job: () => "/Users/test/Library/LaunchAgents/new-job.plist",
   delete_job: () => undefined,

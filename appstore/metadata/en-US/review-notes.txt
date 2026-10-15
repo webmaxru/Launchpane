@@ -1,89 +1,70 @@
-Launchpane is a local macOS utility for developers, power users, and Mac
-support professionals who need to understand and safely manage background
-services that otherwise require launchctl commands and hidden plist folders.
-It solves the problem of diagnosing startup behavior, service state, and
-launchd configuration from one focused interface.
+Launchpane 1.3.1 replacement preparation - NOT YET READY FOR REVIEW
 
-1. Access and main flow
+This candidate addresses the October 15 rejection of 1.2.1 (202610100953),
+submission 9249e9ef-0e6c-4043-9197-2bb9e2053b49, guideline 2.4.5(i).
 
-Launch the app directly; there is no account, sign-in, registration, demo
-credential, subscription, or network setup. The inventory loads from the
-review Mac. Use the search field and source dropdown to inspect User Agents,
-Home Agents, System Agents, System Daemons, and Login Items. Select a row to
-inspect state, configuration, schedule, and available logs. User Agents can
-be enabled, disabled, started, stopped, restarted, tested, edited, created,
-and removed. Login Items support only Enable and Disable because they are
-owned by their parent app. System Agents and System Daemons are displayed for
-context and remain read-only.
+1. Entitlements
 
-To exercise the write flow safely, choose New Agent and create a temporary
-agent using `/usr/bin/true` as the executable, leave Run at Login disabled,
-save it, select it, then remove it. The app writes only to the user's
-`~/Library/LaunchAgents/` directory. No sample file or account is required.
+All temporary filesystem exceptions have been removed, including the rejected
+LaunchAgents, LaunchDaemons, and Applications paths. The signing script now
+omits com.apple.security.get-task-allow entirely, rather than setting it false
+or allowing debugging. Source and signed executable entitlement validation
+reject either value and any temporary exception.
 
-2. Physical-device QA and recording
+2. Access and main flow
 
-Local candidate build `202610101605` includes the edition-specific hints and
-correct account-home resolution inside App Sandbox. It has not been uploaded
-or attached to this version. Native screenshots now come from this updated
-Store-feature binary run locally with an ad-hoc sandbox signature. They show
-real disposable user agents, a real login helper, the native editor and actual
-log output; personal file paths are privacy-masked. They are not an exact-build
-TestFlight walkthrough or the latest-macOS review recording.
+No account, subscription, registration, or remote service is required.
+Choose "Choose folders..." to open the native macOS folder picker.
+Use Command-Shift-G to select ~/Library/LaunchAgents, /Library/LaunchAgents,
+/Library/LaunchDaemons, /Applications, or ~/Applications. Only selected
+inventory roots are shown. For logs select the log's containing folder.
+Canceling makes no changes. Access lasts until quit; select again on reopening.
 
-Build `202610100953` is attached to this version. The supplied TestFlight video
-confirms that it launches and loads its live inventory.
+Search/filter the inventory and select a row for configuration, state,
+schedules, logs and command references. Shared agents and daemons remain
+read-only; administrator access is unavailable. Login helpers permit only
+Enable/Disable, with lifecycle controlled by the parent app. An optional
+GitHub documentation/source link opens the browser; it does not download,
+install, update or unlock another edition.
 
-The attached recording, `Screen Recording 2026-10-10 at 17.30.33.mov`, shows
-Launchpane 1.2.1 (`202610100953`) in TestFlight, native launch, live inventory,
-system-service inspection, search/source interaction, the New Agent form,
-and appearance controls. It is a 55.55-second screen capture, not a browser
-simulation. The recording does not establish the macOS version and does not
-demonstrate saving or removing an agent. We are not claiming that it verifies
-the latest-macOS requirement or the complete write flow. Instructions for
-safely exercising that flow on the review Mac are provided above.
+For safe write-flow QA, select the test user's Library/LaunchAgents folder,
+create a disposable agent with executable /usr/bin/true, Run at Login off,
+and Keep Alive off, save it, inspect it, then remove it and confirm cleanup.
+Folder access does not confer launchd authorization: this complete flow must
+pass in the exact signed candidate before submission.
 
-3. External services
+3. Privacy and external services
 
-Launchpane does not use external services to deliver its core functionality.
-It reads local launchd state, local plist files, local log files, and
-ServiceManagement login-item metadata through macOS APIs and commands. It
-does not use analytics, advertising, authentication, payment processing,
-cloud storage, AI services, or remote data providers. All service and plist
-information remains on the Mac. The sandboxed Tauri/WebKit runtime requires
-local network client and server entitlements to start its embedded web
-process; Launchpane does not contact an external endpoint or expose a network
-service.
+Service definitions, state, logs, and configuration remain local. No analytics,
+advertising, authentication, payments, cloud storage, or AI service is used.
+The network client/server entitlements support the embedded Tauri/WebKit
+runtime on supported macOS versions, not an external product service.
+There are no regional feature differences or regulated content.
 
-4. Regional behavior and regulated content
+4. Outstanding evidence - submission hold
 
-The app has no regional feature or content differences. It behaves
-consistently in all territories. It is not a regulated-industry service and
-does not include protected third-party material or user-generated content.
+Local ad-hoc sandbox QA verified native folder consent, inventory, reopening,
+and disposable agent creation. Loading that agent failed with bootstrap error
+5 inside the sandbox, while the same valid plist loaded outside it. This
+candidate is NOT ready for resubmission; user-selected folder access does not
+resolve launchd control authorization. Preserve the hold pending Apple/DTS
+clarification and a working exact-build lifecycle/create/remove flow.
 
-5. Sandbox and ownership boundaries
+No new exact-build TestFlight/full-flow recording on the latest macOS has been
+verified. The available local Mac runs macOS 12.7.6. The October 10 recording
+belongs to rejected build 202610100953 and does not verify this candidate.
+Screenshots must be recaptured from the current Store edition; historical
+captures must not be presented as current. Replace this preparation notice
+with verified build identity and recording details only after native QA passes.
 
-The Mac App Store build is sandboxed with narrowly scoped temporary
-exceptions for the standard launchd locations. It writes only user-owned
-agents in `~/Library/LaunchAgents/`; system agents and daemons are read-only.
-Temporary sandbox exception details and assessment steps are documented in
-`appstore/sandbox-exceptions.md`.
+Draft clarification request (not sent):
 
-6. Edition limits and project reference (candidate not yet submitted)
-
-The updated Store-feature build keeps applicable unavailable controls visible
-but disabled with an explicit "Unavailable in the Mac App Store edition"
-explanation. Administrator access cannot be enabled; shared agents and daemons
-are read-only. Login-helper lifecycle controls are disabled; Enable/Disable
-remain the only permitted changes.
-
-An optional "Project documentation and source on GitHub" link opens
-https://github.com/webmaxru/Launchpane in the system browser. It supplies project
-documentation and source; the repository also describes separate standalone
-distribution. Launchpane does not download, install, update, or unlock external
-code. No purchase, license, or external payment flow is provided by the link.
-The Store edition works independently and does not require another edition.
-
-These candidate-build changes are not present in the attached build
-`202610100953` or in the recording. Do not treat local checks as evidence of
-App Review approval.
+We removed all temporary filesystem exceptions and omit get-task-allow
+entirely. External file access is now explicitly granted via NSOpenPanel and
+the user-selected.read-write entitlement. In a local sandboxed build, this
+permits inventory and writing a user-selected LaunchAgents plist, but
+launchctl bootstrap of that plist fails with error 5; the identical plist
+loads outside the sandbox. Which supported, sandbox-compatible API or
+entitlement, if any, may a Mac App Store utility use to manage user-selected
+third-party/user-authored launch agents? We will not claim that a folder grant
+authorizes service control or resubmit before the workflow is functional.

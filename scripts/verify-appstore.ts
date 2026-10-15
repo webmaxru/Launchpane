@@ -20,6 +20,7 @@ function imageProperty(path: string, property: string): string {
 }
 
 function main(): void {
+  execFileSync("python3", [join(ROOT, "scripts/verify-store-entitlements.py"), join(ROOT, "src-tauri/entitlements/app-store.plist")], { stdio: "inherit" })
   const packageJson = JSON.parse(readFileSync(join(ROOT, "package.json"), "utf8")) as { version: string }
   const tauri = JSON.parse(readFileSync(join(ROOT, "src-tauri", "tauri.conf.json"), "utf8")) as {
     version: string

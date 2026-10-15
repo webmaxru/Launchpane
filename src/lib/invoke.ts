@@ -58,6 +58,8 @@ export const restartAsAdministrator = () =>
 
 export const openProjectPage = () => invoke<void>("open_project_page")
 
+export const chooseAccessFolders = () => invoke<boolean>("choose_access_folders")
+
 export const saveJob = (plistPath: string, config: PlistConfig) =>
   invoke<void>("save_job", { plistPath, config })
 

@@ -12,6 +12,52 @@ test("both release environments have separate required credential contracts", ()
   assert.deepEqual(environments["mac-app-store"].variables, ["ASC_APP_ID"]);
   assert.deepEqual(missingNames(["present", "missing"], [{ name: "present" }]), ["missing"]);
 });
+test("Store entitlements reject every rejected exception and either debug value", t => {
+  const directory = mkdtempSync(join(tmpdir(), "launchpane-entitlements-"));
+  t.after(() => rmSync(directory, { recursive: true, force: true }));
+  const script = resolve("scripts/verify-store-entitlements.py");
+  const source = resolve("src-tauri/entitlements/app-store.plist");
+  assert.match(execFileSync("python3", [script, source]).toString(), /verified/);
+  const nulTerminated = join(directory, "codesign-output.plist");
+  writeFileSync(nulTerminated, Buffer.concat([readFileSync(source), Buffer.from([0])]));
+  assert.match(execFileSync("python3", [script, nulTerminated]).toString(), /verified/);
+  const generate = `
+import plistlib, sys
+with open(sys.argv[1], "rb") as f:
+    entitlements = plistlib.load(f)
+entitlements[sys.argv[3]] = plistlib.loads(sys.argv[4].encode())
+with open(sys.argv[2], "wb") as f:
+    plistlib.dump(entitlements, f)
+`;
+  for (const [key, value] of [
+    ["com.apple.security.get-task-allow", "<false/>"],
+    ["com.apple.security.get-task-allow", "<true/>"],
+    ["com.apple.security.temporary-exception.files.absolute-path.read-only", "<array><string>/Library/LaunchAgents/</string><string>/Library/LaunchDaemons/</string><string>/Applications/</string></array>"],
+    ["com.apple.security.temporary-exception.files.home-relative-path.read-write", "<array><string>/Library/LaunchAgents/</string></array>"],
+    ["com.apple.security.temporary-exception.files.home-relative-path.read-only", "<array><string>/Applications/</string></array>"],
+    ["com.apple.security.app-sandbox", "<false/>"],
+  ]) {
+    const path = join(directory, "invalid.plist");
+    execFileSync("python3", ["-c", generate, source, path, key, `<plist version="1.0">${value}</plist>`]);
+    assert.notEqual(spawnSync("python3", [script, path]).status, 0, key);
+  }
+  assert.doesNotMatch(readFileSync("scripts/macos-app-store.sh", "utf8"), /Add :com.apple.security.get-task-allow/);
+  assert.match(readFileSync("scripts/macos-app-store.sh", "utf8"), /--signed --app "\$APP_PATH"/);
+  assert.notEqual(spawnSync("python3", [script, source, "--signed"]).status, 0, "signed identity required");
+  const signed = join(directory, "signed.plist");
+  execFileSync("python3", ["-c", `
+import plistlib, sys
+with open(sys.argv[1], "rb") as f:
+    entitlements = plistlib.load(f)
+entitlements["com.apple.developer.team-identifier"] = "TESTTEAM"
+entitlements["com.apple.application-identifier"] = "TESTTEAM.com.webmaxru.launchpane"
+with open(sys.argv[2], "wb") as f:
+    plistlib.dump(entitlements, f)
+`, source, signed]);
+  assert.match(execFileSync("python3", [script, signed, "--signed"]).toString(), /verified/);
+  execFileSync("python3", ["-c", generate, signed, signed, "com.apple.application-identifier", '<plist version="1.0"><string>OTHER.com.webmaxru.launchpane</string></plist>']);
+  assert.notEqual(spawnSync("python3", [script, signed, "--signed"]).status, 0, "team mismatch rejected");
+});
 test("source verifier rejects mismatched manifests and invalid build numbers", t => {
   const directory = mkdtempSync(join(tmpdir(), "launchpane-release-source-"));
   t.after(() => rmSync(directory, { recursive: true, force: true }));
