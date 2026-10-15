@@ -108,6 +108,7 @@ PY
   python3 "$ROOT/scripts/verify-store-entitlements.py" "$generated_entitlements" --signed
 
   cp "$PROFILE_PATH" "$APP_PATH/Contents/embedded.provisionprofile"
+  chmod 0644 "$APP_PATH/Contents/embedded.provisionprofile"
   codesign --force --timestamp --options runtime \
     --entitlements "$generated_entitlements" \
     --sign "$application_identity" \
@@ -147,6 +148,10 @@ NODE
 
 verify_package() {
   [[ -f "$PKG_PATH" ]] || fail "Signed installer package not found: $PKG_PATH"
+  [[ -z "$(find "$APP_PATH" -type f ! -perm -004 -print -quit)" ]] ||
+    fail "Store app contains files unreadable by non-root users"
+  [[ -z "$(find "$APP_PATH" -type d ! -perm -005 -print -quit)" ]] ||
+    fail "Store app contains directories inaccessible to non-root users"
   codesign --verify --deep --strict --verbose=2 "$APP_PATH"
   test "$(/usr/bin/lipo -archs "$APP_PATH/Contents/MacOS/launchpane")" = "x86_64 arm64" ||
     fail "Store app must contain Intel and Apple Silicon architectures"

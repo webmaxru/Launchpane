@@ -2,6 +2,19 @@
 
 ## Current edition: October 15, 2026
 
+Production candidate `1.3.2 (202610160102)` is Apple-processed `VALID`, attached
+to the manual-release version, and assigned to `Launchpane Internal QA`.
+The four screenshots have completed processing. It uses immutable source
+`cf1cbbeb50b9fc7459d29f3088adc25f24263872`, also published as standalone `v1.3.2`.
+Build `202610160101` failed Apple upload validation because its installer embedded
+a root-only provisioning profile. Build `202610160102` preserves the same app
+source, increments the build number, normalizes bundle permissions, and was
+re-signed/repackaged using the existing Store certificates. Its package SHA-256
+is `d4116011ceed884679c4c6ee6ad85d67ba6f3c0c0f417d836e9c9459f6430eae`.
+Apple API upload validation passed; local `altool` is unavailable on this host.
+No exact-build native QA, current-macOS recording, or App Review submission is
+claimed. TestFlight opens a loading window; installation has not been verified.
+
 The frozen 1.3.1 Store pipeline stopped before signing/upload because current
 macOS ImageIO preserved alpha during the previous BMP conversion. The parallel
 standalone run was canceled before publication; the immutable tag is retained.

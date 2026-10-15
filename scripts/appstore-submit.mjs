@@ -464,7 +464,7 @@ export async function uploadBuild(buildNumber, packagePath = PKG_PATH) {
   if (!complete) throw new Error(`Build upload ${upload.id} timed out; inspect it before preparing a new candidate`);
 
   for (let attempt = 0; attempt < 120; attempt += 1) {
-    const builds = await list(`/v1/apps/${APP_ID}/builds?include=preReleaseVersion&limit=200`);
+    const builds = await list(`/v1/builds?filter[app]=${APP_ID}&include=preReleaseVersion&limit=200`);
     const build = builds.find(b => b.attributes.version === buildNumber);
     if (build) {
       const prereleaseId = build.relationships.preReleaseVersion?.data?.id;

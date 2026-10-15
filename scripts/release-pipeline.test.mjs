@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { execFileSync, spawnSync } from "node:child_process";
-import { readFileSync, mkdtempSync, mkdirSync, writeFileSync, rmSync } from "node:fs";
+import { readFileSync, mkdtempSync, mkdirSync, writeFileSync, rmSync, statSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { resolve, join } from "node:path";
 import { test } from "node:test";
@@ -71,6 +71,24 @@ with open(sys.argv[2], "wb") as f:
   execFileSync("python3", ["-c", generate, signed, signed, "com.apple.application-identifier", '<plist version="1.0"><string>OTHER.com.webmaxru.launchpane</string></plist>']);
   assert.notEqual(spawnSync("python3", [script, signed, "--signed"]).status, 0, "team mismatch rejected");
 });
+test("Store packaging makes a private source profile readable before signing", t => {
+  const directory = mkdtempSync(join(tmpdir(), "launchpane-profile-permissions-"));
+  t.after(() => rmSync(directory, { recursive: true, force: true }));
+  const source = join(directory, "private.provisionprofile");
+  const app = join(directory, "Launchpane.app");
+  mkdirSync(join(app, "Contents"), { recursive: true });
+  writeFileSync(source, "profile fixture", { mode: 0o600 });
+  const script = readFileSync("scripts/macos-app-store.sh", "utf8");
+  const stage = script.match(/^  cp "\$PROFILE_PATH" "\$APP_PATH\/Contents\/embedded.provisionprofile"\n  chmod 0644 "\$APP_PATH\/Contents\/embedded.provisionprofile"$/m)?.[0];
+  assert.ok(stage, "Production staging must explicitly normalize public profile permissions");
+  execFileSync("bash", ["-c", stage], {
+    env: { ...process.env, PROFILE_PATH: source, APP_PATH: app },
+  });
+  assert.equal(statSync(source).mode & 0o777, 0o600, "Do not weaken private signing inputs");
+  assert.equal(statSync(join(app, "Contents/embedded.provisionprofile")).mode & 0o777, 0o644);
+  assert.ok(script.includes('find "$APP_PATH" -type f ! -perm -004 -print -quit'));
+  assert.ok(script.includes('find "$APP_PATH" -type d ! -perm -005 -print -quit'));
+});
 test("source verifier rejects mismatched manifests and invalid build numbers", t => {
   const directory = mkdtempSync(join(tmpdir(), "launchpane-release-source-"));
   t.after(() => rmSync(directory, { recursive: true, force: true }));
@@ -95,6 +113,9 @@ test("Store workflow has immutable source, explicit build number, safe upload, a
   assert.match(workflow, /ASC_AUTOMATIC_RELEASE: "false"/);
   assert.match(workflow, /test "\$WORKFLOW_REF" = "\$RELEASE_TAG"/);
   assert.match(workflow, /--preflight/);
+  assert.match(workflow, /API_KEY_PATH="\$GITHUB_WORKSPACE\/private_keys\/AuthKey_\$\{ASC_KEY_ID\}\.p8"/);
+  assert.match(workflow, /mkdir -p "\$GITHUB_WORKSPACE\/private_keys"/);
+  assert.match(workflow, /if \[\[ -n "\$\{ASC_KEY_PATH:-\}" \]\]; then rm -f "\$ASC_KEY_PATH"; fi/);
   assert.ok(workflow.indexOf("--preflight") < workflow.indexOf("pnpm appstore:build"));
   assert.match(workflow, /rm -f "\$RUNNER_TEMP\/application.p12" "\$RUNNER_TEMP\/installer.p12"/);
   assert.doesNotMatch(workflow, /github.run_number|SUBMIT_FOR_REVIEW|automatic_release:/);

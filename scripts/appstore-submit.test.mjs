@@ -136,10 +136,15 @@ test("uploads a fresh package and returns only the exact VALID macOS build", asy
     }
     if (url.pathname === "/v1/buildUploads/upload") return { data: { attributes: { state: { state: "COMPLETE" } } } };
     if (url.pathname === "/v1/preReleaseVersions/prerelease") return { data: { attributes: { version, platform: "MAC_OS" } } };
-    if (url.pathname.endsWith("/builds") && uploaded) return page([{
-      id: "build", attributes: { version: "202610120003", processingState: "VALID" },
-      relationships: { preReleaseVersion: { data: { id: "prerelease" } } },
-    }]);
+    if (url.pathname.endsWith("/builds") && uploaded) {
+      assert.equal(url.pathname, "/v1/builds", "The app relationship endpoint does not support include");
+      assert.equal(url.searchParams.get("filter[app]"), "test-app");
+      assert.equal(url.searchParams.get("include"), "preReleaseVersion");
+      return page([{
+        id: "build", attributes: { version: "202610120003", processingState: "VALID" },
+        relationships: { preReleaseVersion: { data: { id: "prerelease" } } },
+      }]);
+    }
     return inventory(url);
   };
   // Upload requests carry binary bodies, not JSON.
