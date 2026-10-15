@@ -19,13 +19,27 @@ fn plist_dirs() -> Result<Vec<(PathBuf, JobSource)>, AppError> {
     if system_daemons.exists() {
         dirs.push((system_daemons, JobSource::SystemDaemon));
     }
+    #[cfg(feature = "app-store")]
+    {
+        let selected = crate::store_access::selected_folders()?;
+        if selected.is_empty() {
+            return Err(AppError::Launchctl(
+                "Folder access is required. Choose folders to allow access to ~/Library/LaunchAgents, /Library/LaunchAgents, /Library/LaunchDaemons, or Applications. Access lasts until you quit Launchpane.".into(),
+            ));
+        }
+        dirs.retain(|(path, _)| crate::store_access::includes_folder(&selected, path));
+    }
     Ok(dirs)
 }
 
 pub fn scan_plist_files() -> Result<Vec<(String, JobSource)>, AppError> {
     let mut results = Vec::new();
     for (dir, source) in plist_dirs()? {
-        if let Ok(entries) = std::fs::read_dir(&dir) {
+        #[cfg(feature = "app-store")]
+        let entries = Some(std::fs::read_dir(&dir)?);
+        #[cfg(not(feature = "app-store"))]
+        let entries = std::fs::read_dir(&dir).ok();
+        if let Some(entries) = entries {
             for entry in entries.flatten() {
                 let path = entry.path();
                 if path.extension().and_then(|e| e.to_str()) == Some("plist") {

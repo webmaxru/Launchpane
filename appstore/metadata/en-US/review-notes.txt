@@ -1,89 +1,37 @@
-Launchpane is a local macOS utility for developers, power users, and Mac
-support professionals who need to understand and safely manage background
-services that otherwise require launchctl commands and hidden plist folders.
-It solves the problem of diagnosing startup behavior, service state, and
-launchd configuration from one focused interface.
+Launchpane 1.3.1 - sandboxed service inspector and personal plist editor
 
-1. Access and main flow
+Response to October 15 rejection, guideline 2.4.5(i):
+All temporary filesystem exceptions are removed. The distribution signature
+omits com.apple.security.get-task-allow entirely, not merely setting it false.
+All bundled executable architectures are checked for the permitted entitlements.
 
-Launch the app directly; there is no account, sign-in, registration, demo
-credential, subscription, or network setup. The inventory loads from the
-review Mac. Use the search field and source dropdown to inspect User Agents,
-Home Agents, System Agents, System Daemons, and Login Items. Select a row to
-inspect state, configuration, schedule, and available logs. User Agents can
-be enabled, disabled, started, stopped, restarted, tested, edited, created,
-and removed. Login Items support only Enable and Disable because they are
-owned by their parent app. System Agents and System Daemons are displayed for
-context and remain read-only.
+We also removed unsupported service control from this Store edition: there
+are no Load, Run, Stop/Unload, Restart, Enable/Disable, Remove or Administrator
+controls. Backend IPC rejects them too. The separate standalone distribution
+retains service management; this Store app is independently useful for native
+inventory, state/configuration/schedule inspection, selected logs and editing
+personal LaunchAgent plists. It never downloads/installs/updates/unlocks another
+edition. A factual edition note and optional GitHub documentation/source link
+are present; there is no payment or license flow.
 
-To exercise the write flow safely, choose New Agent and create a temporary
-agent using `/usr/bin/true` as the executable, leave Run at Login disabled,
-save it, select it, then remove it. The app writes only to the user's
-`~/Library/LaunchAgents/` directory. No sample file or account is required.
+No account, demo credentials, subscription or external service is required.
+Choose "Choose folders..." and use Command-Shift-G in the native picker to
+select ~/Library/LaunchAgents, /Library/LaunchAgents, /Library/LaunchDaemons,
+/Applications or ~/Applications as needed. Only selected inventory roots are
+shown. Select a log's containing folder for logs. Cancel changes nothing;
+grants last until quit and must be given again on reopening.
 
-2. Physical-device QA and recording
+Inspect rows, search/filter, read details, schedules and logs, and view/copy
+Terminal references. To exercise file editing safely, create a disposable
+personal plist for /usr/bin/true with Run at Load and Keep Alive off and no
+schedule; save and edit it, verify contents and refresh. Saving does not load
+or start it. Removal is not a Store feature; clean up the disposable file in
+Finder after the demonstration. Never change existing vendor services for QA.
 
-Local candidate build `202610101605` includes the edition-specific hints and
-correct account-home resolution inside App Sandbox. It has not been uploaded
-or attached to this version. Native screenshots now come from this updated
-Store-feature binary run locally with an ad-hoc sandbox signature. They show
-real disposable user agents, a real login helper, the native editor and actual
-log output; personal file paths are privacy-masked. They are not an exact-build
-TestFlight walkthrough or the latest-macOS review recording.
+The runtime network client/server entitlements support Tauri/WebKit on older
+supported macOS. All product data remains local. There are no analytics,
+ads, payments, cloud services, regulated content or regional differences.
 
-Build `202610100953` is attached to this version. The supplied TestFlight video
-confirms that it launches and loads its live inventory.
-
-The attached recording, `Screen Recording 2026-10-10 at 17.30.33.mov`, shows
-Launchpane 1.2.1 (`202610100953`) in TestFlight, native launch, live inventory,
-system-service inspection, search/source interaction, the New Agent form,
-and appearance controls. It is a 55.55-second screen capture, not a browser
-simulation. The recording does not establish the macOS version and does not
-demonstrate saving or removing an agent. We are not claiming that it verifies
-the latest-macOS requirement or the complete write flow. Instructions for
-safely exercising that flow on the review Mac are provided above.
-
-3. External services
-
-Launchpane does not use external services to deliver its core functionality.
-It reads local launchd state, local plist files, local log files, and
-ServiceManagement login-item metadata through macOS APIs and commands. It
-does not use analytics, advertising, authentication, payment processing,
-cloud storage, AI services, or remote data providers. All service and plist
-information remains on the Mac. The sandboxed Tauri/WebKit runtime requires
-local network client and server entitlements to start its embedded web
-process; Launchpane does not contact an external endpoint or expose a network
-service.
-
-4. Regional behavior and regulated content
-
-The app has no regional feature or content differences. It behaves
-consistently in all territories. It is not a regulated-industry service and
-does not include protected third-party material or user-generated content.
-
-5. Sandbox and ownership boundaries
-
-The Mac App Store build is sandboxed with narrowly scoped temporary
-exceptions for the standard launchd locations. It writes only user-owned
-agents in `~/Library/LaunchAgents/`; system agents and daemons are read-only.
-Temporary sandbox exception details and assessment steps are documented in
-`appstore/sandbox-exceptions.md`.
-
-6. Edition limits and project reference (candidate not yet submitted)
-
-The updated Store-feature build keeps applicable unavailable controls visible
-but disabled with an explicit "Unavailable in the Mac App Store edition"
-explanation. Administrator access cannot be enabled; shared agents and daemons
-are read-only. Login-helper lifecycle controls are disabled; Enable/Disable
-remain the only permitted changes.
-
-An optional "Project documentation and source on GitHub" link opens
-https://github.com/webmaxru/Launchpane in the system browser. It supplies project
-documentation and source; the repository also describes separate standalone
-distribution. Launchpane does not download, install, update, or unlock external
-code. No purchase, license, or external payment flow is provided by the link.
-The Store edition works independently and does not require another edition.
-
-These candidate-build changes are not present in the attached build
-`202610100953` or in the recording. Do not treat local checks as evidence of
-App Review approval.
+Preparation status: this text does not establish exact-build native QA or a
+current-macOS recording. Attach verified build/recording evidence before App
+Review submission. The prior 1.2.1 recording does not verify this edition.

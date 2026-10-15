@@ -19,6 +19,7 @@ import {
   getRuntimeInfo,
   restartAsAdministrator,
   openProjectPage,
+  chooseAccessFolders,
 } from "@/lib/invoke"
 import type { JobListEntry, LaunchdJob, PlistConfig } from "@/types"
 import {
@@ -203,6 +204,7 @@ function App() {
   const [isAppStore, setIsAppStore] = useState(false)
   const [canStartAdministrator, setCanStartAdministrator] = useState(false)
   const [adminLaunching, setAdminLaunching] = useState(false)
+  const [choosingFolders, setChoosingFolders] = useState(false)
   const [reviewDemo, setReviewDemo] = useState(false)
   const [reviewDemoConfig, setReviewDemoConfig] = useState<PlistConfig | undefined>()
   const reviewDemoStartedRef = useRef(false)
@@ -618,7 +620,7 @@ function App() {
                 <ShieldCheck className="h-4 w-4" />
                 Administrator
               </div>
-            ) : canStartAdministrator || isAppStore ? (
+            ) : canStartAdministrator && !isAppStore ? (
               <Hint
                 label="Start an administrator window"
                 description={
@@ -697,8 +699,27 @@ function App() {
           >
             <p className="min-w-0 flex-1">
               <strong className="text-foreground">Mac App Store edition.</strong>{" "}
-              No administrator access; shared services are read-only. Login helpers support Enable and Disable only.
+              Inspect services, schedules and logs; create and edit user-selected agent plists. Service control, enable/disable, removal and administrator access are not available in this sandboxed edition.
+              {" "}The separately distributed standalone edition also supports service management and administrator workflows. This app does not download, install or unlock another edition.
+              {" "}Only selected inventory folders are shown. Choose folders to grant access to LaunchAgents, LaunchDaemons, Applications, or logs. Access lasts until you quit; choose again after reopening.
             </p>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={choosingFolders}
+              onClick={async () => {
+                setChoosingFolders(true)
+                try {
+                  if (await chooseAccessFolders()) await refresh()
+                } catch (e) {
+                  showActionFeedback("error", "Couldn’t access the selected folders.", errorMessage(e))
+                } finally {
+                  setChoosingFolders(false)
+                }
+              }}
+            >
+              {choosingFolders ? "Choosing folders…" : "Choose folders…"}
+            </Button>
             <a
               href="https://github.com/webmaxru/Launchpane"
               className="shrink-0 rounded-sm underline underline-offset-4 hover:text-foreground focus-visible:outline-2 focus-visible:outline-ring"
@@ -851,6 +872,7 @@ function App() {
       />
 
       <JobForm
+        isAppStore={isAppStore}
         key={formKey}
         open={formOpen}
         onClose={() => {

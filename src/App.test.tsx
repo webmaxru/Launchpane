@@ -47,6 +47,32 @@ afterEach(() => {
 })
 
 describe("App action feedback", () => {
+  it("refreshes inventory only after native folder consent and reports selection failures", async () => {
+    setFakeHandler("get_runtime_info", () => ({
+      is_app_store: true, is_administrator: false,
+      can_restart_as_administrator: false, review_demo: false,
+    }))
+    const list = vi.fn(() => [])
+    let choose: () => boolean = () => false
+    setFakeHandler("list_jobs", list)
+    setFakeHandler("choose_access_folders", () => choose())
+    const user = userEvent.setup()
+    render(<App />)
+    const button = await screen.findByRole("button", { name: "Choose folders…" })
+    expect(screen.getByText(/Access lasts until you quit/)).toBeInTheDocument()
+    await waitFor(() => expect(list).toHaveBeenCalledOnce())
+    await user.click(button)
+    expect(list).toHaveBeenCalledOnce()
+    choose = () => true
+    await user.click(button)
+    await waitFor(() => expect(list).toHaveBeenCalledTimes(2))
+    choose = () => { throw new Error("Folder permission denied") }
+    await user.click(button)
+    expect(await screen.findByRole("alert")).toHaveTextContent("Folder permission denied")
+    expect(button).toBeEnabled()
+    expect(list).toHaveBeenCalledTimes(2)
+  })
+
   it("shows Store edition limits and opens the neutral project link without requesting root", async () => {
     const admin = vi.fn()
     const openProject = vi.fn()
@@ -61,11 +87,9 @@ describe("App action feedback", () => {
     const user = userEvent.setup()
     render(<App />)
     const limits = await screen.findByRole("complementary", { name: "Mac App Store edition limits" })
-    expect(limits).toHaveTextContent("shared services are read-only")
-    const button = screen.getByRole("button", { name: "Open Administrator Window" })
-    expect(button).toBeDisabled()
-    expect(button).toHaveAttribute("title", expect.stringContaining("Mac App Store edition"))
-    await user.click(button)
+    expect(limits).toHaveTextContent("Service control, enable/disable, removal and administrator access are not available")
+    expect(limits).toHaveTextContent("separately distributed standalone edition")
+    expect(screen.queryByRole("button", { name: "Open Administrator Window" })).not.toBeInTheDocument()
     expect(admin).not.toHaveBeenCalled()
     const link = within(limits).getByRole("link", { name: "Project documentation and source on GitHub" })
     expect(link).toHaveAttribute("href", "https://github.com/webmaxru/Launchpane")
@@ -73,7 +97,7 @@ describe("App action feedback", () => {
     expect(openProject).toHaveBeenCalledOnce()
     expect(screen.getByRole("button", { name: "Create a user agent" })).toBeEnabled()
     const row = screen.getByRole("row", { name: "View details for com.apple.system-agent" })
-    expect(within(row).getByRole("button", { name: "Stop" })).toBeDisabled()
+    expect(within(row).queryByRole("button", { name: "Stop" })).not.toBeInTheDocument()
   })
 
   it("reports a project-link launch failure instead of silently ignoring it", async () => {

@@ -1,5 +1,10 @@
 # Mac App Store release
 
+The 1.3.1 Store edition is a service inspector and personal plist editor.
+It removes all lifecycle, enable/disable, removal and administrator operations;
+the standalone edition retains them. The [edition comparison](../docs/app-store-actions.md)
+is authoritative. A sandboxed filesystem grant is not launchd-control permission.
+
 Launchpane's App Store pipeline builds a universal macOS app, embeds its Mac App
 Store provisioning profile, signs it with Apple distribution certificates,
 creates a signed installer package, then uploads the binary, metadata, and
@@ -19,17 +24,21 @@ Create these items in the Apple Developer and App Store Connect portals:
 7. App privacy responses set to **No, we do not collect data from this app**,
    matching [`app-privacy.json`](app-privacy.json). Apple does not expose this
    setting through API-key authentication, so it is a one-time app-record setup.
-8. Temporary sandbox exception usage information copied from
-   [`sandbox-exceptions.md`](sandbox-exceptions.md), including a Feedback
-   Assistant ID if Apple requests one.
+8. Verify user-selected folder access as described in
+   [`sandbox-exceptions.md`](sandbox-exceptions.md). No temporary filesystem
+   exceptions or `com.apple.security.get-task-allow` key may be signed into the app.
 9. A physical-device recording and completed QA checklist prepared from
    [`review-recording.md`](review-recording.md) before each review submission.
 
-Mac App Store review is not guaranteed: launch-service management needs
-temporary sandbox exceptions that Apple evaluates case by case.
+Mac App Store review is not guaranteed. The Store edition must obtain folder
+access using the native macOS picker; saved paths do not grant access. The
+current implementation asks again after every app restart. File access does
+not grant permission to control launchd. This edition deliberately has no
+service-control operations; verify inspection and selected-file editing in the
+submitted binary instead.
 
 The [App Store action table and link-policy assessment](../docs/app-store-actions.md)
-documents disabled edition-specific controls, their hints, and the neutral
+documents removed edition-specific controls, their explanations, and the neutral
 GitHub project link. A feature build or local ad-hoc signature does not replace
 exact-build sandbox QA or establish App Review approval.
 
@@ -107,6 +116,11 @@ The workflow:
 7. uploads the package through the App Store Connect build upload API;
 8. writes metadata, screenshots, age rating, and review details over the API;
 9. stops before App Review with manual release configured.
+
+Entitlement validation runs before compilation, before signing, and on every
+signed Mach-O executable in the final app. It rejects temporary filesystem
+exceptions, any debug entitlement (including `get-task-allow=false`), missing
+sandbox/WebKit/user-selected access, and mismatched app/team identifiers.
 
 The uploader never renames an unrelated editable version. It rejects mismatched
 app IDs, non-editable target versions, reused build numbers, invalid processing,

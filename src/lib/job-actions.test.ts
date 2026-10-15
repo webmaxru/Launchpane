@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest"
-import { actionAvailability, STORE_LOGIN_REASON, STORE_SHARED_REASON, type RuntimeAction } from "./job-actions"
+import { actionAvailability, STORE_CONTROL_REASON, type RuntimeAction } from "./job-actions"
 import type { JobListEntry, JobSource, JobStatus } from "@/types"
 
 const base: JobListEntry = {
@@ -40,7 +40,7 @@ describe("standalone action availability", () => {
   })
 
   describe("Mac App Store action availability", () => {
-    it("preserves user controls and blocks channel-restricted actions for every state and privilege", () => {
+    it("removes all service controls for every state, source and privilege", () => {
       for (const source of sources) {
         for (const status of statuses) {
           for (const enabled of [true, false, null]) {
@@ -48,16 +48,7 @@ describe("standalone action availability", () => {
               for (const action of actions) {
                 const job = { ...base, source, status, enabled }
                 const state = actionAvailability(job, action, admin, false, true)
-                const standalone = actionAvailability(job, action, admin)
-                expect(state.hidden).toBe(standalone.hidden)
-                if (state.hidden) continue
-                if (source === "SystemAgent" || source === "SystemDaemon") {
-                  expect(state.reason).toBe(STORE_SHARED_REASON)
-                } else if (source === "LoginItem" && action !== "enable" && action !== "disable") {
-                  expect(state.reason).toBe(STORE_LOGIN_REASON)
-                } else {
-                  expect(state).toEqual(standalone)
-                }
+                expect(state).toEqual({ hidden: true, reason: STORE_CONTROL_REASON })
               }
             }
           }

@@ -32,6 +32,11 @@ fn app_roots() -> Result<Vec<PathBuf>, AppError> {
     ];
     roots.push(crate::user_paths::home_dir()?.join("Applications"));
     roots.retain(|root| root.is_dir());
+    #[cfg(feature = "app-store")]
+    {
+        let selected = crate::store_access::selected_folders()?;
+        roots.retain(|path| crate::store_access::includes_folder(&selected, path));
+    }
     Ok(roots)
 }
 

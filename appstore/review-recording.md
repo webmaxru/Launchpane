@@ -1,5 +1,47 @@
 # App Review recording and QA checklist
 
+## Current edition: October 15, 2026
+
+The user authorized removing unsupported Store functionality. This supersedes
+the historical shot list and holds below that require Store service control or
+in-app removal. The Store edition is now an inspector and personal plist editor;
+standalone remains a full service manager. No blanket claim of App Review
+compliance is made by removing controls.
+
+The current physical-device recording must show native launch, missing-consent
+recovery and cancellation, explicit folder selection, inventory, search/source
+filtering, configuration/schedule inspection, selected-folder log access,
+personal plist create/edit/save without activation, absence of runtime/toggle/
+removal/admin controls, and closing/reopening with fresh consent required.
+Clean the disposable plist using Finder afterward; no Store Remove action exists.
+The neutral edition comparison and documentation/source link must not install,
+update, purchase or unlock another edition. Demonstrate light and dark appearance.
+
+The exact production-signed build must be installed through TestFlight/an
+appropriate Apple path on a physical Mac running the current required macOS.
+Watch the complete recording, decode it, inspect required flows and privacy,
+and tie it to build and video checksums. Historical videos do not verify it.
+Record unresolved checks explicitly; never reuse an earlier waiver or claim
+that ad-hoc local previews establish production-signed QA.
+
+The available Mac currently runs 12.7.6; softwareupdate offers 27.0.1 and requires
+a restart. The user authorizes checklist actions on this laptop, including
+advancing to real authentication/device gates, but no credential may be invented.
+
+Local 1.3.1 sandbox preview `202610160100` evidence (not submitted-build QA):
+native launch, missing-consent recovery, cancel/reselect, personal LaunchAgents
+and Applications grants, filtered inventory, real login-helper inspection,
+disposable `/usr/bin/true` plist creation and subsequent log-path editing passed.
+The created plist has no RunAtLoad, KeepAlive or schedule activation and
+`launchctl print` confirmed it was not registered. The sandboxed log reader read
+a labeled sample log in the granted folder. Runtime and administrator controls
+are absent. All four screenshots were recaptured from this native build; the
+manifest records hashes and explicit log-path privacy masks.
+
+The automatic OS update cannot proceed unattended: `sudo -n true` reports
+"a password is required". macOS owner authentication is a real remaining gate,
+not a reason to bypass the current-OS/exact-production-build recording requirement.
+
 Apple requested a screen recording captured on a physical Mac running the
 latest macOS release. This file is the shot list and the bounded
 test plan for that recording; it is intentionally not a simulated recording.
@@ -14,6 +56,11 @@ test plan for that recording; it is intentionally not a simulated recording.
 - Begin recording before launching Launchpane.
 - Keep the recording at the Mac's native resolution and show the full app
   window and macOS menu bar.
+- Before inventory access, demonstrate **Choose folders…** and explicitly
+  select the test user's `~/Library/LaunchAgents`, shared LaunchAgents and
+  LaunchDaemons folders, and Applications when showing login helpers. Show
+  picker cancellation, successful selection, and re-selection after reopening.
+  Select a log's containing folder before demonstrating log access.
 
 ## Required flow
 
@@ -84,6 +131,40 @@ upload is not evidence that the app works.
 - [ ] Light and dark macOS appearances render the main flow legibly.
 - [ ] The temporary plist is removed after the test.
 - [ ] The exact submitted build number is shown in the recording notes.
+- [ ] Initial missing consent has a clear recovery action; cancellation grants no access.
+- [ ] Only selected inventory roots are shown, and reopening asks for consent again.
+- [ ] The final signed app omits get-task-allow and all temporary file exceptions.
+
+## October 15 replacement preparation
+
+Apple rejected 1.2.1 (`202610100953`) under guideline 2.4.5(i), submission
+`9249e9ef-0e6c-4043-9197-2bb9e2053b49`. The 1.3.1 source removes the rejected
+entitlements and replaces automatic external folder access with NSOpenPanel.
+Both distribution editions use the same four version manifests; previously
+published 1.3.0 standalone assets are not overwritten.
+
+The available local Mac runs macOS 12.7.6. No new exact-build TestFlight
+recording on current macOS is available. The prior user-directed waiver was
+for the October 10 submission only. A new build, upload, or entitlement
+validation must not be described as satisfying the outstanding recording gate.
+Do not submit the replacement until its current native QA evidence passes.
+
+Local native sandbox testing of candidate `202610152100` verified launch,
+initial permission error, picker cancellation, explicit LaunchAgents selection,
+inventory, fresh consent after reopening, and creation of a disposable
+`/usr/bin/true` agent. It exposed and corrected a coupled issue: new Store agents
+must not automatically populate logs under an unselected `~/Library/Logs` folder.
+Optional log paths now start empty; standalone keeps its normal defaults.
+
+**Functional gate failed:** Load on that disposable plist returned bootstrap
+error 5 (Input/output error) inside the ad-hoc sandbox preview. The identical
+valid plist successfully bootstrapped and booted out when tested outside the
+sandbox. User-selected file access is therefore insufficient evidence of
+working service control. These checks are not production-signed/TestFlight QA.
+Do not replace failed lifecycle checks with successful compilation or file
+creation. Preserve management features pending Apple/DTS guidance rather than
+silently converting the Store product to an inspector or resubmitting a broken
+workflow. The prior recording and screenshots do not establish readiness.
 
 ## Earlier replacement-build smoke test
 

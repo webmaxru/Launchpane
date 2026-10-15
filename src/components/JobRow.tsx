@@ -312,7 +312,7 @@ export function JobRow({
       </TableCell>
       <TableCell className="pr-3" onClick={stopRowActivation} onKeyDown={stopRowActivation}>
         <div className="flex items-center justify-end gap-1" data-testid="row-actions">
-          {primaryAction && PrimaryIcon && (
+          {primaryAction && PrimaryIcon && !primaryState?.hidden && (
             <Hint
               label={primaryAction.label}
               description={primaryState?.reason ?? primaryAction.description}
@@ -374,7 +374,7 @@ export function JobRow({
                 <FolderOpen />
                 Reveal in Finder
               </DropdownMenuItem>
-              {isUserAgent && (
+              {isUserAgent && !isAppStore && (
                 <>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem

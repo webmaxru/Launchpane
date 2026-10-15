@@ -58,9 +58,16 @@ action's privilege requirements, state dependencies, reasons for disabling or
 hiding it, and real-Mac verification limits. Enable does not load or start;
 Disable does not stop an already loaded service.
 
-The Mac App Store edition has no administrator access: shared agents and daemons
-are read-only, and login helpers retain Enable/Disable only. Edition-specific
-limits stay visible with explanations and a project documentation/source link.
+The Mac App Store edition is an inspector and user-selected plist editor, not a
+service controller. It has no Load, Run, Stop, Restart, Enable, Disable, Remove,
+or administrator actions; Rust rejects these operations even through direct IPC.
+The standalone edition retains its service-management functionality.
+Store inventory and logs require explicit native folder selection on each launch.
+Creating or editing a user-agent plist does not load, start, stop or reload it.
+Shared services and login helpers are inspection-only.
+
+Edition-specific limits stay visible with explanations and an optional project
+documentation/source link. This is not a downloader or an external unlock flow.
 See the [App Store action and review-policy tables](docs/app-store-actions.md).
 
 ## Install

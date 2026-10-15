@@ -47,6 +47,7 @@ installer_identity() {
 
 build_app() {
   require_command pnpm
+  python3 "$ROOT/scripts/verify-store-entitlements.py" "$BASE_ENTITLEMENTS"
   if command -v rustup >/dev/null; then
     rustup target add aarch64-apple-darwin x86_64-apple-darwin
   fi
@@ -104,7 +105,7 @@ PY
   cp "$BASE_ENTITLEMENTS" "$generated_entitlements"
   /usr/libexec/PlistBuddy -c "Add :com.apple.application-identifier string $application_identifier" "$generated_entitlements"
   /usr/libexec/PlistBuddy -c "Add :com.apple.developer.team-identifier string $team_identifier" "$generated_entitlements"
-  /usr/libexec/PlistBuddy -c "Add :com.apple.security.get-task-allow bool false" "$generated_entitlements"
+  python3 "$ROOT/scripts/verify-store-entitlements.py" "$generated_entitlements" --signed
 
   cp "$PROFILE_PATH" "$APP_PATH/Contents/embedded.provisionprofile"
   codesign --force --timestamp --options runtime \
@@ -152,6 +153,8 @@ verify_package() {
   test "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleVersion' "$APP_PATH/Contents/Info.plist")" = "$BUILD_NUMBER" ||
     fail "Store app build number mismatch"
   codesign --display --entitlements :- "$APP_PATH" > "$OUTPUT_DIR/signed-entitlements.plist"
+  python3 "$ROOT/scripts/verify-store-entitlements.py" \
+    "$OUTPUT_DIR/signed-entitlements.plist" --signed --app "$APP_PATH"
   /usr/libexec/PlistBuddy -c "Print :com.apple.security.app-sandbox" "$OUTPUT_DIR/signed-entitlements.plist" |
     grep -qx true || fail "Signed app is missing the App Sandbox entitlement"
   /usr/libexec/PlistBuddy -c "Print :com.apple.security.network.client" "$OUTPUT_DIR/signed-entitlements.plist" |

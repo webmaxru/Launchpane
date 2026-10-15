@@ -1,1 +1,1 @@
-Manage launch agents and items
+Inspect services and plists

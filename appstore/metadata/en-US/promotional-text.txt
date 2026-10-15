@@ -1,1 +1,1 @@
-Launchpane keeps your macOS launch agents, daemons, and login items in one clean, native workspace.
+Inspect macOS services, schedules and selected logs, and edit personal LaunchAgent plists in one native workspace. This sandboxed edition does not control services.

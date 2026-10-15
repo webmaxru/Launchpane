@@ -1,6 +1,7 @@
-Launchpane 1.3.0
+Launchpane 1.3.1
 
-- Improved service action menus so all available actions are easier to reach
-- Removed duplicate action hints and clarified why actions are unavailable
-- Added a specific explanation when an empty launchd plist cannot be loaded
-- Refreshed the project website and product documentation
+- Sandboxed service inspection and personal LaunchAgent plist editing
+- Native folder consent for inventory and logs, with clear recovery instructions
+- Removed unsupported service control, enable/disable, removal and administrator actions from this Store edition
+- Removed temporary filesystem exceptions and corrected signing entitlements
+- Saving a plist does not activate it; choose folders again after quitting

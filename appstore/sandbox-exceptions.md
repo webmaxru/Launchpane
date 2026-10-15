@@ -1,58 +1,58 @@
-# App Sandbox exception justification
+# App Sandbox and user-selected access
 
-Launchpane is a focused macOS utility for inspecting launch agents, launch
-daemons, and application login-item helpers. Its core purpose requires reading
-the standard locations where macOS and third-party software install these
-definitions. The Mac App Store build has no administrator mode; system agents
-and daemons remain read-only.
+## October 15, 2026 rejection
 
-Applicable unavailable controls stay visible but disabled with a Store-specific
-reason; login helpers permit only Enable/Disable. These are build-enforced
-boundaries, not claims that file exceptions grant launchd control rights. See
-the [edition action table](../docs/app-store-actions.md) for every restriction.
+Apple rejected version 1.2.1 build `202610100953`, submission
+`9249e9ef-0e6c-4043-9197-2bb9e2053b49`, under guideline 2.4.5(i).
+The replacement source removes **all** temporary filesystem exceptions,
+including the rejected shared LaunchAgents, LaunchDaemons, Applications and
+home LaunchAgents paths. It also omits `com.apple.security.get-task-allow`
+entirely. Do not change that key to `true`: distribution apps must not allow
+debugging. A false value is also rejected by this submission's review.
 
-## WebKit runtime entitlements
+## Native folder consent
 
-`com.apple.security.network.client` and
-`com.apple.security.network.server` are enabled so Tauri's embedded WebKit
-process can start inside the App Sandbox. Without both entitlements on
-supported older macOS releases, the WebKit child process is terminated and
-the app window remains blank. Launchpane does not contact external endpoints
-or expose a network service; its product data and operations remain local.
+The Store entitlement `com.apple.security.files.user-selected.read-write`
+allows access granted through macOS `NSOpenPanel`. Choose **Choose folders…**
+and explicitly select the folders to inspect:
 
-## `com.apple.security.temporary-exception.files.home-relative-path.read-write`
+- `~/Library/LaunchAgents` for personal agents and create/edit/remove.
+- `/Library/LaunchAgents` and `/Library/LaunchDaemons` for read-only inventory.
+- `/Applications` and/or `~/Applications` for login-helper discovery.
+- A log's containing folder to read or clear that log.
 
-Value: `/Library/LaunchAgents/`
+Use Command-Shift-G in the picker to enter a hidden Library path. Grants last
+for the current process only: choose folders again after quitting/reopening.
+No path is saved and treated as permission; no unselected inventory root is
+scanned. The app initially explains the missing permission rather than
+presenting an apparently complete empty inventory. Canceling the picker does
+not change grants or refresh the inventory.
+New Store agents leave the optional log paths empty by default rather than
+trying to create `~/Library/Logs/Launchpane` without consent. To enable logs,
+select their containing folder and enter the desired paths explicitly.
 
-Launchpane creates and edits launch-agent property lists selected by the user
-inside `~/Library/LaunchAgents`. To assess the exception, create a user launch
-agent in Launchpane, save it, and confirm the resulting property list in that
-directory. Launchpane does not request access to other home-relative paths.
+Folder grants do not confer administrator privileges or launchd authorization.
+All service control, enable/disable, removal and administrator operations are
+removed from the Store UI and rejected by its backend. User-selected personal
+plists can be created and edited but not activated. See the
+[action table](../docs/app-store-actions.md) and
+[exact-build QA gate](review-recording.md).
 
-## `com.apple.security.temporary-exception.files.home-relative-path.read-only`
+## Runtime and signing entitlements
 
-Value: `/Applications/`
+`com.apple.security.app-sandbox`, `com.apple.security.network.client`,
+`com.apple.security.network.server`, and user-selected read/write access are
+Boolean true. The network entitlements support Tauri's embedded WebKit process
+on supported older macOS; Launchpane's service data stays local.
 
-Launchpane includes app bundles installed in `~/Applications` when discovering
-login-item helpers. This access is read-only and is limited to application
-bundle metadata and `Contents/Library/LoginItems`.
+Signing adds only `com.apple.application-identifier` and
+`com.apple.developer.team-identifier`, derived from the matching distribution
+profile. `scripts/verify-store-entitlements.py` validates the source entitlement
+file, generated signing entitlements and final executable entitlements.
+Unknown entitlements, temporary file exceptions, and either value of the
+debugging entitlement fail validation.
 
-## `com.apple.security.temporary-exception.files.absolute-path.read-only`
-
-Values:
-
-- `/Library/LaunchAgents/`
-- `/Library/LaunchDaemons/`
-- `/System/Library/LaunchAgents/`
-- `/System/Library/LaunchDaemons/`
-- `/Applications/`
-
-Launchpane reads system launch definitions and discovers application login-item
-helpers under standard application bundles. System entries are presented as
-read-only. The `/Applications/` exception is used only to inspect
-`Contents/Library/LoginItems` and the helpers' bundle metadata.
-
-These exceptions are visible in `src-tauri/entitlements/app-store.plist`.
-Apple may require a Feedback Assistant ID before approving temporary
-exceptions. Add that ID to the App Store Connect sandbox usage information
-before submission.
+These changes address the reported entitlement configuration, not a guarantee
+of approval. They must pass exact distribution-build QA before resubmission.
+References: [QA1773](https://developer.apple.com/library/archive/qa/qa1773/_index.html)
+and [App Review Guidelines](https://developer.apple.com/app-store/review/guidelines/).
