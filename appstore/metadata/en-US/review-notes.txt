@@ -1,70 +1,37 @@
-Launchpane 1.3.1 replacement preparation - NOT YET READY FOR REVIEW
+Launchpane 1.3.1 - sandboxed service inspector and personal plist editor
 
-This candidate addresses the October 15 rejection of 1.2.1 (202610100953),
-submission 9249e9ef-0e6c-4043-9197-2bb9e2053b49, guideline 2.4.5(i).
+Response to October 15 rejection, guideline 2.4.5(i):
+All temporary filesystem exceptions are removed. The distribution signature
+omits com.apple.security.get-task-allow entirely, not merely setting it false.
+All bundled executable architectures are checked for the permitted entitlements.
 
-1. Entitlements
+We also removed unsupported service control from this Store edition: there
+are no Load, Run, Stop/Unload, Restart, Enable/Disable, Remove or Administrator
+controls. Backend IPC rejects them too. The separate standalone distribution
+retains service management; this Store app is independently useful for native
+inventory, state/configuration/schedule inspection, selected logs and editing
+personal LaunchAgent plists. It never downloads/installs/updates/unlocks another
+edition. A factual edition note and optional GitHub documentation/source link
+are present; there is no payment or license flow.
 
-All temporary filesystem exceptions have been removed, including the rejected
-LaunchAgents, LaunchDaemons, and Applications paths. The signing script now
-omits com.apple.security.get-task-allow entirely, rather than setting it false
-or allowing debugging. Source and signed executable entitlement validation
-reject either value and any temporary exception.
+No account, demo credentials, subscription or external service is required.
+Choose "Choose folders..." and use Command-Shift-G in the native picker to
+select ~/Library/LaunchAgents, /Library/LaunchAgents, /Library/LaunchDaemons,
+/Applications or ~/Applications as needed. Only selected inventory roots are
+shown. Select a log's containing folder for logs. Cancel changes nothing;
+grants last until quit and must be given again on reopening.
 
-2. Access and main flow
+Inspect rows, search/filter, read details, schedules and logs, and view/copy
+Terminal references. To exercise file editing safely, create a disposable
+personal plist for /usr/bin/true with Run at Load and Keep Alive off and no
+schedule; save and edit it, verify contents and refresh. Saving does not load
+or start it. Removal is not a Store feature; clean up the disposable file in
+Finder after the demonstration. Never change existing vendor services for QA.
 
-No account, subscription, registration, or remote service is required.
-Choose "Choose folders..." to open the native macOS folder picker.
-Use Command-Shift-G to select ~/Library/LaunchAgents, /Library/LaunchAgents,
-/Library/LaunchDaemons, /Applications, or ~/Applications. Only selected
-inventory roots are shown. For logs select the log's containing folder.
-Canceling makes no changes. Access lasts until quit; select again on reopening.
+The runtime network client/server entitlements support Tauri/WebKit on older
+supported macOS. All product data remains local. There are no analytics,
+ads, payments, cloud services, regulated content or regional differences.
 
-Search/filter the inventory and select a row for configuration, state,
-schedules, logs and command references. Shared agents and daemons remain
-read-only; administrator access is unavailable. Login helpers permit only
-Enable/Disable, with lifecycle controlled by the parent app. An optional
-GitHub documentation/source link opens the browser; it does not download,
-install, update or unlock another edition.
-
-For safe write-flow QA, select the test user's Library/LaunchAgents folder,
-create a disposable agent with executable /usr/bin/true, Run at Login off,
-and Keep Alive off, save it, inspect it, then remove it and confirm cleanup.
-Folder access does not confer launchd authorization: this complete flow must
-pass in the exact signed candidate before submission.
-
-3. Privacy and external services
-
-Service definitions, state, logs, and configuration remain local. No analytics,
-advertising, authentication, payments, cloud storage, or AI service is used.
-The network client/server entitlements support the embedded Tauri/WebKit
-runtime on supported macOS versions, not an external product service.
-There are no regional feature differences or regulated content.
-
-4. Outstanding evidence - submission hold
-
-Local ad-hoc sandbox QA verified native folder consent, inventory, reopening,
-and disposable agent creation. Loading that agent failed with bootstrap error
-5 inside the sandbox, while the same valid plist loaded outside it. This
-candidate is NOT ready for resubmission; user-selected folder access does not
-resolve launchd control authorization. Preserve the hold pending Apple/DTS
-clarification and a working exact-build lifecycle/create/remove flow.
-
-No new exact-build TestFlight/full-flow recording on the latest macOS has been
-verified. The available local Mac runs macOS 12.7.6. The October 10 recording
-belongs to rejected build 202610100953 and does not verify this candidate.
-Screenshots must be recaptured from the current Store edition; historical
-captures must not be presented as current. Replace this preparation notice
-with verified build identity and recording details only after native QA passes.
-
-Draft clarification request (not sent):
-
-We removed all temporary filesystem exceptions and omit get-task-allow
-entirely. External file access is now explicitly granted via NSOpenPanel and
-the user-selected.read-write entitlement. In a local sandboxed build, this
-permits inventory and writing a user-selected LaunchAgents plist, but
-launchctl bootstrap of that plist fails with error 5; the identical plist
-loads outside the sandbox. Which supported, sandbox-compatible API or
-entitlement, if any, may a Mac App Store utility use to manage user-selected
-third-party/user-authored launch agents? We will not claim that a folder grant
-authorizes service control or resubmit before the workflow is functional.
+Preparation status: this text does not establish exact-build native QA or a
+current-macOS recording. Attach verified build/recording evidence before App
+Review submission. The prior 1.2.1 recording does not verify this edition.

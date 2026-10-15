@@ -1,5 +1,10 @@
 # Mac App Store release
 
+The 1.3.1 Store edition is a service inspector and personal plist editor.
+It removes all lifecycle, enable/disable, removal and administrator operations;
+the standalone edition retains them. The [edition comparison](../docs/app-store-actions.md)
+is authoritative. A sandboxed filesystem grant is not launchd-control permission.
+
 Launchpane's App Store pipeline builds a universal macOS app, embeds its Mac App
 Store provisioning profile, signs it with Apple distribution certificates,
 creates a signed installer package, then uploads the binary, metadata, and
@@ -28,10 +33,12 @@ Create these items in the Apple Developer and App Store Connect portals:
 Mac App Store review is not guaranteed. The Store edition must obtain folder
 access using the native macOS picker; saved paths do not grant access. The
 current implementation asks again after every app restart. File access does
-not grant permission to control launchd; verify both in the submitted binary.
+not grant permission to control launchd. This edition deliberately has no
+service-control operations; verify inspection and selected-file editing in the
+submitted binary instead.
 
 The [App Store action table and link-policy assessment](../docs/app-store-actions.md)
-documents disabled edition-specific controls, their hints, and the neutral
+documents removed edition-specific controls, their explanations, and the neutral
 GitHub project link. A feature build or local ad-hoc signature does not replace
 exact-build sandbox QA or establish App Review approval.
 

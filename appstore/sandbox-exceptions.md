@@ -32,8 +32,9 @@ trying to create `~/Library/Logs/Launchpane` without consent. To enable logs,
 select their containing folder and enter the desired paths explicitly.
 
 Folder grants do not confer administrator privileges or launchd authorization.
-Shared services remain read-only in the Store edition. User-agent lifecycle and
-login-item toggles require separate sandboxed native verification. See the
+All service control, enable/disable, removal and administrator operations are
+removed from the Store UI and rejected by its backend. User-selected personal
+plists can be created and edited but not activated. See the
 [action table](../docs/app-store-actions.md) and
 [exact-build QA gate](review-recording.md).
 

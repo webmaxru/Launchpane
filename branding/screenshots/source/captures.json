@@ -1,36 +1,36 @@
 {
-  "version": "1.2.1",
-  "buildNumber": "202610101605",
+  "version": "1.3.1",
+  "buildNumber": "202610160100",
   "distribution": "app-store",
-  "sourceDigest": "7f4247f4cba082329cb8f7af3e29ca4ffaa6e37131210b774c4cfe58aa9573c6",
+  "sourceDigest": "1cb7a3b1b8e609d57ebc160d0ee2368c97517c2dfed978a28faf329e3bc5384b",
   "captureMethod": "native-local-sandbox",
   "submittedBuildQA": false,
   "macOS": "12.7.6",
-  "captureSize": "2560x1566",
-  "sourceCanvas": "2560x1600",
-  "processing": "Native window captures without shadows; narrow solid-color padding preserves the 16:10 canvas without distorting the app. Personal file paths in logs are covered by explicit privacy masks.",
+  "captureSize": "2400x1500",
+  "sourceCanvas": "2400x1500",
+  "processing": "Actual 1200x750 native sandbox window captured at Retina resolution. Logs header and log-path labels are covered by explicit privacy masks. No browser rendering, fabricated service states or substituted UI.",
   "screenshots": {
     "overview": {
-      "sha256": "7d10875770df56ca73b20fb0d63cd92f6e69ec70e0fb723082ac5a316632fa5a",
-      "description": "Current sandboxed Store inventory filtered to three disposable real user agents: running, loaded and disabled/unloaded.",
+      "sha256": "3852f1614cb2570f76446ff03d30c7e2cc55be443692be5c62da67ca86aa5150",
+      "description": "Current sandboxed inspector filtered to a disposable personal plist created through the native app. It is not activated; runtime actions and removal are absent.",
       "privacyRedactions": []
     },
     "detail": {
-      "sha256": "7f79e8168002ceea10d21d715eb6c854c3fbc9a250b01a9c786b3e4ead1bd5b3",
-      "description": "Native plist editor for the disposable cleanup user agent, showing its command and daily schedule. No change was saved during capture.",
+      "sha256": "6f740a88a2d038f60e023af853b81306ef98498022e0444905eff4cabbb71d48",
+      "description": "Actual personal plist editor for the disposable /usr/bin/true agent, explaining that Save does not reload a service. No schedule or automatic launch is configured.",
       "privacyRedactions": []
     },
     "login-items": {
-      "sha256": "bc04d01e5ababe17c3f5a30439d67d5ef0f64062a0b6c42ef71add5e680c13e2",
-      "description": "Real registered login helper with Store-specific lifecycle restrictions and an eligible Disable action. The vendor service was not changed.",
+      "sha256": "929e3046fb367a48ba8342548f64a097f40df45e3cb9ec69441500257247977a",
+      "description": "Real Spotify login helper discovered after explicit Applications folder selection. It is inspection-only; no vendor state was changed.",
       "privacyRedactions": []
     },
     "logs": {
-      "sha256": "cbded70577643e1961214c85a5e7b309bed875f378198841a1c29663fd44163b",
-      "description": "Actual stdout written by launchd's disposable preview service and read by the sandboxed Store app through its LaunchAgents exception.",
+      "sha256": "33123a26b785a27bf79c27e0f3946521ad4fddeb1ab63af5e83681b3a1d99167",
+      "description": "Actual sandboxed log reader showing a deliberately labeled local sample file in the user-selected LaunchAgents folder. The service was not run and no filesystem exception is present.",
       "privacyRedactions": [
         "Full user plist path in the details header",
-        "User home prefixes in stdout and stderr path labels"
+        "Personal standard-output log path label"
       ]
     }
   }

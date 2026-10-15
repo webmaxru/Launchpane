@@ -73,39 +73,33 @@ async function openActions(user: ReturnType<typeof userEvent.setup>, label: stri
 }
 
 describe("JobList", () => {
-  it.each(["SystemAgent", "SystemDaemon"] as const)(
-    "keeps every %s runtime action visible with a Store-specific explanation",
+  it.each(["UserAgent", "SystemAgent", "SystemDaemon", "LoginItem"] as const)(
+    "removes every %s runtime action and removal from Store",
     async (source) => {
       const user = userEvent.setup()
       const job = { ...mockJobs[0], source }
       renderJobList([job], { isAppStore: true, isAdministrator: true })
-      const stop = screen.getByRole("button", { name: "Stop" })
-      expect(stop).toBeDisabled()
-      expect(stop).not.toHaveAttribute("title")
-      expect(
-        screen.getByLabelText(/Stop\. .*Mac App Store edition/)
-      ).toBeInTheDocument()
+      expect(screen.queryByRole("button", { name: "Stop" })).not.toBeInTheDocument()
       const menu = await openActions(user, job.label)
       for (const name of ["Load", "Run now", "Unload", "Restart", "Enable", "Disable"]) {
-        const item = within(menu).getByRole("menuitem", { name })
-        expect(item).toHaveAttribute("aria-disabled", "true")
-        expect(item).toHaveTextContent("Mac App Store edition")
-        expect(item).not.toHaveTextContent("Open Administrator Window")
+        expect(within(menu).queryByRole("menuitem", { name })).not.toBeInTheDocument()
       }
+      expect(within(menu).queryByRole("menuitem", { name: "Remove agent…" })).not.toBeInTheDocument()
+      expect(within(menu).getByRole("menuitem", { name: "View details" })).toBeEnabled()
+      expect(within(menu).getByRole("menuitem", { name: "Reveal in Finder" })).toBeEnabled()
     }
   )
 
-  it("disables login-helper lifecycle controls in Store without disabling eligible toggles", async () => {
+  it("makes Store login helpers inspection-only", async () => {
     const user = userEvent.setup()
     renderJobList([loginItemJob], { isAppStore: true })
-    expect(screen.getByRole("button", { name: "Run now" })).toBeDisabled()
+    expect(screen.queryByRole("button", { name: "Run now" })).not.toBeInTheDocument()
     const menu = await openActions(user, loginItemJob.label)
     expect(within(menu).queryByRole("menuitem", { name: "Load" })).not.toBeInTheDocument()
     for (const name of ["Run now", "Unload", "Restart"]) {
-      expect(within(menu).getByRole("menuitem", { name })).toHaveAttribute("aria-disabled", "true")
-      expect(within(menu).getByRole("menuitem", { name })).toHaveTextContent("Mac App Store edition")
+      expect(within(menu).queryByRole("menuitem", { name })).not.toBeInTheDocument()
     }
-    expect(within(menu).getByRole("menuitem", { name: "Disable" })).not.toHaveAttribute("aria-disabled")
+    expect(within(menu).queryByRole("menuitem", { name: "Disable" })).not.toBeInTheDocument()
   })
 
   it("renders loading state before the first result", () => {

@@ -5,10 +5,8 @@ export type ActionAvailability = { hidden: boolean; reason: string | null }
 
 export const STORE_ADMIN_REASON =
   "Unavailable in the Mac App Store edition: administrator access is not supported."
-export const STORE_SHARED_REASON =
-  "Mac App Store edition: shared services are read-only."
-export const STORE_LOGIN_REASON =
-  "Mac App Store edition: Enable or Disable only; the parent app controls this helper."
+export const STORE_CONTROL_REASON =
+  "Mac App Store edition: service control is not supported by App Sandbox. Inventory and user-selected plist editing remain available."
 
 export function actionAvailability(
   job: JobListEntry,
@@ -17,6 +15,7 @@ export function actionAvailability(
   busy = false,
   isAppStore = false
 ): ActionAvailability {
+  if (isAppStore) return { hidden: true, reason: STORE_CONTROL_REASON }
   if (action === "load" && job.source === "LoginItem") {
     return {
       hidden: true,
@@ -24,11 +23,7 @@ export function actionAvailability(
     }
   }
   let reason: string | null = null
-  if (isAppStore && (job.source === "SystemAgent" || job.source === "SystemDaemon")) {
-    reason = STORE_SHARED_REASON
-  } else if (isAppStore && job.source === "LoginItem" && action !== "enable" && action !== "disable") {
-    reason = STORE_LOGIN_REASON
-  } else if (busy) {
+  if (busy) {
     reason = "Wait for the current action to finish and verify its state."
   } else if (job.source === "SystemDaemon" && !isAdministrator) {
     reason = "Open Administrator Window to control system daemons."

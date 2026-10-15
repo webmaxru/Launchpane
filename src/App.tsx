@@ -620,7 +620,7 @@ function App() {
                 <ShieldCheck className="h-4 w-4" />
                 Administrator
               </div>
-            ) : canStartAdministrator || isAppStore ? (
+            ) : canStartAdministrator && !isAppStore ? (
               <Hint
                 label="Start an administrator window"
                 description={
@@ -699,7 +699,8 @@ function App() {
           >
             <p className="min-w-0 flex-1">
               <strong className="text-foreground">Mac App Store edition.</strong>{" "}
-              No administrator access; shared services are read-only. Login helpers support Enable and Disable only.
+              Inspect services, schedules and logs; create and edit user-selected agent plists. Service control, enable/disable, removal and administrator access are not available in this sandboxed edition.
+              {" "}The separately distributed standalone edition also supports service management and administrator workflows. This app does not download, install or unlock another edition.
               {" "}Only selected inventory folders are shown. Choose folders to grant access to LaunchAgents, LaunchDaemons, Applications, or logs. Access lasts until you quit; choose again after reopening.
             </p>
             <Button

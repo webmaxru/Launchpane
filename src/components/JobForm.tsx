@@ -217,7 +217,10 @@ export function JobForm({
           <DialogDescription>
             {isEditing
               ? "Update this agent’s command, schedule, and output settings."
-              : "Create a user LaunchAgent in your Library folder."}
+              : isAppStore
+                ? "Create a plist in your selected LaunchAgents folder. Saving does not load or start it."
+                : "Create a user LaunchAgent in your Library folder."}
+            {isAppStore && isEditing && " Saving changes the plist only; it does not reload a service."}
           </DialogDescription>
         </DialogHeader>
 

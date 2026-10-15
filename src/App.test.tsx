@@ -87,11 +87,9 @@ describe("App action feedback", () => {
     const user = userEvent.setup()
     render(<App />)
     const limits = await screen.findByRole("complementary", { name: "Mac App Store edition limits" })
-    expect(limits).toHaveTextContent("shared services are read-only")
-    const button = screen.getByRole("button", { name: "Open Administrator Window" })
-    expect(button).toBeDisabled()
-    expect(button).toHaveAttribute("title", expect.stringContaining("Mac App Store edition"))
-    await user.click(button)
+    expect(limits).toHaveTextContent("Service control, enable/disable, removal and administrator access are not available")
+    expect(limits).toHaveTextContent("separately distributed standalone edition")
+    expect(screen.queryByRole("button", { name: "Open Administrator Window" })).not.toBeInTheDocument()
     expect(admin).not.toHaveBeenCalled()
     const link = within(limits).getByRole("link", { name: "Project documentation and source on GitHub" })
     expect(link).toHaveAttribute("href", "https://github.com/webmaxru/Launchpane")
@@ -99,7 +97,7 @@ describe("App action feedback", () => {
     expect(openProject).toHaveBeenCalledOnce()
     expect(screen.getByRole("button", { name: "Create a user agent" })).toBeEnabled()
     const row = screen.getByRole("row", { name: "View details for com.apple.system-agent" })
-    expect(within(row).getByRole("button", { name: "Stop" })).toBeDisabled()
+    expect(within(row).queryByRole("button", { name: "Stop" })).not.toBeInTheDocument()
   })
 
   it("reports a project-link launch failure instead of silently ignoring it", async () => {

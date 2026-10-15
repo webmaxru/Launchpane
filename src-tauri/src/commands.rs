@@ -147,20 +147,11 @@ fn ensure_toggle_allowed(plist_path: &str, source: &JobSource) -> Result<(), App
     Ok(())
 }
 
-fn ensure_store_control_allowed(source: &JobSource, lifecycle: bool) -> Result<(), AppError> {
+fn ensure_store_control_allowed(_source: &JobSource, _lifecycle: bool) -> Result<(), AppError> {
     if cfg!(feature = "app-store") {
-        if matches!(source, JobSource::SystemAgent | JobSource::SystemDaemon) {
-            return Err(AppError::Launchctl(
-                "Unavailable in the Mac App Store edition: shared agents and system daemons are read-only."
-                    .to_string(),
-            ));
-        }
-        if *source == JobSource::LoginItem && lifecycle {
-            return Err(AppError::Launchctl(
-                "Unavailable in the Mac App Store edition: login helpers support Enable and Disable only; their parent app manages their lifecycle."
-                    .to_string(),
-            ));
-        }
+        return Err(AppError::Launchctl(
+            "Unavailable in the Mac App Store edition: App Sandbox does not support service control, enable/disable or removal. Inspect services and edit user-selected plists instead.".into(),
+        ));
     }
     Ok(())
 }
@@ -749,6 +740,7 @@ pub async fn save_raw_plist(plist_path: String, xml: String) -> Result<(), AppEr
 
 #[tauri::command]
 pub async fn delete_job(plist_path: String, label: String) -> Result<(), AppError> {
+    ensure_store_control_allowed(&JobSource::UserAgent, true)?;
     ensure_user_agent(&plist_path)?;
     let (domain, actual_label) = control_target(&plist_path, true)?;
     if label != actual_label {
@@ -971,7 +963,10 @@ mod tests {
     #[test]
     fn test_login_items_are_toggleable_without_administrator() {
         // Login items live in the user's own GUI domain, so no admin escalation is needed.
-        assert!(ensure_toggle_allowed(LOGIN_ITEM_PATH, &JobSource::LoginItem).is_ok());
+        assert_eq!(
+            ensure_toggle_allowed(LOGIN_ITEM_PATH, &JobSource::LoginItem).is_ok(),
+            !cfg!(feature = "app-store")
+        );
     }
 
     #[test]
@@ -1014,9 +1009,7 @@ mod tests {
             JobSource::LoginItem,
         ] {
             for lifecycle in [false, true] {
-                let blocked = cfg!(feature = "app-store")
-                    && (matches!(source, JobSource::SystemAgent | JobSource::SystemDaemon)
-                        || (source == JobSource::LoginItem && lifecycle));
+                let blocked = cfg!(feature = "app-store");
                 assert_eq!(
                     ensure_store_control_allowed(&source, lifecycle).is_err(),
                     blocked
@@ -1040,7 +1033,12 @@ mod tests {
     #[cfg(feature = "app-store")]
     fn test_store_commands_reject_shared_changes_before_accessing_files() {
         tauri::async_runtime::block_on(async {
+            let user_path = crate::user_paths::home_dir()
+                .unwrap()
+                .join("Library/LaunchAgents/com.launchpane.not-real.plist");
             for (source, path) in [
+                (JobSource::UserAgent, user_path.to_str().unwrap()),
+                (JobSource::LoginItem, LOGIN_ITEM_PATH),
                 (
                     JobSource::SystemAgent,
                     "/Library/LaunchAgents/com.launchpane.not-real.plist",
@@ -1051,7 +1049,6 @@ mod tests {
                 ),
             ] {
                 let results = [
-                    start_job(path.to_string()).await,
                     stop_job(path.to_string()).await,
                     restart_job(path.to_string()).await,
                     kickstart_job("not-real".to_string(), path.to_string()).await,
@@ -1070,7 +1067,23 @@ mod tests {
                             .contains("Mac App Store edition")
                     );
                 }
+                if source_for_path(path) != Some(JobSource::LoginItem) {
+                    assert!(
+                        start_job(path.to_string())
+                            .await
+                            .unwrap_err()
+                            .to_string()
+                            .contains("Mac App Store edition")
+                    );
+                }
             }
+            assert!(
+                delete_job(user_path.to_string_lossy().into_owned(), "not-real".into())
+                    .await
+                    .unwrap_err()
+                    .to_string()
+                    .contains("Mac App Store edition")
+            );
             for result in [
                 stop_job(LOGIN_ITEM_PATH.to_string()).await,
                 restart_job(LOGIN_ITEM_PATH.to_string()).await,

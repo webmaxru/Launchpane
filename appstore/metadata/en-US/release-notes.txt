@@ -1,6 +1,7 @@
 Launchpane 1.3.1
 
-- Select inventory and log folders using the native macOS picker
-- Removed temporary filesystem exceptions and corrected distribution signing entitlements
-- Clear recovery instructions when folder access is required
-- Folder access lasts until you quit; select folders again after reopening
+- Sandboxed service inspection and personal LaunchAgent plist editing
+- Native folder consent for inventory and logs, with clear recovery instructions
+- Removed unsupported service control, enable/disable, removal and administrator actions from this Store edition
+- Removed temporary filesystem exceptions and corrected signing entitlements
+- Saving a plist does not activate it; choose folders again after quitting

@@ -1,20 +1,21 @@
-Launchpane gives you a clean, native way to manage launch agents, daemons, and macOS login items on your Mac.
+Launchpane helps you understand macOS background services from one focused native interface.
 
-Built for developers, power users, and anyone who wants more control over startup behavior, Launchpane makes it easy to inspect system services and enable, disable, and troubleshoot user services without digging through hidden folders and shell commands.
+The Mac App Store edition is a sandboxed service inspector and personal LaunchAgent plist editor. Diagnose startup configuration, inspect service state and schedules, and read logs without memorizing plist structure.
 
 FEATURES
-• Browse user, system, and login item services in one organized view
-• Search and filter by label, source, or status
-• Toggle user services and login items with explicit confirmation and clear feedback
-• Inspect plist details, logs, and next-run information
-• Create, edit, and remove user launch agents with a guided workflow
-• See important service state changes without leaving the app
+• Browse user agents, shared agents, daemons and app login helpers from folders you select
+• Search service labels and filter by source
+• Inspect running/loaded state, process ID, exit status and configuration
+• Review interval and calendar schedules
+• Read and refresh configured logs after selecting their containing folder
+• Create and edit personal LaunchAgent plists with a guided form
+• View and copy Terminal command references
+• Follow the system appearance or choose light or dark
 
 FOLDER ACCESS
-The Mac App Store edition asks you to select folders using the native macOS picker. Select your Library/LaunchAgents folder for personal agents, shared LaunchAgents and LaunchDaemons folders for read-only inventory, and Applications for login helpers. Only selected inventory folders are shown. Select log folders to access logs. Folder access lasts until you quit the app; select the folders again after reopening.
+Choose folders in the native macOS picker. Select your Library/LaunchAgents folder for personal plists, shared LaunchAgents and LaunchDaemons folders for read-only inventory, and Applications for login helpers. Only selected inventory roots are shown. Log access requires selecting the containing folder. Grants last until you quit; choose again after reopening.
 
-Launchpane is built for macOS and follows Apple-style interface patterns: fast, clear, and focused on the task at hand.
+EDITION BOUNDARIES
+This Store edition does not load, run, stop, restart, enable, disable or remove services, and has no administrator mode. System/shared configuration and login helpers are read-only. Creating or editing a personal plist saves the file only; it does not activate or reload the service.
 
-Whether you are debugging a startup issue, managing background helpers, or keeping your Mac's launch services under control, Launchpane gives you the visibility and tools you need in one place. System agents and daemons are displayed read-only in the Mac App Store edition.
-
-For App Store submission, the app is designed around the macOS workflow of viewing launchd-managed entries, verifying service state, and making safe, reviewable changes.
+No account, subscription or network service is required. Service definitions and logs stay on your Mac. Launchpane does not collect your data or include analytics or advertising.

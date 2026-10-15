@@ -1,5 +1,47 @@
 # App Review recording and QA checklist
 
+## Current edition: October 15, 2026
+
+The user authorized removing unsupported Store functionality. This supersedes
+the historical shot list and holds below that require Store service control or
+in-app removal. The Store edition is now an inspector and personal plist editor;
+standalone remains a full service manager. No blanket claim of App Review
+compliance is made by removing controls.
+
+The current physical-device recording must show native launch, missing-consent
+recovery and cancellation, explicit folder selection, inventory, search/source
+filtering, configuration/schedule inspection, selected-folder log access,
+personal plist create/edit/save without activation, absence of runtime/toggle/
+removal/admin controls, and closing/reopening with fresh consent required.
+Clean the disposable plist using Finder afterward; no Store Remove action exists.
+The neutral edition comparison and documentation/source link must not install,
+update, purchase or unlock another edition. Demonstrate light and dark appearance.
+
+The exact production-signed build must be installed through TestFlight/an
+appropriate Apple path on a physical Mac running the current required macOS.
+Watch the complete recording, decode it, inspect required flows and privacy,
+and tie it to build and video checksums. Historical videos do not verify it.
+Record unresolved checks explicitly; never reuse an earlier waiver or claim
+that ad-hoc local previews establish production-signed QA.
+
+The available Mac currently runs 12.7.6; softwareupdate offers 27.0.1 and requires
+a restart. The user authorizes checklist actions on this laptop, including
+advancing to real authentication/device gates, but no credential may be invented.
+
+Local 1.3.1 sandbox preview `202610160100` evidence (not submitted-build QA):
+native launch, missing-consent recovery, cancel/reselect, personal LaunchAgents
+and Applications grants, filtered inventory, real login-helper inspection,
+disposable `/usr/bin/true` plist creation and subsequent log-path editing passed.
+The created plist has no RunAtLoad, KeepAlive or schedule activation and
+`launchctl print` confirmed it was not registered. The sandboxed log reader read
+a labeled sample log in the granted folder. Runtime and administrator controls
+are absent. All four screenshots were recaptured from this native build; the
+manifest records hashes and explicit log-path privacy masks.
+
+The automatic OS update cannot proceed unattended: `sudo -n true` reports
+"a password is required". macOS owner authentication is a real remaining gate,
+not a reason to bypass the current-OS/exact-production-build recording requirement.
+
 Apple requested a screen recording captured on a physical Mac running the
 latest macOS release. This file is the shot list and the bounded
 test plan for that recording; it is intentionally not a simulated recording.
