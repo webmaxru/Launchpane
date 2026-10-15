@@ -103,7 +103,7 @@ jobs:
           NODE
           KEYCHAIN_PATH="$RUNNER_TEMP/launchpane-store.keychain-db"
           PROFILE_PATH="$RUNNER_TEMP/Launchpane.provisionprofile"
-          API_KEY_PATH="$RUNNER_TEMP/AuthKey_${ASC_KEY_ID}.p8"
+          API_KEY_PATH="$GITHUB_WORKSPACE/private_keys/AuthKey_${ASC_KEY_ID}.p8"
           # Record cleanup locations before importing anything.
           {
             echo "SIGNING_KEYCHAIN_PATH=$KEYCHAIN_PATH"
@@ -112,6 +112,7 @@ jobs:
             echo "APP_STORE_CONNECT_API_KEY_PATH=$API_KEY_PATH"
           } >> "$GITHUB_ENV"
           umask 077
+          mkdir -p "$GITHUB_WORKSPACE/private_keys"
           printf '%s' "$APPLICATION_CERTIFICATE_BASE64" | base64 --decode > "$RUNNER_TEMP/application.p12"
           printf '%s' "$INSTALLER_CERTIFICATE_BASE64" | base64 --decode > "$RUNNER_TEMP/installer.p12"
           printf '%s' "$PROVISIONING_PROFILE_BASE64" | base64 --decode > "$PROFILE_PATH"

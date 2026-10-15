@@ -212,6 +212,19 @@ The workflow maps `APP_STORE_CONNECT_*` secrets into `ASC_KEY_ID`,
 an environment variable for the app record. Temporary keys, both PKCS12 files,
 the profile, and keychain are cleaned even on failure.
 
+`altool` does not use `ASC_KEY_PATH`: its validation step discovers
+`private_keys/AuthKey_<key-id>.p8` in the checkout. Keep that private directory
+mode-restricted and remove the exact key during cleanup. The embedded
+provisioning profile, unlike private signing inputs, must be world-readable
+(`0644`) before signing and packaging; Apple rejects root-only bundle files.
+The final package gate also rejects unreadable files and inaccessible directories.
+
+For processed-build queries with `include=preReleaseVersion`, use the top-level
+`/v1/builds` endpoint filtered by app. Apple's `/v1/apps/<id>/builds` relationship
+endpoint rejects that include parameter even after a successful upload. If a
+post-upload step fails, inspect the existing upload/build before recovery; never
+upload the same build number again merely to resume metadata preparation.
+
 1. `node scripts/appstore-submit.mjs --status` is read-only: verify app bundle,
    version state, and existing builds. `--preflight` additionally checks the
    explicit `APP_BUILD_NUMBER` against all paginated builds/uploads.
