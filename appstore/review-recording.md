@@ -1,6 +1,19 @@
 # App Review recording and QA checklist
 
-## Current edition: October 15, 2026
+## Current edition: October 16, 2026
+
+Candidate 1.3.3 fixes folder-access and inventory error formatting seen in the
+1.3.2 TestFlight build: non-launchctl failures no longer carry a
+"launchctl error" prefix, and the error card and toast wrap long details.
+All four native captures were refreshed from local sandbox preview
+`1.3.3 (202610162201)` after actual folder selection, disposable plist creation
+through the New Agent form, editing a standard-output path, selected sample-log
+reading and Spotify login-helper search. The plist was verified not registered
+with launchd and was removed afterward. These remain local preview evidence,
+not exact production-build QA. Production upload status is tracked in App Store
+Connect; no App Review submission is claimed here.
+
+### Previous candidate: 1.3.2
 
 Production candidate `1.3.2 (202610160102)` is Apple-processed `VALID`, attached
 to the manual-release version, and assigned to `Launchpane Internal QA`.
