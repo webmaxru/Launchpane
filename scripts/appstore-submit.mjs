@@ -382,7 +382,16 @@ function bundleVersion() {
   return match[1];
 }
 
-export async function preflight(buildNumber) {
+// `altool --validate-app` (Xcode 26+) registers an AWAITING_UPLOAD buildUpload
+// holding only analysis files. It reserves the number for this exact candidate
+// and is completed by attaching the package rather than creating a duplicate.
+function isValidationReservation(upload, buildNumber) {
+  const { cfBundleVersion, cfBundleShortVersionString, uploadedDate, state } = upload.attributes;
+  return cfBundleVersion === buildNumber && cfBundleShortVersionString === appVersion
+    && !uploadedDate && state?.state === "AWAITING_UPLOAD" && !state.errors?.length;
+}
+
+export async function preflight(buildNumber, { allowValidationReservation = false } = {}) {
   if (!KEY_ID || !ISSUER_ID || !APP_ID) throw new Error("Apple API key, issuer, and ASC_APP_ID are required");
   const { data: app } = await api("GET", `/v1/apps/${APP_ID}`);
   if (app.attributes.bundleId !== "com.webmaxru.launchpane") throw new Error("ASC_APP_ID belongs to a different bundle");
@@ -390,24 +399,38 @@ export async function preflight(buildNumber) {
   if (buildNumber !== undefined) selectVersion(versions);
   const builds = await list(`/v1/apps/${APP_ID}/builds?limit=200`);
   const uploads = await list(`/v1/apps/${APP_ID}/buildUploads?limit=200`);
+  let reservation;
   if (buildNumber !== undefined) {
     if (!/^[1-9]\d{0,17}$/.test(buildNumber)) throw new Error("APP_BUILD_NUMBER must be a positive integer of at most 18 digits");
+    const reservations = allowValidationReservation
+      ? uploads.filter(upload => isValidationReservation(upload, buildNumber)) : [];
+    if (reservations.length > 1) throw new Error(`Multiple validation reservations exist for build ${buildNumber}; inspect them before uploading`);
+    reservation = reservations[0];
     const existingNumbers = [
       ...builds.map(b => b.attributes.version),
-      ...uploads.map(u => u.attributes.cfBundleVersion),
+      ...uploads.filter(u => u !== reservation).map(u => u.attributes.cfBundleVersion),
     ];
     if (existingNumbers.some(n => /^\d+$/.test(n) && BigInt(n) >= BigInt(buildNumber))) {
       throw new Error("APP_BUILD_NUMBER must exceed all existing Apple build/upload numbers; do not reuse an uploaded candidate");
     }
   }
-  return { version: appVersion, versions: versions.map(v => ({
+  return { version: appVersion, reservation: reservation?.id, versions: versions.map(v => ({
     version: v.attributes.versionString, state: v.attributes.appStoreState,
   })), builds: builds.map(b => ({ number: b.attributes.version, state: b.attributes.processingState })) };
 }
 
+async function reservedUpload(id) {
+  const files = await list(`/v1/buildUploads/${id}/buildUploadFiles`);
+  if (files.some(file => file.attributes.assetType === "ASSET")) {
+    throw new Error(`Build upload ${id} already has a package; do not reuse an uploaded candidate`);
+  }
+  log(`completing validation reservation ${id}`);
+  return { id };
+}
+
 export async function uploadBuild(buildNumber, packagePath = PKG_PATH) {
-  await preflight(buildNumber);
-  const upload = (
+  const { reservation } = await preflight(buildNumber, { allowValidationReservation: true });
+  const upload = reservation ? await reservedUpload(reservation) : (
       await api("POST", "/v1/buildUploads", {
         data: {
           type: "buildUploads",
