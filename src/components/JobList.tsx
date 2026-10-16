@@ -169,10 +169,10 @@ export function JobList({
           </TableRow>
         ) : error ? (
           <TableRow>
-            <TableCell colSpan={7} className="h-48 text-center">
+            <TableCell colSpan={7} className="h-48 whitespace-normal py-8 text-center">
               <div
                 role="alert"
-                className="mx-auto flex max-w-lg flex-col items-center"
+                className="mx-auto flex w-full max-w-lg flex-col items-center"
               >
                 <AlertCircle className="h-5 w-5 text-destructive" />
                 <p className="mt-2 text-sm font-semibold text-foreground">
@@ -181,22 +181,23 @@ export function JobList({
                 <p className="mt-1 text-xs text-muted-foreground">
                   Launchpane can’t verify the services on this Mac right now.
                 </p>
-                <div className="mt-3 flex items-center gap-2">
-                  {onRetry && (
-                    <Button size="sm" onClick={onRetry}>
-                      <RefreshCw className="h-3.5 w-3.5" />
-                      Retry
-                    </Button>
-                  )}
-                  <details className="text-left text-xs text-muted-foreground">
-                    <summary className="cursor-pointer rounded px-2 py-1 hover:text-foreground">
-                      Technical details
-                    </summary>
-                    <p className="mt-1 max-w-md break-words rounded-md bg-muted px-2 py-1.5 font-mono">
-                      {error}
-                    </p>
-                  </details>
-                </div>
+                {onRetry && (
+                  <Button size="sm" className="mt-3" onClick={onRetry}>
+                    <RefreshCw className="h-3.5 w-3.5" />
+                    Retry
+                  </Button>
+                )}
+                <details className="mt-2 block w-full text-center text-xs text-muted-foreground">
+                  <summary className="cursor-pointer rounded px-2 py-1 hover:text-foreground">
+                    Technical details
+                  </summary>
+                  <p
+                    data-testid="load-error-detail"
+                    className="mt-1 w-full whitespace-pre-wrap break-words rounded-md bg-muted px-3 py-2 text-left font-mono leading-relaxed [overflow-wrap:anywhere]"
+                  >
+                    {error}
+                  </p>
+                </details>
               </div>
             </TableCell>
           </TableRow>

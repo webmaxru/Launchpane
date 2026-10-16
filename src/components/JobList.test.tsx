@@ -131,6 +131,24 @@ describe("JobList", () => {
     expect(screen.getByText("Permission denied by launchctl")).toBeVisible()
   })
 
+  it("stacks retry above technical details that wrap long messages", () => {
+    renderJobList([], {
+      error:
+        "Folder access is required. Choose folders to allow access to ~/Library/LaunchAgents, /Library/LaunchAgents, /Library/LaunchDaemons, or Applications.",
+      onRetry: vi.fn(),
+    })
+
+    const alert = screen.getByRole("alert")
+    const cell = alert.closest("td")
+    expect(cell).toHaveClass("whitespace-normal")
+    expect(screen.getByRole("button", { name: "Retry" }).parentElement).toBe(alert)
+    expect(screen.getByText("Technical details").closest("details")?.parentElement).toBe(alert)
+    expect(screen.getByTestId("load-error-detail")).toHaveClass(
+      "whitespace-pre-wrap",
+      "break-words"
+    )
+  })
+
   it("puts recovery actions in the empty state", async () => {
     const user = userEvent.setup()
     const onRetry = vi.fn()

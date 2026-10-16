@@ -13,7 +13,7 @@ pub fn selected_folders() -> Result<Vec<PathBuf>, AppError> {
         .lock()
         .map(|folders| folders.clone())
         .map_err(|_| {
-            AppError::Launchctl("Could not read folder permissions. Restart Launchpane.".into())
+            AppError::Message("Could not read folder permissions. Restart Launchpane.".into())
         })
 }
 
@@ -31,7 +31,7 @@ pub fn choose_access_folders() -> Result<bool, AppError> {
     use objc2_foundation::{NSString, NSURL};
 
     let main_thread = MainThreadMarker::new()
-        .ok_or_else(|| AppError::Launchctl("Folder selection requires the main thread.".into()))?;
+        .ok_or_else(|| AppError::Message("Folder selection requires the main thread.".into()))?;
     let panel = NSOpenPanel::openPanel(main_thread);
     panel.setCanChooseDirectories(true);
     panel.setCanChooseFiles(false);
@@ -48,11 +48,11 @@ pub fn choose_access_folders() -> Result<bool, AppError> {
         return Ok(false);
     }
     let mut folders = SELECTED_FOLDERS.lock().map_err(|_| {
-        AppError::Launchctl("Could not save folder permissions. Restart Launchpane.".into())
+        AppError::Message("Could not save folder permissions. Restart Launchpane.".into())
     })?;
     for url in panel.URLs() {
         let path = url.path().ok_or_else(|| {
-            AppError::Launchctl("The selected folder has no local filesystem path.".into())
+            AppError::Message("The selected folder has no local filesystem path.".into())
         })?;
         let path = PathBuf::from(path.to_string());
         // NSOpenPanel grants access in this process; never infer consent from a saved path.
@@ -67,7 +67,7 @@ pub fn choose_access_folders() -> Result<bool, AppError> {
 #[tauri::command]
 #[cfg(not(feature = "app-store"))]
 pub fn choose_access_folders() -> Result<bool, AppError> {
-    Err(AppError::Launchctl(
+    Err(AppError::Message(
         "Folder selection is only required in the Mac App Store edition.".into(),
     ))
 }
