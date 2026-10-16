@@ -10,7 +10,7 @@ pub fn home_dir() -> Result<PathBuf, AppError> {
     #[cfg(not(feature = "app-store"))]
     {
         dirs::home_dir().ok_or_else(|| {
-            AppError::Launchctl("Could not determine the user's home directory.".into())
+            AppError::Message("Could not determine the user's home directory.".into())
         })
     }
 }
@@ -43,14 +43,14 @@ fn account_home(uid: libc::uid_t) -> Result<PathBuf, AppError> {
             return Err(std::io::Error::from_raw_os_error(code).into());
         }
         if result.is_null() {
-            return Err(AppError::Launchctl(format!(
+            return Err(AppError::Message(format!(
                 "No home directory for account UID {uid}."
             )));
         }
         // A successful getpwuid_r result owns a NUL-terminated pw_dir in buffer.
         let directory = unsafe { (*result).pw_dir };
         if directory.is_null() {
-            return Err(AppError::Launchctl(format!(
+            return Err(AppError::Message(format!(
                 "Account UID {uid} has no home directory."
             )));
         }
@@ -58,7 +58,7 @@ fn account_home(uid: libc::uid_t) -> Result<PathBuf, AppError> {
             unsafe { CStr::from_ptr(directory) }.to_bytes().to_vec(),
         ));
         if !path.is_absolute() {
-            return Err(AppError::Launchctl(format!(
+            return Err(AppError::Message(format!(
                 "Account UID {uid} has an invalid home directory."
             )));
         }

@@ -88,7 +88,7 @@ fn is_home_agent(source: &JobSource, config: &PlistConfig) -> bool {
 /// Login items have no standalone launchd plist to load, edit or remove.
 fn ensure_not_login_item(plist_path: &str, action: &str) -> Result<(), AppError> {
     if login_items::is_login_item_path(plist_path) {
-        return Err(AppError::Launchctl(format!(
+        return Err(AppError::Message(format!(
             "Login items cannot be {action}. Their parent app owns registration and bundle files; use the supported runtime controls instead."
         )));
     }
@@ -100,7 +100,7 @@ fn ensure_user_agent(plist_path: &str) -> Result<(), AppError> {
     let home = crate::user_paths::home_dir()?;
     let user_agents = home.join("Library/LaunchAgents");
     if !std::path::Path::new(plist_path).starts_with(&user_agents) {
-        return Err(AppError::Launchctl(
+        return Err(AppError::Message(
             "Only user-agent plist files (~/Library/LaunchAgents) can be edited or removed. Shared system configuration is protected."
                 .to_string(),
         ));
@@ -128,10 +128,10 @@ fn source_for_path(plist_path: &str) -> Option<JobSource> {
 
 fn ensure_toggle_allowed(plist_path: &str, source: &JobSource) -> Result<(), AppError> {
     let actual_source = source_for_path(plist_path).ok_or_else(|| {
-        AppError::Launchctl("Cannot manage a plist outside known launchd directories.".to_string())
+        AppError::Message("Cannot manage a plist outside known launchd directories.".to_string())
     })?;
     if &actual_source != source {
-        return Err(AppError::Launchctl(
+        return Err(AppError::Message(
             "Job source does not match its plist path.".to_string(),
         ));
     }
@@ -140,7 +140,7 @@ fn ensure_toggle_allowed(plist_path: &str, source: &JobSource) -> Result<(), App
     // root-owned plist is not being edited by launchctl lifecycle operations.
     let user_owned = actual_source != JobSource::SystemDaemon;
     if !user_owned && !launchctl::is_administrator() {
-        return Err(AppError::Launchctl(
+        return Err(AppError::Message(
             "Administrator mode is required to manage system daemons.".to_string(),
         ));
     }
@@ -149,7 +149,7 @@ fn ensure_toggle_allowed(plist_path: &str, source: &JobSource) -> Result<(), App
 
 fn ensure_store_control_allowed(_source: &JobSource, _lifecycle: bool) -> Result<(), AppError> {
     if cfg!(feature = "app-store") {
-        return Err(AppError::Launchctl(
+        return Err(AppError::Message(
             "Unavailable in the Mac App Store edition: App Sandbox does not support service control, enable/disable or removal. Inspect services and edit user-selected plists instead.".into(),
         ));
     }
@@ -369,7 +369,7 @@ pub async fn get_job_detail(plist_path: String) -> Result<LaunchdJob, AppError> 
 
     let plist = plist_util::parse_plist(&plist_path)?;
     let source = source_for_path(&plist_path)
-        .ok_or_else(|| AppError::Launchctl("Unknown launchd directory.".to_string()))?;
+        .ok_or_else(|| AppError::Message("Unknown launchd directory.".to_string()))?;
     let loaded = launchctl::list_loaded(&domain_for_source(&source))?;
 
     let svc = loaded.iter().find(|s| s.label == plist.label);
@@ -404,7 +404,7 @@ pub async fn start_job(plist_path: String) -> Result<(), AppError> {
     let (domain, label) = control_target(&plist_path, true)?;
     require_enabled(&plist_path, &label)?;
     if is_loaded(&domain, &label)? {
-        return Err(AppError::Launchctl(
+        return Err(AppError::Message(
             "Already loaded. Use Run now or Restart.".to_string(),
         ));
     }
@@ -420,7 +420,7 @@ fn ensure_runnable_plist(plist_path: &str) -> Result<(), AppError> {
         .as_ref()
         .is_some_and(|args| !args.is_empty());
     if config.program.is_none() && !has_args {
-        return Err(AppError::Launchctl(
+        return Err(AppError::Message(
             "This plist defines no Program or ProgramArguments, so launchd cannot load it. Its owner may have left it empty; reinstall or remove it.".to_string(),
         ));
     }
@@ -438,7 +438,7 @@ pub async fn stop_job(plist_path: String) -> Result<(), AppError> {
 pub async fn restart_job(plist_path: String) -> Result<(), AppError> {
     let (domain, label) = control_target(&plist_path, true)?;
     if !is_loaded(&domain, &label)? {
-        return Err(AppError::Launchctl(
+        return Err(AppError::Message(
             "Load the service before restarting it.".to_string(),
         ));
     }
@@ -450,12 +450,12 @@ pub async fn restart_job(plist_path: String) -> Result<(), AppError> {
 pub async fn kickstart_job(label: String, plist_path: String) -> Result<(), AppError> {
     let (domain, actual_label) = control_target(&plist_path, true)?;
     if label != actual_label {
-        return Err(AppError::Launchctl(
+        return Err(AppError::Message(
             "Label does not match the selected service.".to_string(),
         ));
     }
     if !is_loaded(&domain, &label)? {
-        return Err(AppError::Launchctl(
+        return Err(AppError::Message(
             "Load the service before running it.".to_string(),
         ));
     }
@@ -465,7 +465,7 @@ pub async fn kickstart_job(label: String, plist_path: String) -> Result<(), AppE
 
 fn control_target(plist_path: &str, lifecycle: bool) -> Result<(String, String), AppError> {
     let source = source_for_path(plist_path)
-        .ok_or_else(|| AppError::Launchctl("Unknown launchd directory.".to_string()))?;
+        .ok_or_else(|| AppError::Message("Unknown launchd directory.".to_string()))?;
     ensure_toggle_allowed(plist_path, &source)?;
     ensure_store_control_allowed(&source, lifecycle)?;
     let label = if source == JobSource::LoginItem {
@@ -482,9 +482,9 @@ fn control_target(plist_path: &str, lifecycle: bool) -> Result<(String, String),
 
 fn require_enabled(plist_path: &str, label: &str) -> Result<(), AppError> {
     let source = source_for_path(plist_path)
-        .ok_or_else(|| AppError::Launchctl("Unknown launchd directory.".to_string()))?;
+        .ok_or_else(|| AppError::Message("Unknown launchd directory.".to_string()))?;
     if !verified_enabled_state(&source, label, plist_path)? {
-        return Err(AppError::Launchctl(
+        return Err(AppError::Message(
             "Enable this service before loading it.".to_string(),
         ));
     }
@@ -499,7 +499,7 @@ fn is_loaded(domain: &str, label: &str) -> Result<bool, AppError> {
 
 fn verify_loaded(domain: &str, label: &str, expected: bool) -> Result<(), AppError> {
     if is_loaded(domain, label)? != expected {
-        return Err(AppError::Launchctl(format!(
+        return Err(AppError::Message(format!(
             "The command succeeded, but {domain}/{label} was not {}. Its owner may have changed its registration.",
             if expected { "loaded" } else { "unloaded" }
         )));
@@ -516,14 +516,14 @@ pub async fn enable_job(
     ensure_toggle_allowed(&plist_path, &source)?;
     let (_, actual_label) = control_target(&plist_path, false)?;
     if label != actual_label {
-        return Err(AppError::Launchctl(
+        return Err(AppError::Message(
             "Label does not match the selected service.".to_string(),
         ));
     }
     launchctl::enable(&domain_for_source(&source), &label)?;
     let enabled = verified_enabled_state(&source, &label, &plist_path)?;
     if !enabled {
-        return Err(AppError::Launchctl(format!(
+        return Err(AppError::Message(format!(
             "launchctl enable succeeded, but '{label}' is still disabled when read back. Another process may have changed its enabled override."
         )));
     }
@@ -539,14 +539,14 @@ pub async fn disable_job(
     ensure_toggle_allowed(&plist_path, &source)?;
     let (_, actual_label) = control_target(&plist_path, false)?;
     if label != actual_label {
-        return Err(AppError::Launchctl(
+        return Err(AppError::Message(
             "Label does not match the selected service.".to_string(),
         ));
     }
     launchctl::disable(&domain_for_source(&source), &label)?;
     let enabled = verified_enabled_state(&source, &label, &plist_path)?;
     if enabled {
-        return Err(AppError::Launchctl(format!(
+        return Err(AppError::Message(format!(
             "launchctl disable succeeded, but '{label}' is still enabled when read back. Another process may have changed its enabled override."
         )));
     }
@@ -606,7 +606,7 @@ fn process_effective_uid(pid: u32) -> Option<u32> {
 #[tauri::command]
 #[cfg(feature = "app-store")]
 pub async fn restart_as_administrator(_app: tauri::AppHandle) -> Result<(), AppError> {
-    Err(AppError::Launchctl(
+    Err(AppError::Message(
         "Unavailable in the Mac App Store edition: administrator access is not supported."
             .to_string(),
     ))
@@ -621,7 +621,7 @@ pub async fn restart_as_administrator(app: tauri::AppHandle) -> Result<(), AppEr
 
     let executable = std::env::current_exe()?;
     let home = dirs::home_dir()
-        .ok_or_else(|| AppError::Launchctl("could not determine home directory".to_string()))?;
+        .ok_or_else(|| AppError::Message("could not determine home directory".to_string()))?;
     let command = administrator_launch_command(&executable, &home, launchctl::effective_uid());
     let output = std::process::Command::new("osascript")
         .args([
@@ -637,7 +637,7 @@ pub async fn restart_as_administrator(app: tauri::AppHandle) -> Result<(), AppEr
         .output()?;
 
     if !output.status.success() {
-        return Err(AppError::Launchctl(format!(
+        return Err(AppError::Message(format!(
             "administrator relaunch failed: {}",
             String::from_utf8_lossy(&output.stderr)
         )));
@@ -647,7 +647,7 @@ pub async fn restart_as_administrator(app: tauri::AppHandle) -> Result<(), AppEr
         .trim()
         .parse::<u32>()
         .map_err(|_| {
-            AppError::Launchctl(format!(
+            AppError::Message(format!(
                 "administrator relaunch returned an invalid process id: {}",
                 String::from_utf8_lossy(&output.stdout).trim()
             ))
@@ -663,7 +663,7 @@ pub async fn restart_as_administrator(app: tauri::AppHandle) -> Result<(), AppEr
     }
     if !administrator_ready {
         let log = std::fs::read_to_string("/tmp/launchpane-admin.log").unwrap_or_default();
-        return Err(AppError::Launchctl(format!(
+        return Err(AppError::Message(format!(
             "administrator process did not start{}",
             if log.trim().is_empty() {
                 String::new()
@@ -744,7 +744,7 @@ pub async fn delete_job(plist_path: String, label: String) -> Result<(), AppErro
     ensure_user_agent(&plist_path)?;
     let (domain, actual_label) = control_target(&plist_path, true)?;
     if label != actual_label {
-        return Err(AppError::Launchctl(
+        return Err(AppError::Message(
             "Label does not match the selected service.".to_string(),
         ));
     }
@@ -828,7 +828,7 @@ pub async fn get_home_dir() -> Result<String, AppError> {
     crate::user_paths::home_dir()?
         .to_str()
         .map(String::from)
-        .ok_or_else(|| AppError::Launchctl("Home directory is not valid UTF-8.".to_string()))
+        .ok_or_else(|| AppError::Message("Home directory is not valid UTF-8.".to_string()))
 }
 
 #[tauri::command]
@@ -846,7 +846,7 @@ pub async fn open_project_page() -> Result<(), AppError> {
         .arg("https://github.com/webmaxru/Launchpane")
         .output()?;
     if !output.status.success() {
-        return Err(AppError::Launchctl(format!(
+        return Err(AppError::Message(format!(
             "Could not open the project page: {}",
             String::from_utf8_lossy(&output.stderr).trim()
         )));

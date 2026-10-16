@@ -833,7 +833,7 @@ function App() {
                 {actionFeedback.detail && (
                   <details className="mt-1 text-xs opacity-80">
                     <summary className="cursor-pointer">Technical details</summary>
-                    <p className="mt-1 break-words font-mono">
+                    <p className="mt-1 whitespace-pre-wrap break-words font-mono [overflow-wrap:anywhere]">
                       {actionFeedback.detail}
                     </p>
                   </details>
