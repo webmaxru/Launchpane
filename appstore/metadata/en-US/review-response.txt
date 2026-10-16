@@ -1,5 +1,3 @@
-DRAFT - attach exact-build QA and recording before sending this response.
-
 Hello App Review,
 
 We have addressed the October 15, 2026 guideline 2.4.5(i) rejection in the
@@ -32,6 +30,6 @@ updates, purchases or unlocks another edition.
 Data stays local, with no collection, analytics, ads, payment or cloud services.
 There are no regional differences or regulated content.
 
-The exact submitted build number and verified current-macOS recording must
-be added when production-signed native QA is complete; the old 1.2.1 evidence
-does not verify this candidate.
+The submitted build is 1.3.3 (202610162230). We installed that exact build
+through TestFlight and verified folder consent, inventory, details and the
+absence of service-control actions on macOS 12.7.6.

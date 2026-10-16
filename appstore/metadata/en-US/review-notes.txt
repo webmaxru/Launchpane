@@ -32,6 +32,6 @@ The runtime network client/server entitlements support Tauri/WebKit on older
 supported macOS. All product data remains local. There are no analytics,
 ads, payments, cloud services, regulated content or regional differences.
 
-Preparation status: this text does not establish exact-build native QA or a
-current-macOS recording. Attach verified build/recording evidence before App
-Review submission. The prior 1.2.1 recording does not verify this edition.
+Submitted build 1.3.3 (202610162230) was installed through TestFlight and
+checked on a MacBook running macOS 12.7.6: folder consent, Cancel, inventory,
+search, details and absence of service-control actions were verified.
