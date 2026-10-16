@@ -9,9 +9,20 @@ All four native captures were refreshed from local sandbox preview
 `1.3.3 (202610162201)` after actual folder selection, disposable plist creation
 through the New Agent form, editing a standard-output path, selected sample-log
 reading and Spotify login-helper search. The plist was verified not registered
-with launchd and was removed afterward. These remain local preview evidence,
-not exact production-build QA. Production upload status is tracked in App Store
-Connect; no App Review submission is claimed here.
+with launchd and was removed afterward. Those captures are local preview
+evidence.
+
+Production build `1.3.3 (202610162230)` is Apple-processed `VALID`, attached to
+the manual-release version, and was installed through TestFlight on a MacBook
+Air (M1) running macOS 12.7.6 (TestFlight Beta Distribution signature, App
+Store receipt present, no `get-task-allow`). On that exact build the following
+were verified: fixed error card before folder consent, folder panel Cancel
+(no error, access unchanged), granting `~/Library/LaunchAgents`, inventory,
+label search, a row menu limited to View details and Reveal in Finder, and a
+details view offering only Edit and Reveal. Review submission
+`9249e9ef-0e6c-4043-9197-2bb9e2053b49` was resubmitted with this build on
+October 16, 2026 and is `WAITING_FOR_REVIEW`. No current-macOS screen
+recording was attached; this host runs macOS 12.7.6.
 
 ### Previous candidate: 1.3.2
 
