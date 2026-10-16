@@ -1,4 +1,4 @@
-Launchpane 1.3.2 - sandboxed service inspector and personal plist editor
+Launchpane 1.3.3 - sandboxed service inspector and personal plist editor
 
 Response to October 15 rejection, guideline 2.4.5(i):
 All temporary filesystem exceptions are removed. The distribution signature

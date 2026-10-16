@@ -3,7 +3,7 @@ DRAFT - attach exact-build QA and recording before sending this response.
 Hello App Review,
 
 We have addressed the October 15, 2026 guideline 2.4.5(i) rejection in the
-1.3.2 candidate. All temporary filesystem exceptions are removed, and the
+1.3.3 candidate. All temporary filesystem exceptions are removed, and the
 distribution signature omits com.apple.security.get-task-allow entirely.
 The source and final executable entitlements are checked for every architecture.
 

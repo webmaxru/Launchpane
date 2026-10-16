@@ -1,4 +1,4 @@
-Launchpane 1.3.2
+Launchpane 1.3.3
 
 - Sandboxed service inspection and personal LaunchAgent plist editing
 - Native folder consent for inventory and logs, with clear recovery instructions
@@ -6,3 +6,4 @@ Launchpane 1.3.2
 - Removed temporary filesystem exceptions and corrected signing entitlements
 - Saving a plist does not activate it; choose folders again after quitting
 - Current native screenshots use lossless opaque RGB rendering
+- Folder-access and loading errors now wrap cleanly and no longer carry an unrelated "launchctl error" prefix

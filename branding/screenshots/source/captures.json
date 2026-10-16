@@ -1,8 +1,8 @@
 {
-  "version": "1.3.2",
-  "buildNumber": "202610160101",
+  "version": "1.3.3",
+  "buildNumber": "202610162201",
   "distribution": "app-store",
-  "sourceDigest": "e87e6a010f341942969e79ca5025ddded3977633f411d0c69c6610d1d9739632",
+  "sourceDigest": "27d612f53ccc9ce5da783ae9dc2edd3fc5e49e854f28eb9f45bd45d7a6a87630",
   "captureMethod": "native-local-sandbox",
   "submittedBuildQA": false,
   "macOS": "12.7.6",
@@ -11,22 +11,22 @@
   "processing": "Actual 1200x750 native sandbox window captured at Retina resolution. Logs header and log-path labels are covered by explicit privacy masks. No browser rendering, fabricated service states or substituted UI.",
   "screenshots": {
     "overview": {
-      "sha256": "769cf71cb98e339092e17cd3a4434c2b93a5401bebbe2167a3a47ee121290c67",
+      "sha256": "397c27df5e2f012e96e155b9db2ce61c96117f4c1ce5c50455e590ee1c525cab",
       "description": "Current sandboxed inspector filtered to a disposable personal plist created through the native app. It is not activated; runtime actions and removal are absent.",
       "privacyRedactions": []
     },
     "detail": {
-      "sha256": "ee80491080b4a1dec153b77288d0a89e340330f55793551c9a3302f49e7de1e4",
+      "sha256": "ee8877d88a771972087cc1c372dcaa7a8e6855dd7cc37b11b9a0daf56d2697f0",
       "description": "Actual personal plist editor for the disposable /usr/bin/true agent, explaining that Save does not reload a service. No schedule or automatic launch is configured.",
       "privacyRedactions": []
     },
     "login-items": {
-      "sha256": "f918ed190466c94141310f6293c234a9b814f40c83651e824195d8982bf49061",
+      "sha256": "59b36d2e32eed34c300b5062ffa226021efe83fe35df6c34a7fd9767df9f824a",
       "description": "Real Spotify login helper discovered after explicit Applications folder selection. It is inspection-only; no vendor state was changed.",
       "privacyRedactions": []
     },
     "logs": {
-      "sha256": "96f818c62a4c8f419afbac64a47ebb0d29838150de48b1dac860d8e6ff21e47e",
+      "sha256": "90b8baa0e33abf12d87f7163cf2fa402c6e8223d652f172ca369f5831c664176",
       "description": "Actual sandboxed log reader showing a deliberately labeled local sample file in the user-selected LaunchAgents folder. The service was not run and no filesystem exception is present.",
       "privacyRedactions": [
         "Full user plist path in the details header",
