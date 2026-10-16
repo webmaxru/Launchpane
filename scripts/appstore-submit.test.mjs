@@ -166,3 +166,57 @@ test("Apple upload failure is explicit and does not change metadata", async () =
   await assert.rejects(uploadBuild("202610120003", packagePath), /no upload operations/);
   assert.ok(calls.every(call => !(call.method === "PATCH" && call.url.includes("appStore"))));
 });
+const reservation = (overrides = {}) => ({
+  id: "reserved",
+  attributes: {
+    cfBundleVersion: "202610120003", cfBundleShortVersionString: version, uploadedDate: null,
+    state: { state: "AWAITING_UPLOAD", errors: [] }, ...overrides,
+  },
+});
+test("strict preflight still rejects a validation reservation", async () => {
+  handler = url => url.pathname.endsWith("/buildUploads") ? page([reservation()]) : inventory(url);
+  await assert.rejects(preflight("202610120003"), /do not reuse/);
+});
+test("upload preflight accepts only an exact, unuploaded validation reservation", async () => {
+  for (const overrides of [
+    { cfBundleShortVersionString: "0.0.1" },
+    { uploadedDate: "2026-10-16T00:00:00Z" },
+    { state: { state: "COMPLETE", errors: [] } },
+    { state: { state: "AWAITING_UPLOAD", errors: [{ code: "1" }] } },
+  ]) {
+    handler = url => url.pathname.endsWith("/buildUploads") ? page([reservation(overrides)]) : inventory(url);
+    await assert.rejects(preflight("202610120003", { allowValidationReservation: true }), /do not reuse/);
+  }
+  handler = url => url.pathname.endsWith("/buildUploads") ? page([reservation()]) : inventory(url);
+  assert.equal((await preflight("202610120003", { allowValidationReservation: true })).reservation, "reserved");
+  handler = url => url.pathname.endsWith("/buildUploads")
+    ? page([reservation(), { ...reservation(), id: "other" }]) : inventory(url);
+  await assert.rejects(preflight("202610120003", { allowValidationReservation: true }), /Multiple validation reservations/);
+});
+test("completes a validation reservation instead of creating a duplicate upload", async () => {
+  const packagePath = join(directory, "reserved.pkg");
+  writeFileSync(packagePath, "test");
+  handler = (url, method, body) => {
+    if (url.pathname === "/v1/buildUploads/reserved/buildUploadFiles") return page([{ attributes: { assetType: "ASSET_SPI" } }]);
+    if (url.pathname === "/v1/buildUploads" && method === "POST") throw new Error("must not create a duplicate upload");
+    if (url.pathname === "/v1/buildUploadFiles" && method === "POST") {
+      assert.equal(body.data.relationships.buildUpload.data.id, "reserved");
+      return { data: { id: "file", attributes: { uploadOperations: [] } } };
+    }
+    if (url.pathname.endsWith("/buildUploads")) return page([reservation()]);
+    return inventory(url);
+  };
+  await assert.rejects(uploadBuild("202610120003", packagePath), /no upload operations/);
+  assert.ok(calls.some(call => call.method === "POST" && call.url.endsWith("/v1/buildUploadFiles")));
+});
+test("refuses a reservation that already holds a package", async () => {
+  const packagePath = join(directory, "reused.pkg");
+  writeFileSync(packagePath, "test");
+  handler = url => {
+    if (url.pathname === "/v1/buildUploads/reserved/buildUploadFiles") return page([{ attributes: { assetType: "ASSET" } }]);
+    if (url.pathname.endsWith("/buildUploads")) return page([reservation()]);
+    return inventory(url);
+  };
+  await assert.rejects(uploadBuild("202610120003", packagePath), /already has a package/);
+  assert.ok(calls.every(call => call.method === "GET"));
+});
