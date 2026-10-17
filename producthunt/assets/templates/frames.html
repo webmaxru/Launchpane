@@ -1,0 +1,339 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Launchpane · Product Hunt visuals</title>
+<!--
+  One template for every rendered Product Hunt visual. Frame data (size, copy, captures)
+  lives in ../frames.js. Open this file without a hash to preview all frames, or with
+  #<frame-id> to show one frame at its native size. Render with `pnpm producthunt:assets`.
+-->
+<style>
+  :root {
+    --indigo-light: #6e8bff; --indigo: #3d5be0; --indigo-deep: #242a9e;
+    --mint-light: #7df9d0; --mint: #2bd39c; --amber: #ffd36b;
+  }
+  * { box-sizing: border-box; margin: 0; }
+  html, body { overflow: hidden; }
+  body {
+    position: relative;
+    color: #fbfcff;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  .frame {
+    position: absolute; inset: 0; overflow: hidden;
+    background:
+      radial-gradient(70% 80% at 88% -12%, rgba(110, 139, 255, .42), transparent 62%),
+      radial-gradient(60% 70% at -8% 112%, rgba(43, 211, 156, .12), transparent 60%),
+      linear-gradient(160deg, #262da6 0%, #1a1f78 46%, #0f1247 100%);
+  }
+  .frame.light { background: #ffffff; }
+  .brand { position: absolute; display: flex; align-items: center; gap: .45em; font-weight: 700; letter-spacing: -.02em; color: #fbfcff; }
+  .brand img { display: block; }
+  .text { position: absolute; display: flex; flex-direction: column; }
+  .eyebrow { color: var(--mint-light); font-weight: 650; letter-spacing: .09em; text-transform: uppercase; }
+  h1 { font-weight: 700; letter-spacing: -.045em; line-height: 1.03; text-wrap: balance; }
+  .body { color: #d5dbff; line-height: 1.42; text-wrap: pretty; }
+  .chips { display: flex; flex-wrap: wrap; gap: .6em; }
+  .chips.center { justify-content: center; }
+  .chip {
+    border: 1px solid rgba(255, 255, 255, .22); background: rgba(255, 255, 255, .07);
+    border-radius: 999px; padding: .42em .95em; font-weight: 600; color: #e9ecff; white-space: nowrap;
+  }
+  .url { font-family: ui-monospace, "SF Mono", Menlo, monospace; color: var(--mint-light); letter-spacing: -.01em; }
+  .shot {
+    position: absolute; overflow: hidden;
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, .2), 0 44px 90px rgba(4, 6, 32, .55), 0 12px 26px rgba(4, 6, 32, .35);
+  }
+  .shot img { position: absolute; display: block; max-width: none; }
+  svg.layer { position: absolute; left: 0; top: 0; pointer-events: none; }
+  /* Preview index */
+  body.index { overflow: auto; background: #0f1247; padding: 32px; }
+  body.index h2 { font-size: 15px; font-weight: 600; margin: 28px 0 10px; color: #c9d1ff; }
+  body.index .cell { position: relative; overflow: hidden; border-radius: 6px; box-shadow: 0 0 0 1px rgba(255,255,255,.15); }
+  body.index iframe { border: 0; transform-origin: 0 0; position: absolute; left: 0; top: 0; }
+</style>
+<script src="../frames.js"></script>
+</head>
+<body>
+<template id="icon-svg">
+  <svg viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <linearGradient id="frameGradient" x1="0.1" y1="0" x2="0.9" y2="1">
+        <stop offset="0%" stop-color="#6E8BFF"/><stop offset="50%" stop-color="#3D5BE0"/><stop offset="100%" stop-color="#242A9E"/>
+      </linearGradient>
+      <linearGradient id="pulseGradient" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0%" stop-color="#2BD39C"/><stop offset="50%" stop-color="#7DF9D0"/><stop offset="100%" stop-color="#FFD36B"/>
+      </linearGradient>
+      <filter id="frameShadow" x="-30%" y="-30%" width="160%" height="160%">
+        <feDropShadow dx="0" dy="18" stdDeviation="22" flood-color="#0B1030" flood-opacity="0.30"/>
+      </filter>
+      <filter id="pulseGlow" x="-50%" y="-50%" width="200%" height="200%">
+        <feGaussianBlur stdDeviation="18" result="b"/>
+        <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+      </filter>
+      <mask id="frameGap">
+        <rect x="0" y="0" width="1024" height="1024" fill="#fff"/>
+        <rect x="96" y="432" width="200" height="160" rx="40" fill="#000"/>
+        <rect x="728" y="432" width="200" height="160" rx="40" fill="#000"/>
+      </mask>
+    </defs>
+    <g filter="url(#frameShadow)" mask="url(#frameGap)">
+      <rect x="186" y="186" width="652" height="652" rx="186" fill="none" stroke="url(#frameGradient)" stroke-width="86"/>
+    </g>
+    <g class="dots">
+      <circle cx="332" cy="356" r="34" fill="#9FB6FF"/>
+      <circle cx="444" cy="356" r="34" fill="#9FB6FF" opacity="0.6"/>
+      <circle cx="556" cy="356" r="34" fill="#9FB6FF" opacity="0.35"/>
+    </g>
+    <g filter="url(#pulseGlow)">
+      <path class="pulse" d="M128 512 H330 l64 -150 l84 320 l70 -210 l54 40 H896" fill="none" stroke="url(#pulseGradient)"
+            stroke-width="56" stroke-linecap="round" stroke-linejoin="round"/>
+    </g>
+  </svg>
+</template>
+<script>
+  const { frames } = globalThis.LAUNCHPANE_FRAMES
+  const CAPTURES = "../../capture/"
+  const ICON = "../../../branding/launchpane-icon-1024.png"
+  const SVG_NS = "http://www.w3.org/2000/svg"
+  // Relative moves of the pulse spike in the app icon (1024 px canvas); they sum to zero height.
+  const SPIKE = [[64, -150], [84, 320], [70, -210], [54, 40]]
+
+  const [frameId, query = ""] = decodeURIComponent(location.hash.slice(1)).split("/")
+  const params = new URLSearchParams(query)
+  const frame = frames.find(f => f.id === frameId)
+
+  const px = value => (typeof value === "number" ? `${value}px` : value)
+  function el(tag, className, parent, text) {
+    const node = document.createElement(tag)
+    if (className) node.className = className
+    if (text != null) node.textContent = text
+    if (parent) parent.append(node)
+    return node
+  }
+  function place(node, styles) {
+    for (const [key, value] of Object.entries(styles)) node.style[key] = px(value)
+    return node
+  }
+  const box = node => node.getBoundingClientRect()
+
+  function shot(parent, spec, position) {
+    const [x, y, w, h] = spec.crop
+    const scale = spec.width ? spec.width / w : spec.height / h
+    const card = place(el("div", "shot", parent), {
+      width: w * scale, height: h * scale, borderRadius: Math.max(8, 10 * scale), ...position,
+    })
+    const img = place(el("img", null, card), { width: 1200 * scale, height: 750 * scale, left: -x * scale, top: -y * scale })
+    img.src = CAPTURES + spec.src
+    img.alt = ""
+    return card
+  }
+  const shotSize = spec => {
+    const [, , w, h] = spec.crop
+    const scale = spec.width ? spec.width / w : spec.height / h
+    return { width: w * scale, height: h * scale }
+  }
+
+  function brand(parent, position, size) {
+    const node = place(el("div", "brand", parent), { ...position, fontSize: size * 0.66 })
+    const img = place(el("img", null, node), { width: size, height: size })
+    img.src = ICON
+    img.alt = ""
+    el("span", null, node, "Launchpane")
+    return node
+  }
+
+  function text(parent, f, position, s) {
+    const node = place(el("div", "text", parent), position)
+    if (s.align) node.style.alignItems = s.align
+    if (s.align === "center") node.style.textAlign = "center"
+    if (f.eyebrow) place(el("div", "eyebrow", node, f.eyebrow), { fontSize: s.eyebrow, marginBottom: s.gap * 0.9 })
+    if (f.title && !s.skipTitle) place(el("h1", null, node, f.title), { fontSize: s.title })
+    if (f.body) place(el("p", "body", node, f.body), { fontSize: s.body, marginTop: s.gap, maxWidth: s.bodyWidth || "none" })
+    if (f.chips) {
+      const chips = place(el("div", s.align === "center" ? "chips center" : "chips", node), { marginTop: s.gap * 1.5, fontSize: s.chip })
+      for (const chip of f.chips) el("span", "chip", chips, chip)
+    }
+    if (f.url && s.url) place(el("div", "url", node, f.url), { fontSize: s.url, marginTop: s.gap * 1.6 })
+    return node
+  }
+
+  function svgLayer(parent, z = 0) {
+    const svg = document.createElementNS(SVG_NS, "svg")
+    svg.setAttribute("class", "layer")
+    svg.setAttribute("width", frame.width)
+    svg.setAttribute("height", frame.height)
+    svg.style.zIndex = z
+    parent.append(svg)
+    return svg
+  }
+  function svgEl(parent, tag, attrs) {
+    const node = document.createElementNS(SVG_NS, tag)
+    for (const [key, value] of Object.entries(attrs)) node.setAttribute(key, value)
+    parent.append(node)
+    return node
+  }
+  function gradient(svg, id, x1, x2, stops) {
+    const defs = svg.querySelector("defs") || svgEl(svg, "defs", {})
+    const g = svgEl(defs, "linearGradient", { id, gradientUnits: "userSpaceOnUse", x1, y1: 0, x2, y2: 0 })
+    for (const [offset, color, opacity = 1] of stops) svgEl(g, "stop", { offset, "stop-color": color, "stop-opacity": opacity })
+    return `url(#${id})`
+  }
+  function glow(svg, id, deviation) {
+    const defs = svg.querySelector("defs") || svgEl(svg, "defs", {})
+    // User-space region: a bounding-box region would be empty for zero-height horizontal lines.
+    const filter = svgEl(defs, "filter", { id, filterUnits: "userSpaceOnUse", x: 0, y: 0, width: frame.width, height: frame.height })
+    svgEl(filter, "feGaussianBlur", { stdDeviation: deviation, result: "b" })
+    const merge = svgEl(filter, "feMerge", {})
+    svgEl(merge, "feMergeNode", { in: "b" })
+    svgEl(merge, "feMergeNode", { in: "SourceGraphic" })
+    return `url(#${id})`
+  }
+
+  // Thin signal line with the icon's pulse spike, ending in an amber dot at x1.
+  function signal(parent, { y, x0, x1, spikeAt, amp, stroke }) {
+    const svg = svgLayer(parent, 0)
+    let d = `M${x0} ${y} H${spikeAt}`
+    for (const [dx, dy] of SPIKE) d += ` l${dx * amp} ${dy * amp}`
+    d += ` H${x1}`
+    svgEl(svg, "path", {
+      d, fill: "none", "stroke-width": stroke, "stroke-linecap": "round", "stroke-linejoin": "round",
+      stroke: gradient(svg, "signalGradient", x0, x1, [[0, "#2bd39c", 0], [0.18, "#2bd39c"], [0.6, "#7df9d0"], [1, "#ffd36b"]]),
+      filter: glow(svg, "signalGlow", stroke * 1.6),
+    })
+    svgEl(svg, "circle", { cx: x1, cy: y, r: stroke * 2.2, fill: "#ffd36b" })
+  }
+
+  // Large icon whose pulse continues to both frame edges.
+  function emblem(parent, { cx, top, size }) {
+    const left = cx - size / 2
+    const y = top + size / 2
+    const stroke = (56 / 1024) * size
+    const svg = svgLayer(parent, 0)
+    const blur = glow(svg, "emblemGlow", stroke * 1.4)
+    const inLeft = left + 0.125 * size
+    const outRight = left + 0.875 * size
+    svgEl(svg, "line", { x1: 0, y1: y, x2: inLeft, y2: y, "stroke-width": stroke * 0.55, "stroke-linecap": "round", filter: blur,
+      stroke: gradient(svg, "emblemIn", 0, inLeft, [[0, "#2bd39c", 0], [1, "#2bd39c"]]) })
+    svgEl(svg, "line", { x1: outRight, y1: y, x2: frame.width, y2: y, "stroke-width": stroke * 0.55, "stroke-linecap": "round", filter: blur,
+      stroke: gradient(svg, "emblemOut", outRight, frame.width, [[0, "#ffd36b"], [1, "#ffd36b", 0]]) })
+    const img = place(el("img", null, parent), { position: "absolute", left, top, width: size, height: size, zIndex: 1 })
+    img.src = ICON
+    img.alt = ""
+    return { bottom: top + size }
+  }
+
+  const layouts = {
+    hero(root, f) {
+      const k = f.width / 1270
+      const margin = 72 * k
+      brand(root, { left: margin, top: 50 * k }, 34 * k)
+      const t = text(root, f, { left: margin, top: 116 * k, width: f.width - margin * 2 },
+        { eyebrow: 15 * k, title: 64 * k, body: 24 * k, chip: 15 * k, gap: 14 * k })
+      const spec = f.shots[0]
+      const size = shotSize(spec)
+      shot(root, spec, { left: (f.width - size.width) / 2, top: box(t).bottom + 40 * k })
+    },
+    split(root, f) {
+      const margin = 72
+      brand(root, { left: margin, top: 52 }, 30)
+      const spec = f.shots[0]
+      const size = shotSize(spec)
+      const shotLeft = f.width - 60 - size.width
+      const t = text(root, f, { left: margin, top: 0, height: f.height, width: Math.min(410, shotLeft - margin - 48), justifyContent: "center" },
+        { eyebrow: 14, title: 50, body: 21, chip: 14, gap: 16 })
+      const card = shot(root, spec, { left: shotLeft, top: (f.height - size.height) / 2 + 12, zIndex: 1 })
+      const textBottom = Math.max(...[...t.children].map(c => box(c).bottom))
+      signal(root, { y: textBottom + 54, x0: 0, x1: box(card).left, spikeAt: margin + 40, amp: 0.2, stroke: 3 })
+    },
+    closing(root, f) {
+      const k = f.width / 1270
+      const size = 170 * k
+      const gap = 22 * k
+      const e = f.eyebrow
+        ? place(el("div", "eyebrow", root, f.eyebrow), { position: "absolute", left: 0, right: 0, top: 0, textAlign: "center", fontSize: 18 * k })
+        : null
+      const t = text(root, { ...f, eyebrow: null }, { left: 80 * k, right: 80 * k, top: 0, zIndex: 1 },
+        { align: "center", title: 66 * k, body: 28 * k, chip: 17 * k, url: 24 * k, gap: 14 * k })
+      // Measure first, then center the eyebrow, emblem, and text block vertically.
+      const eyebrowSpace = e ? box(e).height + 44 * k : 0
+      let top = (f.height - (eyebrowSpace + size + gap + box(t).height)) / 2
+      if (e) e.style.top = px(top)
+      const mark = emblem(root, { cx: f.width / 2, top: top + eyebrowSpace, size })
+      t.style.top = px(mark.bottom + gap)
+    },
+    card(root, f) {
+      const margin = 64
+      brand(root, { left: margin, top: 50 }, 32)
+      const spec = f.shots[0]
+      const size = shotSize(spec)
+      text(root, f, { left: margin, top: 0, height: f.height, width: 470, justifyContent: "center", paddingTop: 30 },
+        { eyebrow: 14, title: 54, body: 21, chip: 14, gap: 16 })
+      shot(root, spec, { left: 560, top: (f.height - size.height) / 2 + 20 })
+    },
+    square(root, f) {
+      const margin = 72
+      brand(root, { left: margin, top: 64 }, 40)
+      const t = text(root, f, { left: margin, top: 160, width: f.width - margin * 2 },
+        { eyebrow: 20, title: 86, body: 30, chip: 18, gap: 18 })
+      const spec = f.shots[0]
+      const size = shotSize(spec)
+      shot(root, spec, { left: (f.width - size.width) / 2, top: box(t).bottom + 64 })
+    },
+    story(root, f) {
+      // Stories overlay the top ~220 px with app UI, so the brand and headline start below it.
+      const margin = 80
+      brand(root, { left: margin, top: 230 }, 48)
+      const t = text(root, f, { left: margin, top: 340, width: f.width - margin * 2 },
+        { eyebrow: 26, title: 112, body: 38, chip: 24, gap: 24 })
+      const [overview, logs] = f.shots
+      const o = shot(root, overview, { left: (f.width - shotSize(overview).width) / 2, top: box(t).bottom + 70 })
+      shot(root, logs, { left: f.width - 40 - shotSize(logs).width, top: box(o).bottom - 80, zIndex: 2 })
+    },
+    pulse(root, f) {
+      // Animated thumbnail: the pulse draws in, holds, then travels out. t = 0..1 from the hash.
+      root.classList.add("light")
+      const svg = document.getElementById("icon-svg").content.firstElementChild.cloneNode(true)
+      const size = f.width * 0.92
+      place(svg, { position: "absolute", left: (f.width - size) / 2, top: (f.height - size) / 2, width: size, height: size })
+      root.append(svg)
+      const path = svg.querySelector(".pulse")
+      const length = path.getTotalLength()
+      const t = Number(params.get("t") || 0.6)
+      const ease = x => (x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2)
+      let offset = 0
+      if (t < 0.45) offset = length * (1 - ease(t / 0.45))
+      else if (t > 0.8) offset = -length * ease((t - 0.8) / 0.2)
+      path.setAttribute("stroke-dasharray", `${length} ${length}`)
+      path.setAttribute("stroke-dashoffset", offset)
+    },
+  }
+
+  function renderFrame() {
+    document.documentElement.style.width = px(frame.width)
+    document.documentElement.style.height = px(frame.height)
+    document.body.style.width = px(frame.width)
+    document.body.style.height = px(frame.height)
+    const root = el("main", "frame", document.body)
+    layouts[frame.layout](root, frame)
+  }
+
+  function renderIndex() {
+    document.body.className = "index"
+    el("h1", null, document.body, "Launchpane · Product Hunt visuals").style.fontSize = "26px"
+    for (const f of frames) {
+      el("h2", null, document.body, `${f.id} — ${f.out} (${f.width}×${f.height} @${f.scale}x)`)
+      const preview = Math.min(1, 640 / f.width)
+      const cell = place(el("div", "cell", document.body), { width: f.width * preview, height: f.height * preview })
+      const frameEl = place(el("iframe", null, cell), { width: f.width, height: f.height, transform: `scale(${preview})` })
+      frameEl.src = `frames.html#${f.id}`
+    }
+  }
+
+  if (frame) renderFrame()
+  else renderIndex()
+</script>
+</body>
+</html>
