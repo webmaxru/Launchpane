@@ -11,8 +11,21 @@ only the three remaining entitlements, after actual folder selection,
 disposable plist creation through New Agent, editing its standard-output path,
 sample-log reading and Spotify login-helper search. The plist was verified not
 registered with launchd and was removed afterward. Those captures are local
-preview evidence; exact-build QA is recorded once the production build is
-installed through TestFlight.
+preview evidence.
+
+Production build `1.3.4 (202610171400)` is Apple-processed `VALID`, attached to
+the manual-release version, and was installed through TestFlight on a MacBook
+Air (M1) running macOS 12.7.6 (TestFlight Beta Distribution signature, team
+`B9FMXAW5TZ`, App Store receipt present). Its signed entitlements are only
+`app-sandbox`, `files.user-selected.read-write` and `network.client` plus the
+Apple-added `application-identifier`, `team-identifier` and
+`beta-reports-active`; no `network.server` or `get-task-allow`. On that exact
+build the following were verified: the window renders (not blank), the error
+card and wrapped technical details before folder consent, folder panel Cancel
+(no error, access unchanged), granting `~/Library/LaunchAgents` (6 services),
+label search, a row menu limited to View details and Reveal in Finder, and a
+details view offering only Edit and Reveal. No current-macOS screen recording
+was attached; this host runs macOS 12.7.6.
 
 ### Previous candidate: 1.3.3 (October 16, 2026)
 
@@ -35,7 +48,8 @@ were verified: fixed error card before folder consent, folder panel Cancel
 label search, a row menu limited to View details and Reveal in Finder, and a
 details view offering only Edit and Reveal. Review submission
 `9249e9ef-0e6c-4043-9197-2bb9e2053b49` was resubmitted with this build on
-October 16, 2026 and is `WAITING_FOR_REVIEW`. No current-macOS screen
+October 16, 2026; App Review then rejected that build for the unused
+`network.server` entitlement (see `rejection-postmortems.md`). No current-macOS screen
 recording was attached; this host runs macOS 12.7.6.
 
 ### Previous candidate: 1.3.2

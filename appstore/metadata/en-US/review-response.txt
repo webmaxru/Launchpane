@@ -37,4 +37,7 @@ updates, purchases or unlocks another edition.
 Data stays local, with no collection, analytics, ads, payment or cloud services.
 There are no regional differences or regulated content.
 
-The submitted 1.3.4 build is verified through TestFlight before submission.
+The submitted build 1.3.4 (202610171400) was installed through TestFlight and
+verified on macOS 12.7.6 (MacBook Air M1): its entitlements are only App
+Sandbox, user-selected read-write files and network.client; the window renders,
+and folder consent, Cancel, inventory, search, row menu and details work.
