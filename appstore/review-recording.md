@@ -1,6 +1,20 @@
 # App Review recording and QA checklist
 
-## Current edition: October 16, 2026
+## Current edition: 1.3.4 entitlement minimization
+
+Candidate 1.3.4 removes the unused `com.apple.security.network.server`
+entitlement flagged by App Review on build `1.3.3 (202610162230)`. A sandboxed
+removal test on macOS 12.7.6 showed `network.client` alone renders the full UI
+while a build with no network entitlement is blank. All four native captures
+were refreshed from local sandbox preview `1.3.4 (202610170010)`, signed with
+only the three remaining entitlements, after actual folder selection,
+disposable plist creation through New Agent, editing its standard-output path,
+sample-log reading and Spotify login-helper search. The plist was verified not
+registered with launchd and was removed afterward. Those captures are local
+preview evidence; exact-build QA is recorded once the production build is
+installed through TestFlight.
+
+### Previous candidate: 1.3.3 (October 16, 2026)
 
 Candidate 1.3.3 fixes folder-access and inventory error formatting seen in the
 1.3.2 TestFlight build: non-launchctl failures no longer carry a

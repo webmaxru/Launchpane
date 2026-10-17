@@ -40,17 +40,28 @@ plists can be created and edited but not activated. See the
 
 ## Runtime and signing entitlements
 
-`com.apple.security.app-sandbox`, `com.apple.security.network.client`,
-`com.apple.security.network.server`, and user-selected read/write access are
-Boolean true. The network entitlements support Tauri's embedded WebKit process
-on supported older macOS; Launchpane's service data stays local.
+The Store edition requests exactly three entitlements, each tied to shipped
+functionality and enforced by the justification map in
+`scripts/verify-store-entitlements.py`:
+
+| Entitlement | Functionality | Evidence |
+| --- | --- | --- |
+| `com.apple.security.app-sandbox` | Required for Mac App Store distribution | Store requirement |
+| `com.apple.security.network.client` | Tauri's WKWebView content process loads the bundled UI | Removing it gives a blank window in a sandboxed build (macOS 12.7.6, October 16, 2026) |
+| `com.apple.security.files.user-selected.read-write` | Native folder consent for inventory/logs; personal plist create/edit | Folder-consent QA in [review-recording.md](review-recording.md) |
+
+`com.apple.security.network.server` is forbidden. Launchpane never listens for
+incoming connections; App Review rejected 1.3.3 for requesting it without
+matching functionality. A client-only sandboxed build renders and behaves
+identically. Launchpane makes no outbound requests of its own; its service data
+stays local.
 
 Signing adds only `com.apple.application-identifier` and
 `com.apple.developer.team-identifier`, derived from the matching distribution
 profile. `scripts/verify-store-entitlements.py` validates the source entitlement
 file, generated signing entitlements and final executable entitlements.
-Unknown entitlements, temporary file exceptions, and either value of the
-debugging entitlement fail validation.
+Unknown or unjustified entitlements, `network.server`, temporary file
+exceptions, and either value of the debugging entitlement fail validation.
 
 These changes address the reported entitlement configuration, not a guarantee
 of approval. They must pass exact distribution-build QA before resubmission.

@@ -163,6 +163,35 @@ Local cross-builds need `RUSTUP_HOME="$HOME/.rustup"` and
 path. Never let one build overwrite the other artifact before copying and
 recording its feature, version, source, signing status and hashes.
 
+## Store entitlement and review-requirement audit (mandatory)
+
+Run this on every Store candidate and after every App Review message, before a
+version bump. See [rejection post-mortems](../../../../appstore/rejection-postmortems.md).
+
+1. Read the complete Apple message, including automated analysis, linked
+   documentation and guideline text. Record every distinct requirement as its
+   own todo; the listed examples are not the full scope of the guideline.
+2. Re-audit the WHOLE entitlement set, not just keys Apple named. For each key
+   in `src-tauri/entitlements/app-store.plist` and the signed output, name the
+   concrete shipped feature that needs it. "Tauri/WebKit might need it" or
+   "added together while debugging" is not a justification. Apps must carry the
+   minimum set; Apple rejects any entitlement without matching functionality.
+3. Prove necessity natively by removal: build a sandboxed copy without the key,
+   launch it, and exercise the feature. Keep the key only if that feature
+   breaks; record the evidence in `appstore/sandbox-exceptions.md`. Remove
+   paired keys one at a time (e.g. `network.client` vs `network.server`).
+4. A new key must be added to the `REQUIRED` justification map in
+   `scripts/verify-store-entitlements.py` with its evidence. A rejected or
+   unused key goes in `FORBIDDEN` with a regression case in
+   `scripts/release-pipeline.test.mjs`. Never make the verifier require a key
+   merely because it is currently present.
+5. Check the rest of guideline 2.4.5 and QA1773 (sandbox, no temporary
+   exceptions, no debug entitlement, no self-installing helpers, minimal
+   entitlements), plus 2.3 metadata accuracy and 4.2/2.5 functionality, against
+   the candidate before resubmitting.
+6. Review notes must describe each entitlement's use accurately; never claim a
+   key "supports" a framework without the removal evidence above.
+
 ## Store assets, QA, and submission
 
 Run `pnpm store:screenshots`, `pnpm appstore:verify`, and
@@ -280,4 +309,5 @@ or revoked, not on every release.
 | Simultaneous availability requested | Keep GitHub draft and Store manual release; wait for approval gates |
 | Upload succeeds but build still processing | Report uploaded/processing, not ready/submitted/public |
 | "Prepare only" | No pushed publication-triggering tag, upload, submission or public release |
+| App Review rejection or automated entitlement notice | Full message read, every requirement tracked, entire entitlement set re-justified by removal testing, verifier updated, post-mortem recorded |
 | First signed GitHub release | Real full signing/notarization run required; secret-name checks alone are insufficient |
