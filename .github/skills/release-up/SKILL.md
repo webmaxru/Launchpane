@@ -117,6 +117,14 @@ and `upload` (default true). Dispatch it **on that same tag**, not `main`.
 dispatch inputs: both are forced false. Explicit review authorization is a
 separate exact-build QA stage, not a reason to change workflow defaults.
 
+### Mandatory Store entitlement audit
+
+Before bumping a Store candidate, and after any App Review message, run the
+runbook's entitlement and review-requirement audit. Every Store entitlement must
+map to shipped functionality, proven by a native removal test, and be listed in
+the verifier's justification map. Fixing only the keys Apple named is not a
+complete remediation: re-audit the whole set and the whole cited guideline.
+
 ## Prepare and freeze
 
 Use the existing version bump implementation. Prefer

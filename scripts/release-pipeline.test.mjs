@@ -49,6 +49,9 @@ with open(sys.argv[2], "wb") as f:
     ["com.apple.security.temporary-exception.files.home-relative-path.read-write", "<array><string>/Library/LaunchAgents/</string></array>"],
     ["com.apple.security.temporary-exception.files.home-relative-path.read-only", "<array><string>/Applications/</string></array>"],
     ["com.apple.security.app-sandbox", "<false/>"],
+    ["com.apple.security.network.server", "<true/>"],
+    ["com.apple.security.network.client", "<false/>"],
+    ["com.apple.security.files.downloads.read-write", "<true/>"],
   ]) {
     const path = join(directory, "invalid.plist");
     execFileSync("python3", ["-c", generate, source, path, key, `<plist version="1.0">${value}</plist>`]);

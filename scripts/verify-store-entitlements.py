@@ -1,4 +1,4 @@
-"""Reject App Store entitlements known to fail review, including signed output."""
+"""Allow only justified, minimal App Store entitlements, including signed output."""
 
 import argparse
 import plistlib
@@ -6,17 +6,43 @@ import subprocess
 from pathlib import Path
 
 
+# Every entitlement must map to functionality the Store edition actually ships.
+# Apple rejects entitlements without matching functionality (2.4.5(i)), so a
+# new key needs a justification here, native removal testing, and review notes.
+REQUIRED = {
+    "com.apple.security.app-sandbox":
+        "Mac App Store apps must run in App Sandbox.",
+    "com.apple.security.network.client":
+        "Tauri's WKWebView content process renders a blank window in the "
+        "sandbox without it (verified by removal on macOS 12.7.6).",
+    "com.apple.security.files.user-selected.read-write":
+        "Folders the user grants through the native Open panel are read and "
+        "personal plists in them are created/edited.",
+}
+SIGNING = {
+    "com.apple.application-identifier": "Added by distribution signing.",
+    "com.apple.developer.team-identifier": "Added by distribution signing.",
+}
+FORBIDDEN = {
+    "com.apple.security.get-task-allow":
+        "Debug entitlement; App Review rejects either value.",
+    "com.apple.security.network.server":
+        "Launchpane never listens for incoming connections; App Review "
+        "rejected it as unused.",
+}
+FORBIDDEN_PREFIXES = ("com.apple.security.temporary-exception.",)
+
+
 def verify(entitlements, signed=False):
-    required = {
-        "com.apple.security.app-sandbox",
-        "com.apple.security.network.client",
-        "com.apple.security.network.server",
-        "com.apple.security.files.user-selected.read-write",
-    }
-    allowed = required | {
-        "com.apple.application-identifier",
-        "com.apple.developer.team-identifier",
-    }
+    required = set(REQUIRED)
+    allowed = required | set(SIGNING)
+    forbidden = sorted(
+        key for key in entitlements
+        if key in FORBIDDEN or key.startswith(FORBIDDEN_PREFIXES)
+    )
+    if forbidden:
+        reasons = "; ".join(f"{key}: {FORBIDDEN.get(key, 'temporary exceptions are not permitted')}" for key in forbidden)
+        raise ValueError(f"Forbidden Store entitlements: {reasons}")
     unexpected = entitlements.keys() - allowed
     if unexpected:
         raise ValueError(f"Disallowed Store entitlements: {', '.join(sorted(unexpected))}")
@@ -66,7 +92,7 @@ def main():
                     check=True, capture_output=True,
                 )
                 verify(plistlib.loads(result.stdout.rstrip(b"\0")), signed=True)
-    print("Store entitlements verified: no debug entitlement or temporary file exceptions")
+    print("Store entitlements verified: only justified minimal entitlements: " + ", ".join(sorted(REQUIRED)))
 
 
 if __name__ == "__main__":

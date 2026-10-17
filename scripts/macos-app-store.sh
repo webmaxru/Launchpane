@@ -164,8 +164,9 @@ verify_package() {
     grep -qx true || fail "Signed app is missing the App Sandbox entitlement"
   /usr/libexec/PlistBuddy -c "Print :com.apple.security.network.client" "$OUTPUT_DIR/signed-entitlements.plist" |
     grep -qx true || fail "Signed app is missing the WebKit network client entitlement"
-  /usr/libexec/PlistBuddy -c "Print :com.apple.security.network.server" "$OUTPUT_DIR/signed-entitlements.plist" |
-    grep -qx true || fail "Signed app is missing the WebKit network server entitlement"
+  if /usr/libexec/PlistBuddy -c "Print :com.apple.security.network.server" "$OUTPUT_DIR/signed-entitlements.plist" >/dev/null 2>&1; then
+    fail "Signed app must not request the unused network server entitlement"
+  fi
   pkgutil --check-signature "$PKG_PATH"
   # Gatekeeper assesses Developer ID distribution, so it always rejects a Mac
   # App Store package. Report the result without failing the build.

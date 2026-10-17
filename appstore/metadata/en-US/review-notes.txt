@@ -1,4 +1,12 @@
-Launchpane 1.3.3 - sandboxed service inspector and personal plist editor
+Launchpane 1.3.4 - sandboxed service inspector and personal plist editor
+
+Response to the October 16 notice about com.apple.security.network.server:
+The entitlement is removed. Launchpane never listens for incoming connections.
+The app now requests only com.apple.security.app-sandbox,
+com.apple.security.network.client (required by the system WebKit web view
+that renders the bundled UI; without it the sandboxed window is blank) and
+com.apple.security.files.user-selected.read-write (folders chosen in the
+native Open panel). Launchpane itself makes no network requests.
 
 Response to October 15 rejection, guideline 2.4.5(i):
 All temporary filesystem exceptions are removed. The distribution signature
@@ -28,10 +36,7 @@ schedule; save and edit it, verify contents and refresh. Saving does not load
 or start it. Removal is not a Store feature; clean up the disposable file in
 Finder after the demonstration. Never change existing vendor services for QA.
 
-The runtime network client/server entitlements support Tauri/WebKit on older
-supported macOS. All product data remains local. There are no analytics,
+All product data remains local. There are no analytics,
 ads, payments, cloud services, regulated content or regional differences.
 
-Submitted build 1.3.3 (202610162230) was installed through TestFlight and
-checked on a MacBook running macOS 12.7.6: folder consent, Cancel, inventory,
-search, details and absence of service-control actions were verified.
+The 1.3.4 build is verified through TestFlight before submission.

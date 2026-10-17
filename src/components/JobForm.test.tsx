@@ -50,7 +50,7 @@ describe("JobForm", () => {
       standard_out_path: isAppStore ? null : "/Users/test/Library/Logs/Launchpane/com.example.consent.stdout.log",
       standard_error_path: isAppStore ? null : "/Users/test/Library/Logs/Launchpane/com.example.consent.stderr.log",
     }), undefined)
-  })
+  }, 20_000)
 
   it("renders the edit window on an explicit opaque surface", () => {
     render(

@@ -1,7 +1,7 @@
 {
   "name": "launchpane",
   "private": true,
-  "version": "1.3.3",
+  "version": "1.3.4",
   "packageManager": "pnpm@10.28.2",
   "type": "module",
   "scripts": {
