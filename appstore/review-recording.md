@@ -1,6 +1,27 @@
 # App Review recording and QA checklist
 
-## Current edition: 1.3.4 entitlement minimization
+## Current candidate: 1.4.0 (202610242100)
+
+The October 24 Apple API check reports 1.3.4 as `READY_FOR_SALE` and its
+macOS review submission as `COMPLETE`. This is a new update, not another
+submission of the previously rejected builds.
+
+The candidate adds remembered user-selected folders, a Forget folders action,
+first-run Choose folders recovery, and a clearer source/standalone-download
+notice. All four source screenshots were recaptured on October 24 from the
+universal 1.4.0 (202610242100) local sandbox preview. Selection, cancellation,
+disposable plist creation/editing, sample-log reading, login-helper inspection,
+quit/relaunch restoration and Forget folders passed. The disposable plist
+was never registered with launchd and both it and the sample log were removed.
+The log screenshot masks personal paths; all 16 opaque RGB derivatives and
+their source fingerprint passed verification. Old
+TestFlight results below are historical only. Before submitting this build,
+verify its exact Apple-installed binary, especially persistence after quit and
+relaunch, cancellation and forgetting access. This host still runs macOS 12.7.6;
+it cannot supply a latest-macOS recording. Any new Apple request for such a
+recording is a separate external gate, not evidence supplied by local previews.
+
+## Previous candidate: 1.3.4 entitlement minimization
 
 Candidate 1.3.4 removes the unused `com.apple.security.network.server`
 entitlement flagged by App Review on build `1.3.3 (202610162230)`. A sandboxed
@@ -156,16 +177,17 @@ test plan for that recording; it is intentionally not a simulated recording.
    - Keep alive: disabled
 7. Save the agent, show it in the User Agents list, open its detail view, and
    use the available action menu.
-8. Remove the temporary agent and show the confirmation and refreshed list.
+8. Remove the disposable plist using Finder and refresh Launchpane. There is
+   no Remove action in the Store edition.
 9. Select a system agent or daemon and show that mutation controls are
    unavailable/read-only.
 10. Stop recording after the final refreshed state is visible.
 
 Login Items can be shown when the review Mac has registered helpers. They are
-not required for the main flow. Only Enable/Disable can be activated; applicable
-lifecycle controls remain visible but disabled with a Store-specific reason.
-Also show the disabled Administrator control and the edition notice's optional
-GitHub documentation/source link. Neither can unlock additional Store features.
+not required for the main flow and are inspection-only. Lifecycle,
+Enable/Disable, Remove and Administrator controls must be absent. The edition
+notice's optional GitHub link opens the source/standalone-download project
+page and cannot unlock additional Store features.
 
 ## Recording evidence gate
 
@@ -201,16 +223,17 @@ upload is not evidence that the app works.
 - [ ] The app launches without an account, login, or network connection.
 - [ ] Inventory loads without a crash on the review Mac.
 - [ ] Search and source filtering return and clear results correctly.
-- [ ] User-agent create, refresh, detail, and remove flow completes.
+- [ ] Personal plist create, edit, refresh and detail work without activation; Finder cleanup completes.
 - [ ] System Agents and System Daemons remain read-only.
-- [ ] Login Items, when present, permit only Enable/Disable; lifecycle controls show Store-specific disabled reasons.
-- [ ] Administrator is disabled with a Store-specific hint; the optional GitHub project link opens the browser and does not download/install/unlock anything.
+- [ ] Login Items, when present, are inspection-only; runtime/toggle/removal controls are absent.
+- [ ] Administrator is absent; the optional GitHub project link opens the browser and does not download/install/unlock anything.
 - [ ] Errors remain visible and provide a recovery action.
 - [ ] Light and dark macOS appearances render the main flow legibly.
 - [ ] The temporary plist is removed after the test.
 - [ ] The exact submitted build number is shown in the recording notes.
 - [ ] Initial missing consent has a clear recovery action; cancellation grants no access.
-- [ ] Only selected inventory roots are shown, and reopening asks for consent again.
+- [ ] Only selected inventory roots are shown; quitting/reopening restores access without a prompt.
+- [ ] Forget folders removes saved bookmarks and returns to the first-run card, including after relaunch.
 - [ ] The final signed app omits get-task-allow and all temporary file exceptions.
 
 ## October 15 replacement preparation

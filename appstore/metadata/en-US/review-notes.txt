@@ -1,7 +1,13 @@
-Launchpane 1.3.4 - sandboxed service inspector and personal plist editor
+Launchpane 1.4.0 (202610242100) - remembered folder access
 
-Response to the October 16 notice about com.apple.security.network.server:
-The entitlement is removed. Launchpane never listens for incoming connections.
+This update adds persistent access to folders explicitly chosen in NSOpenPanel.
+The app saves app-scoped security-scoped bookmarks in its sandbox container,
+resolves them on relaunch and balances security-scoped access with stop calls.
+"Forget folders" removes saved bookmarks and releases the active scopes.
+It does not request access to any unselected inventory root.
+
+The previously removed network.server entitlement remains absent.
+Launchpane never listens for incoming connections.
 The app requests only com.apple.security.app-sandbox,
 com.apple.security.network.client (required by the system WebKit web view
 that renders the bundled UI; without it the sandboxed window is blank),
@@ -10,12 +16,12 @@ native Open panel) and com.apple.security.files.bookmarks.app-scope (so those
 chosen folders are remembered across launches as app-scoped security-scoped
 bookmarks). Launchpane itself makes no network requests.
 
-Response to October 15 rejection, guideline 2.4.5(i):
-All temporary filesystem exceptions are removed. The distribution signature
+The previously approved sandbox restrictions remain unchanged:
+All temporary filesystem exceptions remain absent. The distribution signature
 omits com.apple.security.get-task-allow entirely, not merely setting it false.
 All bundled executable architectures are checked for the permitted entitlements.
 
-We also removed unsupported service control from this Store edition: there
+There is no unsupported service control in this Store edition: there
 are no Load, Run, Stop/Unload, Restart, Enable/Disable, Remove or Administrator
 controls. Backend IPC rejects them too. The separate standalone distribution
 retains service management; this Store app is independently useful for native
@@ -44,7 +50,8 @@ Finder after the demonstration. Never change existing vendor services for QA.
 All product data remains local. There are no analytics,
 ads, payments, cloud services, regulated content or regional differences.
 
-Build 1.3.4 (202610171400) was installed through TestFlight and verified on
-macOS 12.7.6 (MacBook Air M1): the window renders with only network.client
-(required by the WebKit web view; network.server is removed), plus folder
-consent, Cancel, inventory, search, row menu and details.
+Local sandbox testing on macOS 12.7.6 verified choosing folders, quitting,
+restoring inventory without another prompt, and Forget folders. Local previews
+are not TestFlight evidence. Exact-build TestFlight verification and any
+required current-macOS recording remain release gates; no earlier build's
+QA or recording is claimed as evidence for 1.4.0.

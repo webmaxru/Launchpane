@@ -16,7 +16,7 @@ The Store entitlement `com.apple.security.files.user-selected.read-write`
 allows access granted through macOS `NSOpenPanel`. Choose **Choose folders…**
 and explicitly select the folders to inspect:
 
-- `~/Library/LaunchAgents` for personal agents and create/edit/remove.
+- `~/Library/LaunchAgents` for personal agents and create/edit.
 - `/Library/LaunchAgents` and `/Library/LaunchDaemons` for read-only inventory.
 - `/Applications` and/or `~/Applications` for login-helper discovery.
 - A log's containing folder to read or clear that log.
@@ -67,8 +67,13 @@ relaunch, so this machine does not enforce the entitlement and the test cannot
 show what removing it breaks. It is kept because Apple documents it as required
 for security-scoped bookmarks and enforcement may differ on other macOS versions
 and with distribution signing. Confirm persistence on the exact TestFlight build
-before submission; if a distribution-signed build proves the entitlement
-unnecessary, remove it and its verifier entry together.
+before submission. Do not interpret this older-OS removal result as proof that
+Apple's documented entitlement can safely be omitted on supported macOS
+versions. The October 24 candidate retains it for the concrete bookmark
+feature, not for hypothetical framework behavior. Apple's
+[security-scoped bookmark guidance](https://developer.apple.com/documentation/professional-video-applications/enabling-security-scoped-bookmark-and-url-access)
+explicitly lists the app-scope entitlement. The removal result remains
+inconclusive rather than being relabeled a pass.
 
 `com.apple.security.network.server` is forbidden. Launchpane never listens for
 incoming connections; App Review rejected 1.3.3 for requesting it without
