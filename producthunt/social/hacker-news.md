@@ -51,7 +51,7 @@ What it does:
 
 Some decisions you might disagree with: shared plists in /Library stay read-only. System daemons need an explicit relaunch as administrator through the standard macOS password prompt. After load, unload, enable and disable, it reads the state back from launchd instead of trusting the exit status. When an action is unavailable, the menu says why. There are no analytics, accounts or cloud backend, and no auto-updater.
 
-It's Tauri v2. The Rust side runs launchctl through std::process::Command and parses plists with the plist crate. Releases are Developer ID signed and notarized for Apple silicon, Intel and Universal, with SHA256SUMS.
+It's Tauri v2. The Rust side runs launchctl through std::process::Command and parses plists with the plist crate. Releases are built by a public GitHub Actions workflow, Developer ID signed and notarized for Apple silicon, Intel and Universal, with SHA256SUMS. There's also a Mac App Store edition, but the sandbox can't run launchctl, so that one only inspects services and edits your own plists.
 
 I'd like to hear where it's wrong or unclear, especially from people who work with launchd jobs often.
 ```
@@ -66,6 +66,10 @@ Why not just use launchctl? You can, and the Commands tab shows the equivalent c
 
 ```hn-reply
 Why Tauri rather than SwiftUI? The project started from azu's launchd-ui, which is Tauri, and the Rust side is a thin layer over launchctl and plist parsing. The DMG is about 4 MB per architecture. Happy to hear where the UI feels off for a Mac app.
+```
+
+```hn-reply
+Why isn't the full app on the App Store? Store apps must run in the App Sandbox, and the sandbox can't run launchctl. The Store edition is built with a Cargo feature that compiles service control out, and it passed App Review as an inspector and personal plist editor. The GitHub build is the full app: Developer ID signed and notarized, built by a public GitHub Actions workflow that checks Gatekeeper acceptance before publishing, with SHA256SUMS in each release.
 ```
 
 ```hn-reply

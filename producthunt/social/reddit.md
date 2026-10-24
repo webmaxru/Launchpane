@@ -28,8 +28,10 @@ It lists launch agents (~/Library/LaunchAgents and /Library/LaunchAgents), launc
 
 For your own agents you can load, run, stop, restart, enable, disable, create, and edit, with a preview of the next scheduled runs. Shared system plists stay read-only, and system daemons need an explicit administrator window. When an action isn't available, the menu says why. There's also a Commands tab with the equivalent launchctl commands.
 
-No analytics, accounts, or cloud backend. Builds are Developer ID signed and notarized, for Apple silicon, Intel, and Universal:
-https://github.com/webmaxru/Launchpane/releases/latest
+No analytics, accounts, or cloud backend. There are two ways to get it, both free:
+
+- The standalone download, for Apple silicon, Intel, and Universal. It's Developer ID signed and notarized by Apple, built by a public GitHub Actions workflow, and every release ships with SHA256SUMS: https://github.com/webmaxru/Launchpane/releases/latest
+- The Mac App Store edition, which passed App Review and runs in the App Sandbox. The sandbox means it can inspect services and edit your own plists, but it can't load, stop, enable, or disable them: https://apps.apple.com/no/app/launchpane/id6820735995?mt=12
 
 It builds on azu's open-source launchd-ui. I'd love feedback, especially on anything that's confusing or that you expected to find and didn't.
 ```
@@ -49,8 +51,11 @@ I'm the developer, so take this with that in mind.
 
 I made Launchpane because answering "what starts on this Mac, and is it working?" usually means checking several folders, System Settings, and launchctl. Launchpane lists launch agents, launch daemons, and app login items together, with status, last exit status, logs, and the plist or helper bundle behind each one. Reveal in Finder takes you straight to the file.
 
-It's free and MIT-licensed, with signed and notarized builds for Apple silicon and Intel:
+It's free and MIT-licensed, with Developer ID signed, Apple-notarized builds for Apple silicon and Intel:
 https://github.com/webmaxru/Launchpane
+
+A sandboxed edition for inspection and plist editing is also on the Mac App Store:
+https://apps.apple.com/no/app/launchpane/id6820735995?mt=12
 
 Happy to answer questions about launchd itself, too.
 ```
@@ -62,7 +67,7 @@ Launchpane: an MIT-licensed macOS app for launch agents, daemons, and login item
 ```
 
 ```reddit-body
-Launchpane is an MIT-licensed macOS app for inspecting and managing launch agents, launch daemons, and login items. It builds on azu's open-source launchd-ui; I've since added login items, enable and disable, shared-agent and administrator controls, explanations for unavailable actions, read-back checks after state changes, a new design, and a signed and notarized release pipeline on GitHub Actions.
+Launchpane is an MIT-licensed macOS app for inspecting and managing launch agents, launch daemons, and login items. It builds on azu's open-source launchd-ui; I've since added login items, enable and disable, shared-agent and administrator controls, explanations for unavailable actions, read-back checks after state changes, a new design, and a signed and notarized release pipeline on GitHub Actions. A sandboxed edition built from the same source, with service control compiled out, is now on the Mac App Store.
 
 Source, issues, and releases: https://github.com/webmaxru/Launchpane
 
@@ -104,7 +109,7 @@ Sharing a Tauri v2 app I maintain: Launchpane, a macOS app for launch agents, da
 Tauri-specific bits that might help others:
 
 - Standalone builds for Apple silicon, Intel, and Universal are Developer ID signed and notarized on GitHub Actions.
-- A separate Mac App Store build uses its own Tauri config and a Cargo feature that compiles out service control for the sandbox.
+- A separate Mac App Store build uses its own Tauri config and a Cargo feature that compiles out service control for the sandbox. It passed App Review and is live: https://apps.apple.com/no/app/launchpane/id6820735995?mt=12
 - Frontend tests run against a fake Tauri IPC layer instead of mocks.
 
 Source (MIT): https://github.com/webmaxru/Launchpane

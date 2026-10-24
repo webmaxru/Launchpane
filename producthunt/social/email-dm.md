@@ -22,6 +22,8 @@ Today I launched Launchpane on Product Hunt. It's a free, open-source Mac app th
 
 <PH_LINK>
 
+You can get it as a signed, Apple-notarized download from GitHub, or from the Mac App Store, where it passed App Review as a sandboxed edition for inspection and plist editing.
+
 If you have a Mac and five minutes, I'd value your honest take, especially anything that's confusing. A comment on the page or a reply to this email both help.
 
 Thanks,
@@ -33,7 +35,7 @@ Maxim
 For Slack, Teams, Signal, or a DM to someone who already follows the project.
 
 ```dm
-Hi <NAME>, Launchpane is on Product Hunt today: <PH_LINK>. It's the Mac app for launch agents, daemons and login items I've been working on. If you try it, I'd love to hear what's unclear.
+Hi <NAME>, Launchpane is on Product Hunt today: <PH_LINK>. It's the Mac app for launch agents, daemons and login items I've been working on, now signed and notarized on GitHub and on the Mac App Store too. If you try it, I'd love to hear what's unclear.
 ```
 
 ## Pitch to a newsletter, blog, or podcast
@@ -51,9 +53,10 @@ I read <PUBLICATION> and thought Launchpane might suit your readers who look aft
 
 Launchpane shows what starts on a Mac in one window: launch agents, launch daemons and login items that apps bundle. You can see whether each one is loaded, running and enabled, read its logs and plist, and run or edit your own agents. Shared system plists stay read-only, and system daemons need an explicit administrator window.
 
-It's free and MIT-licensed, builds on azu's open-source launchd-ui, and has Developer ID signed and notarized releases for Apple silicon and Intel.
+It's free and MIT-licensed, and builds on azu's open-source launchd-ui. There are two ways to get it: Developer ID signed, Apple-notarized releases for Apple silicon and Intel on GitHub, built by a public GitHub Actions workflow, and a sandboxed Mac App Store edition that passed App Review. The Store edition covers inspection and plist editing; the GitHub release adds service control.
 
-Download: https://github.com/webmaxru/Launchpane/releases/latest
+Download (recommended): https://github.com/webmaxru/Launchpane/releases/latest
+Mac App Store: https://apps.apple.com/no/app/launchpane/id6820735995?mt=12
 Website: https://salnikov.no/projects/launchpane/
 Press kit, screenshots and facts: https://github.com/webmaxru/Launchpane/blob/main/producthunt/press-kit.md
 

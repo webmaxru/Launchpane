@@ -200,5 +200,12 @@ tab shows the launchctl equivalents from this article for whichever job you've s
 Shared plists in `/Library` stay read-only in the app, and system daemons need an explicit
 administrator window, the same boundaries macOS draws.
 
+There are two ways to get it. The full app is a download on
+[GitHub Releases](https://github.com/webmaxru/Launchpane/releases/latest): Developer ID
+signed, notarized by Apple, and built by a public GitHub Actions workflow. The
+[Mac App Store edition](https://apps.apple.com/no/app/launchpane/id6820735995?mt=12) passed
+App Review and runs in the App Sandbox. The sandbox can't run launchctl, so that edition
+inspects jobs and edits your own plists but doesn't load, stop, enable or disable them.
+
 Whether you use it or stick with launchctl, the questions stay the same: where does the job
 live, is it loaded, what did it do last time, and where did its output go?

@@ -4,6 +4,21 @@ Limit: 300 characters (graphemes) per post. Fenced `bluesky-post` blocks are che
 `pnpm producthunt:verify`, which counts `<PH_LINK>` as 60 characters. Replace `<PH_LINK>`
 and `<WEEKDAY>` before posting, and add the alt text when you attach an image.
 
+## Before T-7 (optional): Mac App Store news
+
+Post this a week or more before the teaser if you haven't announced the App Store release
+yet. Image: `assets/gallery/07-download.png`
+
+```bluesky-post
+Launchpane is now on the Mac App Store: it passed App Review and runs sandboxed, for inspecting launch agents, daemons, and login items and editing your own plists.
+
+For service control, get the signed, notarized download on GitHub.
+
+https://apps.apple.com/no/app/launchpane/id6820735995?mt=12
+```
+
+Alt text: Launchpane closing card with Apple's Download on the Mac App Store badge noted "Sandboxed · inspect and edit plists" and a Download from GitHub Releases button noted "Recommended · Developer ID signed · Apple notarized".
+
 ## T-7: teaser
 
 Image: `assets/social/wide-teaser-1600x900.png`
@@ -12,6 +27,8 @@ Image: `assets/social/wide-teaser-1600x900.png`
 Launchpane launches on Product Hunt next <WEEKDAY>.
 
 A free, open-source Mac app for launch agents, daemons, and login items: one native window with status, logs, schedules, and the launchctl commands behind each action.
+
+Signed and notarized, and on the Mac App Store.
 ```
 
 ## T-0: launch thread
@@ -21,7 +38,7 @@ Post 1. Image: `assets/social/wide-live-1600x900.png`
 ```bluesky-post
 Launchpane is live on Product Hunt today.
 
-Know what starts on your Mac: launch agents, daemons, and login items in one native window. Free, MIT-licensed, signed and notarized.
+Know what starts on your Mac: launch agents, daemons, and login items in one native window. Free and MIT-licensed. Signed and notarized on GitHub, and on the Mac App Store.
 
 <PH_LINK>
 ```

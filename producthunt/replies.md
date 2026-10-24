@@ -11,11 +11,13 @@ Rules for every reply:
 - Do not promise dates. "It's on my list" or "please open an issue so I can track it" is fine.
 - Do not claim a minimum macOS version for the GitHub build. The screenshots were captured
   on macOS 12.7.6 on Apple silicon; ask people on other versions to report what they see.
+- Use signing, notarization, and App Review as evidence, not endorsements. Never say Apple
+  approved, endorsed, or recommends Launchpane, and never call notarization a review.
 
 ## Is it really free? What's the business model?
 
 ```reply
-Yes, it's free and MIT-licensed, with no paid tier, account, or in-app purchase. The source is on GitHub, and signed builds are on GitHub Releases.
+Yes, it's free and MIT-licensed, with no paid tier, account, or in-app purchase. The source is on GitHub, signed and notarized builds are on GitHub Releases, and the Mac App Store edition is free too.
 ```
 
 ## Is it in the Mac App Store?
@@ -23,13 +25,19 @@ Yes, it's free and MIT-licensed, with no paid tier, account, or in-app purchase.
 ```reply
 Yes: https://apps.apple.com/no/app/launchpane/id6820735995?mt=12
 
-It's a sandboxed inspector and personal plist editor. App Store restrictions mean no load, run, stop, restart, enable/disable, removal, or administrator mode. You choose inventory and log folders in the macOS picker, and from version 1.4.0 it remembers them after relaunch; saving a plist doesn't activate or reload its service. I recommend the signed, notarized standalone release on GitHub for service control.
+It passed App Review and runs in Apple's App Sandbox. That sandbox is also why it's an inspector and personal plist editor: it can't load, run, stop, restart, enable/disable, remove, or use administrator mode. You choose inventory and log folders in the macOS picker, and from version 1.4.0 it remembers them after relaunch; saving a plist doesn't activate or reload its service. For service control, I recommend the standalone release on GitHub, which is Developer ID signed and notarized by Apple.
 ```
 
 ## Is downloading outside the App Store safe?
 
 ```reply
-The official standalone releases are Developer ID signed, so macOS can verify the developer and detect changes to the signed app. Apple notarization checks the submitted software for known malware, and our release pipeline verifies Gatekeeper acceptance. These are meaningful protections, not a guarantee of safety or the same as App Store review. Standalone has more access than the sandboxed Store edition and can change services, so review actions carefully. Use our official GitHub Releases, keep Gatekeeper enabled, and don't bypass malware, damaged-app, or unverified-developer warnings. Apple's explanation: https://support.apple.com/en-us/102445
+The official standalone releases are Developer ID signed, so macOS can verify the developer and detect changes to the signed app. Apple notarization checks the submitted software for known malware. A public GitHub Actions workflow builds each release, verifies Gatekeeper acceptance, and publishes SHA256SUMS. These are meaningful protections, not a guarantee of safety or the same as App Store review. Standalone has more access than the sandboxed Store edition and can change services, so review actions carefully. Use our official GitHub Releases, keep Gatekeeper enabled, and don't bypass malware, damaged-app, or unverified-developer warnings. Apple's explanation: https://support.apple.com/en-us/102445
+```
+
+## Why should I trust it with my launch agents?
+
+```reply
+Fair question for an app that can change what runs on your Mac. Here's what you can check: the source is MIT-licensed on GitHub, and a public GitHub Actions workflow builds each release. The standalone app and DMGs are Developer ID signed and notarized by Apple, the workflow verifies Gatekeeper acceptance before publishing, and every release has SHA256SUMS. The Mac App Store edition passed App Review and runs in the App Sandbox. Inside the app, shared system plists stay read-only, system daemons need an explicit administrator window, and Launchpane reads the state back from launchd after each change. There are no analytics, accounts, or cloud backend. None of that guarantees safety, so review each action before you take it.
 ```
 
 ## How is it different from LaunchControl, Lingon, or other launchd tools?
@@ -77,7 +85,7 @@ Both. Each release has Apple silicon, Intel, and Universal DMGs, plus .app archi
 ## Is it on Homebrew?
 
 ```reply
-Not at the moment. The DMGs on GitHub Releases are signed and notarized, and each release includes SHA256SUMS so you can verify the download.
+Not at the moment. The DMGs on GitHub Releases are Developer ID signed and notarized by Apple, and each release includes SHA256SUMS so you can verify the download. If you want managed updates, the Mac App Store edition updates itself, but it can't control services.
 ```
 
 ## Do Homebrew services show up?
@@ -101,7 +109,7 @@ Launchpane is built with Tauri v2: a Rust backend that talks to launchctl and re
 ## Is it open source? Where did it come from?
 
 ```reply
-Yes, MIT-licensed on GitHub. Launchpane builds on azu's open-source launchd-ui and its contributors, which already had the agent list, schedules, logs, the plist editor, and copyable launchctl commands. Since then I've added login items, enable and disable, shared-agent and administrator controls, reasons for unavailable actions, read-back checks after each action, a new design, and signed and notarized releases.
+Yes, MIT-licensed on GitHub. Launchpane builds on azu's open-source launchd-ui and its contributors, which already had the agent list, schedules, logs, the plist editor, and copyable launchctl commands. Since then I've added login items, enable and disable, shared-agent and administrator controls, reasons for unavailable actions, read-back checks after each action, a new design, signed and notarized releases, and a Mac App Store edition.
 ```
 
 ## Can you add <feature>?

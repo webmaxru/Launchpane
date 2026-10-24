@@ -10,14 +10,16 @@ Principles for every step:
 - Answer every question with facts from `replies.md`, `press-kit.md`, or the code. If
   something isn't known yet, say so.
 - Credit azu's launchd-ui wherever you describe where Launchpane came from.
+- Lead with trust you can show: the Developer ID signed, Apple-notarized standalone release
+  and the Mac App Store edition that passed App Review. Recommend standalone for service
+  control. Never imply that Apple endorses Launchpane.
 
 ## Blockers to clear first
 
 These are repository settings. Nothing in this folder changes them for you.
 
-- [ ] **Turn on GitHub Issues** (Settings → General → Features). They are currently
-      disabled, but the support page, the maker comment, `replies.md`, and several posts send
-      people to the issue tracker.
+- [x] **Turn on GitHub Issues.** Done: the support page, the maker comment, `replies.md`,
+      and several posts send people to the issue tracker.
 - [ ] **Set the repository homepage** to `https://salnikov.no/projects/launchpane/`. It
       currently points to `https://webmaxru.github.io/Launchpane/`, which redirects to the
       site.
@@ -38,6 +40,11 @@ These are repository settings. Nothing in this folder changes them for you.
 - [ ] Recheck the [live Mac App Store listing](https://apps.apple.com/no/app/launchpane/id6820735995?mt=12).
       Keep the edition comparison in `first-comment.md` and `replies.md`: Store is for
       inspection and personal plist editing; standalone is recommended for service control.
+- [ ] Ship the same version on both channels. Both are on 1.3.4 now. If the Store's 1.4.0
+      review passes before launch, publish the standalone 1.4.0 release too, then recheck
+      the version in `press-kit.md` and the edition copy.
+- [ ] If you haven't announced the Mac App Store release yet, post the optional App Store
+      news posts in `social/` now, a week or more before the teasers.
 - [ ] Regenerate and check the assets:
 
   ```sh
@@ -59,7 +66,8 @@ These are repository settings. Nothing in this folder changes them for you.
 
 - [ ] Preview the scheduled post. Check that the thumbnail animates, the gallery is in order,
       captions are right, and every link opens.
-- [ ] Confirm the latest release is still the one you tested.
+- [ ] Confirm the latest GitHub release is still the one you tested, and that the Mac App
+      Store shows the same version.
 - [ ] Replace `<WEEKDAY>` and post the X reminder.
 - [ ] Have `first-comment.md` and `replies.md` open for the morning.
 - [ ] Set an alarm for the launch time below.
@@ -134,7 +142,8 @@ If a bug is reported:
 ## Measuring
 
 Product Hunt adds `ref=producthunt` to outbound links, and the website has no analytics, so
-measure on GitHub. Run these before the launch for a baseline, then at T+1 and T+7.
+measure on GitHub and in App Store Connect. Run these before the launch for a baseline, then
+at T+1 and T+7.
 
 ```sh
 # Stars, forks, watchers, open issues
@@ -154,11 +163,16 @@ gh api repos/webmaxru/Launchpane/traffic/popular/referrers
 
 GitHub keeps traffic data for 14 days, so save the T+1 output somewhere.
 
+For the Mac App Store edition, open App Store Connect → Analytics. Note impressions, product
+page views, and first-time downloads for the launch week, and look for producthunt.com among
+the web referrer sources. App Store Connect numbers can lag by a day or two.
+
 | | Baseline | T+1 | T+7 |
 | --- | --- | --- | --- |
 | Stars | | | |
 | Forks | | | |
 | Downloads (all releases) | | | |
+| Mac App Store first-time downloads | | | |
 | Views / unique visitors (14 days) | | | |
 | Visitors from producthunt.com | | | |
 | Product Hunt comments | | | |

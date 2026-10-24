@@ -22,7 +22,10 @@ A few boundaries I cared about:
 • After a load, unload, enable, or disable, Launchpane reads the state back from launchd and tells you if it doesn't match
 • No analytics, no accounts, no cloud backend
 
-Both editions are free and MIT-licensed. I recommend the Developer ID signed, Apple-notarized standalone download on GitHub for service control. The Mac App Store edition is also available: it inspects services and edits personal plists, but sandbox restrictions mean no service controls, removal, or administrator mode. From version 1.4.0, it remembers the folders you choose after relaunch.
+There are two ways to get it, both free and MIT-licensed:
+
+• GitHub Releases (recommended): Developer ID signed and notarized by Apple, built by a public GitHub Actions workflow that checks Gatekeeper acceptance before publishing, with SHA256SUMS for every download
+• Mac App Store: passed App Review and runs in Apple's App Sandbox. It inspects services and edits your own plists, but the sandbox rules out service controls, removal, and administrator mode
 
 Launchpane builds on azu's open-source launchd-ui and its contributors. I'm grateful for that foundation.
 
@@ -36,3 +39,6 @@ I'd love to hear what you use launch agents for and what would make Launchpane m
   how. Keep the edition distinction when shortening it.
 - Both download links are in `listing.md`. Do not attach service-control claims to the
   Store link; use the standalone release for those.
+- Signing, notarization, and App Review are trust signals, not endorsements. Say the Store
+  build passed App Review; never say Apple approved, endorsed, or recommends Launchpane.
+  Notarization is not App Review, so keep the two apart.

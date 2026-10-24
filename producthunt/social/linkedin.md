@@ -6,6 +6,25 @@ Limit: 3,000 characters per post. Fenced `linkedin-post` blocks are checked by
 Attach the image yourself rather than relying on the link preview, and keep the link in the
 text.
 
+## Before T-7 (optional): Mac App Store news
+
+Post this a week or more before the teaser if you haven't announced the App Store release
+yet. Image: `assets/gallery/07-download.png`
+
+```linkedin-post
+Launchpane is now on the Mac App Store.
+
+Launchpane is my free, open-source macOS app for the background work that starts on your Mac: launch agents, launch daemons, and login items. The Mac App Store edition passed App Review and runs in Apple's App Sandbox. You can inspect services, read their configuration, and edit your own plists:
+https://apps.apple.com/no/app/launchpane/id6820735995?mt=12
+
+The sandbox is also its limit. It can't load, run, stop, enable, or disable services, and it has no administrator mode. For those, I recommend the standalone download on GitHub. It's Developer ID signed and notarized by Apple, built by a public GitHub Actions workflow that checks Gatekeeper acceptance before publishing, and every release ships with SHA256SUMS:
+https://github.com/webmaxru/Launchpane/releases/latest
+
+Two ways to get the same app, both free and MIT-licensed. Pick the one that fits how you work.
+
+#macOS #OpenSource #DeveloperTools
+```
+
 ## T-7: teaser
 
 Image: `assets/social/linkedin-teaser-1200x627.png`
@@ -17,8 +36,11 @@ Launchpane is a free, open-source macOS app for the background work that starts 
 
 On macOS, that work lives in several places. Some of it appears in System Settings; the rest you find with launchctl, if you remember the domain, the label, and the right subcommand. Launchpane puts it in one native window, with status, logs, schedules, and the launchctl command behind each action.
 
-It's MIT-licensed, Developer ID signed and notarized, and available for Apple silicon and Intel on GitHub:
+It's MIT-licensed. The standalone download on GitHub is Developer ID signed and notarized by Apple, for Apple silicon and Intel:
 https://github.com/webmaxru/Launchpane
+
+A sandboxed edition for inspection and plist editing is on the Mac App Store:
+https://apps.apple.com/no/app/launchpane/id6820735995?mt=12
 
 #macOS #OpenSource #DeveloperTools
 ```
@@ -41,7 +63,11 @@ Launchpane lists launch agents, launch daemons, and app login items in one windo
 
 For your own agents, you can load, run, stop, restart, enable, disable, create, and edit. Shared system plists stay read-only, and system daemons need an explicit administrator window. When an action isn't available, Launchpane tells you why. After a load, unload, enable, or disable, it reads the state back from launchd and tells you if the result doesn't match.
 
-There are no analytics, accounts, or cloud backend. Builds are Developer ID signed and notarized, for Apple silicon, Intel, or Universal.
+There are no analytics, accounts, or cloud backend.
+
+There are two ways to get it, both free:
+→ The standalone download on GitHub, recommended for service control. It's Developer ID signed and notarized by Apple, built by a public GitHub Actions workflow, and available for Apple silicon, Intel, or Universal: https://github.com/webmaxru/Launchpane/releases/latest
+→ The Mac App Store edition, which passed App Review and runs in Apple's App Sandbox. It inspects services and edits your own plists, without service controls: https://apps.apple.com/no/app/launchpane/id6820735995?mt=12
 
 Launchpane builds on azu's open-source launchd-ui and the work of its contributors. It's built with Tauri, Rust, React, and TypeScript.
 

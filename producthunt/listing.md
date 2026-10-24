@@ -10,7 +10,7 @@ strings for tooling; `pnpm producthunt:verify` fails if the two drift apart.
 | Name | Launchpane |
 | Tagline (28/60) | Know what starts on your Mac |
 | Website | https://salnikov.no/projects/launchpane/ |
-| Additional link: standalone download (recommended) | https://github.com/webmaxru/Launchpane/releases/latest |
+| Additional link: signed standalone download (recommended) | https://github.com/webmaxru/Launchpane/releases/latest |
 | Additional link: Mac App Store (inspection and plist editing) | https://apps.apple.com/no/app/launchpane/id6820735995?mt=12 |
 | Additional link: source | https://github.com/webmaxru/Launchpane |
 | Pricing | Free |
@@ -29,10 +29,10 @@ same product more literally:
 - Launch agents, daemons, and login items in one window
 - Free, open-source launchd manager for macOS
 
-## Description (247/260)
+## Description (249/260)
 
 ```text
-Launchpane shows macOS launch agents, daemons, and login items in one window. The signed, notarized standalone app controls services, shows logs, and edits schedules. Free and MIT-licensed. Mac App Store edition: inspection and plist editing only.
+Launchpane shows macOS launch agents, daemons, and login items in one window. Free and MIT-licensed. The signed, Apple-notarized download controls services, reads logs, and edits schedules. Also on the Mac App Store for inspection and plist editing.
 ```
 
 ## Thumbnail
@@ -43,8 +43,11 @@ the GIF, use `assets/thumbnail/thumbnail-240.png`.
 ## Gallery
 
 Upload in this order. Every image is 2540×1520 (2× of 1270×760) and under 3 MB.
-These show the recommended standalone edition; Store sandbox restrictions remove service
-controls. Keep that distinction when adding the App Store link.
+Images 1–6 show the recommended standalone edition, which is Developer ID signed and
+notarized by Apple. Image 7 shows both ways to get the app, with Apple's unmodified Mac App
+Store badge. The Store edition runs in the App Sandbox, which blocks service controls, so
+keep Store mentions to inspection and plist editing. Say the Store build passed App Review,
+never that Apple endorses or recommends Launchpane.
 
 | # | File | Caption | Alt text |
 | --- | --- | --- | --- |
@@ -54,7 +57,7 @@ controls. Keep that distinction when adding the App Store link.
 | 4 | `assets/gallery/04-logs.png` | Last exit status and standard error for a failing agent. | Detail panel for a demo sync agent showing last exit 1 and a standard error line saying the destination volume is not mounted. |
 | 5 | `assets/gallery/05-schedule.png` | Interval or calendar schedules with a preview of the next runs. | Edit Agent form with a daily calendar schedule and a Next runs preview listing the next three run times. |
 | 6 | `assets/gallery/06-commands.png` | The equivalent launchctl commands, ready to copy. | Commands tab listing launchctl kickstart, bootout, enable, disable, and print commands for a demo agent, each with a copy button. |
-| 7 | `assets/gallery/07-download.png` | Free and open source. Signed and notarized builds on GitHub. | Launchpane icon and name with the tagline Know what starts on your Mac, labels for MIT license, Developer ID signing and notarization, Apple silicon, Intel, and Universal builds, and no analytics or accounts, and the GitHub address. |
+| 7 | `assets/gallery/07-download.png` | On the Mac App Store, or as a signed, Apple-notarized download from GitHub. | Launchpane icon and name with the tagline Know what starts on your Mac. Below it, Apple's Download on the Mac App Store badge, noted as sandboxed for inspecting and editing plists, and a Download from GitHub Releases button, noted as recommended, Developer ID signed, and Apple notarized. Labels for the MIT license, Apple silicon, Intel, and Universal builds, and no analytics or accounts, then the GitHub address. |
 
 The screenshots use four disposable demo agents (`com.launchpane.demo.*`) created by
 `capture/demo-agents.sh`, so no personal services appear. See `capture/captures.json` for

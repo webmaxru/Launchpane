@@ -7,7 +7,7 @@
     "Launch agents, daemons, and login items in one window",
     "Free, open-source launchd manager for macOS"
   ],
-  "description": "Launchpane shows macOS launch agents, daemons, and login items in one window. The signed, notarized standalone app controls services, shows logs, and edits schedules. Free and MIT-licensed. Mac App Store edition: inspection and plist editing only.",
+  "description": "Launchpane shows macOS launch agents, daemons, and login items in one window. Free and MIT-licensed. The signed, Apple-notarized download controls services, reads logs, and edits schedules. Also on the Mac App Store for inspection and plist editing.",
   "topics": ["Mac", "Developer Tools", "Open Source"],
   "pricing": "Free",
   "openSource": true,
@@ -54,8 +54,8 @@
     },
     {
       "file": "assets/gallery/07-download.png",
-      "caption": "Free and open source. Signed and notarized builds on GitHub.",
-      "alt": "Launchpane icon and name with the tagline Know what starts on your Mac, labels for MIT license, Developer ID signing and notarization, Apple silicon, Intel, and Universal builds, and no analytics or accounts, and the GitHub address."
+      "caption": "On the Mac App Store, or as a signed, Apple-notarized download from GitHub.",
+      "alt": "Launchpane icon and name with the tagline Know what starts on your Mac. Below it, Apple's Download on the Mac App Store badge, noted as sandboxed for inspecting and editing plists, and a Download from GitHub Releases button, noted as recommended, Developer ID signed, and Apple notarized. Labels for the MIT license, Apple silicon, Intel, and Universal builds, and no analytics or accounts, then the GitHub address."
     }
   ],
   "video": {

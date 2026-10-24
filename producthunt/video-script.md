@@ -43,7 +43,7 @@ is optional and can be recorded separately.
 | 0:35–0:45 | Select `com.launchpane.demo.cleanup`. Show its calendar schedule and the Next runs list. | See when it runs next. | Schedules show as intervals or calendar times, with a preview of the next runs. |
 | 0:45–0:53 | Open the actions menu on a system daemon. Each unavailable action shows its reason under it. Point to Open Administrator Window without clicking. | Power with clear boundaries. | Shared plists stay read-only, system daemons need an explicit administrator window, and unavailable actions say why. |
 | 0:53–1:00 | Back on the sync agent, open the Commands tab and copy a command. | The launchctl commands, ready to copy. | Every action has its launchctl equivalent, ready to copy. |
-| 1:00–1:10 | Closing card (`assets/social/wide-thanks-1600x900.png` style): icon, name, GitHub URL. | Free and open source. Signed and notarized. github.com/webmaxru/Launchpane | Launchpane is free and MIT-licensed, built on azu's open-source launchd-ui. Download it from GitHub. |
+| 1:00–1:10 | Closing card (`assets/gallery/07-download.png` style): icon, name, Apple's Mac App Store badge, the GitHub Releases download, and the GitHub URL. | Free and open source. Signed and notarized download on GitHub. Also on the Mac App Store. | Launchpane is free and MIT-licensed, built on azu's open-source launchd-ui. Get the signed, notarized download from GitHub, or the sandboxed edition on the Mac App Store. |
 
 ## YouTube details
 
@@ -52,7 +52,8 @@ Title: Launchpane: launch agents, daemons, and login items on macOS
 
 Launchpane is a free, open-source Mac app that shows what starts on your Mac: launch agents, launch daemons, and login items, with their status, logs, schedules, and plists in one window.
 
-Download: https://github.com/webmaxru/Launchpane/releases/latest
+Download (signed and notarized, recommended): https://github.com/webmaxru/Launchpane/releases/latest
+Mac App Store (inspection and plist editing): https://apps.apple.com/no/app/launchpane/id6820735995?mt=12
 Website: https://salnikov.no/projects/launchpane/
 Source (MIT): https://github.com/webmaxru/Launchpane
 
