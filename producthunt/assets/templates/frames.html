@@ -42,6 +42,19 @@
     border-radius: 999px; padding: .42em .95em; font-weight: 600; color: #e9ecff; white-space: nowrap;
   }
   .url { font-family: ui-monospace, "SF Mono", Menlo, monospace; color: var(--mint-light); letter-spacing: -.01em; }
+  /* Apple's badge is used unmodified; keep at least a quarter of its height clear around it. */
+  .stores { display: flex; justify-content: center; align-items: flex-start; }
+  .store { display: flex; flex-direction: column; align-items: center; }
+  .store img { display: block; }
+  .download {
+    display: flex; align-items: center; color: #fbfcff;
+    border: 1px solid rgba(125, 249, 208, .55); background: rgba(43, 211, 156, .12);
+  }
+  .download svg { display: block; flex: none; }
+  .download span { display: flex; flex-direction: column; line-height: 1.08; text-align: left; }
+  .download small { font-size: .5em; font-weight: 500; color: #d5dbff; letter-spacing: .01em; }
+  .download strong { font-weight: 650; letter-spacing: -.015em; }
+  .store-note { color: #c9d1ff; font-weight: 500; white-space: nowrap; }
   .shot {
     position: absolute; overflow: hidden;
     box-shadow: 0 0 0 1px rgba(255, 255, 255, .2), 0 44px 90px rgba(4, 6, 32, .55), 0 12px 26px rgba(4, 6, 32, .35);
@@ -97,6 +110,9 @@
   const { frames } = globalThis.LAUNCHPANE_FRAMES
   const CAPTURES = "../../capture/"
   const ICON = "../../../branding/launchpane-icon-1024.png"
+  // Apple's official artwork, shared with the README and website (sha256 pinned in scripts/build-site.test.mjs).
+  const STORE_BADGE = "../../../docs/assets/mac-app-store-badge.svg"
+  const DOWNLOAD_ICON = `<svg viewBox="0 0 24 24" fill="none" stroke="#7df9d0" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="m6.5 10 5.5 5.5 5.5-5.5"/><path d="M4.5 20.5h15"/></svg>`
   const SVG_NS = "http://www.w3.org/2000/svg"
   // Relative moves of the pulse spike in the app icon (1024 px canvas); they sum to zero height.
   const SPIKE = [[64, -150], [84, 320], [70, -210], [54, 40]]
@@ -152,12 +168,37 @@
     if (f.eyebrow) place(el("div", "eyebrow", node, f.eyebrow), { fontSize: s.eyebrow, marginBottom: s.gap * 0.9 })
     if (f.title && !s.skipTitle) place(el("h1", null, node, f.title), { fontSize: s.title })
     if (f.body) place(el("p", "body", node, f.body), { fontSize: s.body, marginTop: s.gap, maxWidth: s.bodyWidth || "none" })
+    if (f.stores && s.store) stores(node, f.stores, s)
     if (f.chips) {
       const chips = place(el("div", s.align === "center" ? "chips center" : "chips", node), { marginTop: s.gap * 1.5, fontSize: s.chip })
       for (const chip of f.chips) el("span", "chip", chips, chip)
     }
     if (f.url && s.url) place(el("div", "url", node, f.url), { fontSize: s.url, marginTop: s.gap * 1.6 })
     return node
+  }
+
+  // Where to get the app: Apple's Mac App Store badge and the standalone GitHub download.
+  function stores(parent, items, s) {
+    const h = s.store
+    const row = place(el("div", "stores", parent), { marginTop: s.gap * 2.2, gap: h * 0.8 })
+    for (const item of items) {
+      const col = el("div", "store", row)
+      if (item.badge) {
+        const img = place(el("img", null, col), { height: h })
+        img.src = STORE_BADGE
+        img.alt = "Download on the Mac App Store"
+      } else {
+        const tile = place(el("div", "download", col), {
+          height: h, fontSize: h * 0.4, gap: h * 0.24, padding: `0 ${h * 0.36}px 0 ${h * 0.28}px`, borderRadius: h * 0.2,
+        })
+        tile.innerHTML = DOWNLOAD_ICON
+        place(tile.firstElementChild, { width: h * 0.46, height: h * 0.46 })
+        const label = el("span", null, tile)
+        el("small", null, label, item.label)
+        el("strong", null, label, item.title)
+      }
+      place(el("div", "store-note", col, item.note), { fontSize: s.note, marginTop: h * 0.3 })
+    }
   }
 
   function svgLayer(parent, z = 0) {
@@ -256,7 +297,7 @@
         ? place(el("div", "eyebrow", root, f.eyebrow), { position: "absolute", left: 0, right: 0, top: 0, textAlign: "center", fontSize: 18 * k })
         : null
       const t = text(root, { ...f, eyebrow: null }, { left: 80 * k, right: 80 * k, top: 0, zIndex: 1 },
-        { align: "center", title: 66 * k, body: 28 * k, chip: 17 * k, url: 24 * k, gap: 14 * k })
+        { align: "center", title: 66 * k, body: 28 * k, chip: 17 * k, url: 24 * k, gap: 14 * k, store: 50 * k, note: 15 * k })
       // Measure first, then center the eyebrow, emblem, and text block vertically.
       const eyebrowSpace = e ? box(e).height + 44 * k : 0
       let top = (f.height - (eyebrowSpace + size + gap + box(t).height)) / 2

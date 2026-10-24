@@ -2,11 +2,12 @@
 
 Everything for launching Launchpane on Product Hunt: the listing, the maker comment, replies,
 posts for each channel, images, a launch-day plan, a video script, and a press kit. Every
-product claim here was checked against the code, the website, or the v1.3.4 release. If the
-app changes before launch, recheck the copy that describes it.
+product claim here was checked against the code, the website, or version 1.3.4, which is live
+on both GitHub Releases and the Mac App Store. If the app changes before launch, recheck the
+copy that describes it.
 
 Start with [`launch-plan.md`](launch-plan.md). Its first section lists repository settings to
-fix before launch, including turning GitHub Issues on.
+fix before launch.
 
 ## What's here
 
@@ -42,10 +43,14 @@ typo can't slip through.
 
 Edition guidance and publishing notes:
 
-- **Mac App Store edition.** [Available now](https://apps.apple.com/no/app/launchpane/id6820735995?mt=12)
-  for inspection and personal plist editing, with sandbox limits. Recommend the signed,
-  notarized standalone release for service control. The listing, maker comment, and
-  replies distinguish the editions; gallery images show standalone.
+- **Two trusted ways to get it.** Lead with both. The standalone release on GitHub is
+  Developer ID signed, notarized by Apple, built by a public GitHub Actions workflow, and
+  ships with `SHA256SUMS`; recommend it for service control. The
+  [Mac App Store edition](https://apps.apple.com/no/app/launchpane/id6820735995?mt=12)
+  passed App Review and runs in the App Sandbox, so describe it only as an inspector and
+  personal plist editor. Gallery images 1–6 show standalone; image 7 shows both ways to get
+  it, with Apple's unmodified badge. Never say Apple approved, endorses, or recommends
+  Launchpane, and don't call notarization a review.
 - **Article.** `social/article.md` is a researched draft, not a finished post. Rewrite it in
   your own voice before publishing; some communities reject machine-written articles.
 - **Press kit link.** Messages link to `producthunt/press-kit.md` on `main`, so merge this

@@ -13,7 +13,7 @@ globalThis.LAUNCHPANE_FRAMES = {
       layout: "hero",
       title: "Know what starts on your Mac.",
       body: "Launch agents, daemons, and login items in one native macOS workspace.",
-      chips: ["Free", "Open source (MIT)", "Signed & notarized"],
+      chips: ["Free", "Open source (MIT)", "Signed & notarized", "Also on the Mac App Store"],
       shots: [{ src: "overview.png", crop: [0, 0, 1200, 520], width: 1126 }],
     },
     {
@@ -91,7 +91,11 @@ globalThis.LAUNCHPANE_FRAMES = {
       layout: "closing",
       title: "Launchpane",
       body: "Know what starts on your Mac.",
-      chips: ["Free and open source (MIT)", "Developer ID signed & notarized", "Apple silicon · Intel · Universal", "No analytics or accounts"],
+      stores: [
+        { badge: true, note: "Sandboxed · inspect and edit plists" },
+        { label: "Download from", title: "GitHub Releases", note: "Recommended · Developer ID signed · Apple notarized" },
+      ],
+      chips: ["Free and open source (MIT)", "Apple silicon · Intel · Universal", "No analytics or accounts"],
       url: "github.com/webmaxru/Launchpane",
     },
     {
@@ -105,7 +109,7 @@ globalThis.LAUNCHPANE_FRAMES = {
       eyebrow: "Coming soon to Product Hunt",
       title: "Know what starts on your Mac.",
       body: "Launch agents, daemons, and login items in one native workspace.",
-      chips: ["Free", "Open source", "macOS"],
+      chips: ["Free & open source", "Signed & notarized", "Also on the Mac App Store"],
       shots: [{ src: "overview.png", crop: [0, 0, 1200, 520], width: 1380 }],
     },
     {
@@ -119,7 +123,7 @@ globalThis.LAUNCHPANE_FRAMES = {
       eyebrow: "Live on Product Hunt today",
       title: "Know what starts on your Mac.",
       body: "Launch agents, daemons, and login items in one native workspace.",
-      chips: ["Free", "Open source", "macOS"],
+      chips: ["Free & open source", "Signed & notarized", "Also on the Mac App Store"],
       shots: [{ src: "overview.png", crop: [0, 0, 1200, 520], width: 1380 }],
     },
     {
@@ -133,7 +137,7 @@ globalThis.LAUNCHPANE_FRAMES = {
       eyebrow: "Thank you, Product Hunt",
       title: "Launchpane",
       body: "Free and open source. Issues and ideas are welcome on GitHub.",
-      chips: ["Apple silicon · Intel · Universal", "Developer ID signed & notarized"],
+      chips: ["Developer ID signed & notarized", "Also on the Mac App Store", "Apple silicon · Intel · Universal"],
       url: "github.com/webmaxru/Launchpane",
     },
     {
@@ -199,7 +203,7 @@ globalThis.LAUNCHPANE_FRAMES = {
       eyebrow: "Live on Product Hunt today",
       title: "Know what starts on your Mac.",
       body: "Launch agents, daemons, and login items in one native workspace.",
-      chips: ["Free", "Open source", "macOS"],
+      chips: ["Free & open source", "Signed & notarized", "Also on the Mac App Store"],
       shots: [
         { src: "overview.png", crop: [0, 0, 1200, 520], width: 1000 },
         { src: "logs.png", crop: [497, 29, 703, 600], width: 640 },

@@ -52,8 +52,11 @@ same entry to `README.md`, `README-zh.md`, `README-ja.md`, and `README-ko.md`, t
 description.
 
 ```markdown
-* [Launchpane](https://salnikov.no/projects/launchpane/) - Inspect and manage launch agents, launch daemons and login items. [![Open-Source Software][OSS Icon]](https://github.com/webmaxru/Launchpane) ![Freeware][Freeware Icon]
+* [Launchpane](https://salnikov.no/projects/launchpane/) - Inspect and manage launch agents, launch daemons and login items. [![Open-Source Software][OSS Icon]](https://github.com/webmaxru/Launchpane) ![Freeware][Freeware Icon] [![App Store][app-store Icon]](https://apps.apple.com/app/id6820735995?platform=mac)
 ```
+
+The App Store icon follows the list's convention for apps that are also on the Mac App Store.
+Keep the main link on the website, which explains the difference between the two editions.
 
 ### iCHAIT/awesome-macOS
 
@@ -79,7 +82,9 @@ its own.
 
 - **AlternativeTo** (alternativeto.net): add Launchpane as a free, open-source macOS app and
   list it as an alternative to apps people search for, such as LaunchControl and Lingon. Keep
-  the description factual; don't compare features you haven't checked.
+  the description factual; don't compare features you haven't checked. Add both download
+  links, the signed GitHub release and the Mac App Store listing (https://apps.apple.com/no/app/launchpane/id6820735995?mt=12),
+  and note that the Store edition doesn't control services.
 - **Homebrew Cask**: Launchpane meets the technical bar (signed, notarized, published by the
   developer). Homebrew also requires notability: a self-submission by the repository owner
   needs at least 90 forks, 90 watchers, or 225 stars. Wait until the repository gets there,

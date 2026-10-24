@@ -6,6 +6,23 @@ checked by `pnpm producthunt:verify`. Replace `<PH_LINK>` with the Product Hunt 
 
 Do not ask for upvotes. Point people to the launch, invite questions, and answer them.
 
+## Before T-7 (optional): Mac App Store news
+
+Post this a week or more before the teaser if you haven't announced the App Store release
+yet. Skip it if you have. Image: `assets/gallery/07-download.png`
+
+```x-post
+Launchpane is now on the Mac App Store.
+
+It passed App Review and runs in Apple's App Sandbox: inspect launch agents, daemons, and login items, and edit your own plists.
+
+For service control, get the signed, notarized download on GitHub.
+
+https://apps.apple.com/no/app/launchpane/id6820735995?mt=12
+```
+
+Alt text: Launchpane closing card with the tagline "Know what starts on your Mac", Apple's Download on the Mac App Store badge noted "Sandboxed · inspect and edit plists", and a Download from GitHub Releases button noted "Recommended · Developer ID signed · Apple notarized".
+
 ## T-7: teaser
 
 Image: `assets/social/wide-teaser-1600x900.png`
@@ -25,7 +42,7 @@ Image: `assets/social/wide-teaser-1600x900.png`
 ```x-post
 Tomorrow at 12:01 AM Pacific, Launchpane launches on Product Hunt.
 
-Launch agents, daemons, and login items in one native macOS window. Free, MIT-licensed, signed and notarized.
+Launch agents, daemons, and login items in one native macOS window. Free and MIT-licensed: a signed, notarized download on GitHub, and on the Mac App Store.
 
 I'll be answering questions in the thread all day.
 ```
@@ -38,6 +55,8 @@ Post 1. Image: `assets/social/wide-live-1600x900.png`
 Launchpane is live on Product Hunt today.
 
 A free, open-source Mac app that shows what starts on your Mac: launch agents, daemons, and login items in one native window.
+
+Signed and notarized on GitHub, and on the Mac App Store.
 
 <PH_LINK>
 ```
@@ -71,11 +90,13 @@ The Commands tab shows the launchctl command behind each action, ready to copy, 
 Post 5. Image: `assets/gallery/07-download.png`
 
 ```x-post
-Free and MIT-licensed, built on azu's open-source launchd-ui. Developer ID signed and notarized builds for Apple silicon, Intel, and Universal.
+Two ways to get it, both free and MIT-licensed: Developer ID signed, Apple-notarized builds on GitHub (Apple silicon, Intel, Universal) or the sandboxed Mac App Store edition. Built on azu's launchd-ui.
 
 Questions and ideas are welcome in the thread:
 <PH_LINK>
 ```
+
+Alt text: Launchpane closing card with the tagline "Know what starts on your Mac", Apple's Download on the Mac App Store badge noted "Sandboxed · inspect and edit plists", and a Download from GitHub Releases button noted "Recommended · Developer ID signed · Apple notarized".
 
 Pin post 1 for launch day.
 
