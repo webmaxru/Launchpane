@@ -6,6 +6,29 @@ The October 24 Apple API check reports 1.3.4 as `READY_FOR_SALE` and its
 macOS review submission as `COMPLETE`. This is a new update, not another
 submission of the previously rejected builds.
 
+Source `8e91403938c43f4fc1697a869f11f599b7f1e1fc` was built as a universal
+Store app, distribution-signed with the matching existing profile, packaged
+with the Mac Installer Distribution certificate, and uploaded once. Package
+SHA-256: `0e2c1ae536b3ccb8186509a79e16538f44b5014f05c5b1f00c8924284f94dff3`.
+Apple build/upload `a854303b-4d05-42de-b305-765ecf0c5233` is `VALID` and attached
+to version `0dd65534-d93d-4209-a6df-9e5c9dac81a5`, with `MANUAL` release.
+All four uploaded screenshots reached `COMPLETE`; their Apple checksums and
+the live description, release notes and review notes match the prepared files.
+The build is assigned to the existing Launchpane Internal QA group and is
+`IN_BETA_TESTING`. Local `altool` is unavailable; Apple's upload processing
+validated the package successfully.
+
+**Exact-build QA blocked, not submitted to App Review.** On October 24,
+TestFlight offers 1.4.0 (202610242100), but Install does not replace the
+installed 1.3.4 (202610171400). Accessibility press and native-pointer
+installation both leave the old build installed; the Previous Builds view
+loads blank. No authentication prompt or actionable error was presented.
+The new build's persistence must be checked after successful Apple-path
+installation on a physical Mac. Do not copy receipts, re-sign a preview and
+call it TestFlight QA, or re-upload this already accepted build number.
+Resume from the existing candidate once installation is possible; the
+version remains `PREPARE_FOR_SUBMISSION`, not submitted or public.
+
 The candidate adds remembered user-selected folders, a Forget folders action,
 first-run Choose folders recovery, and a clearer source/standalone-download
 notice. All four source screenshots were recaptured on October 24 from the
