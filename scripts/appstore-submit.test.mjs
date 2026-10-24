@@ -14,7 +14,7 @@ Object.assign(process.env, {
   ASC_KEY_PATH: join(directory, "key.p8"), ASC_APP_ID: "test-app",
   ASC_SUBMIT: "false", ASC_AUTOMATIC_RELEASE: "false",
 });
-const { editableVersion, preflight, uploadBuild, booleanSetting } = await import("./appstore-submit.mjs");
+const { editableVersion, preflight, uploadBuild, booleanSetting, submit } = await import("./appstore-submit.mjs");
 const version = JSON.parse(readFileSync(new URL("../package.json", import.meta.url))).version;
 const nativeFetch = globalThis.fetch;
 let calls;
@@ -52,6 +52,41 @@ test("submission and automatic release are opt-in booleans", () => {
   process.env.TEST_RELEASE_FLAG = "yes";
   assert.throws(() => booleanSetting("TEST_RELEASE_FLAG"), /true or false/);
   delete process.env.TEST_RELEASE_FLAG;
+});
+test("review submission never reuses an unrelated platform's ready submission", async () => {
+  handler = (url, method, body) => {
+    if (url.pathname.endsWith("/reviewSubmissions") && method === "GET") {
+      return page([{ id: "vision", attributes: { platform: "VISION_OS", state: "READY_FOR_REVIEW" } }]);
+    }
+    if (url.pathname === "/v1/reviewSubmissions" && method === "POST") {
+      assert.equal(body.data.attributes.platform, "MAC_OS");
+      return { data: { id: "mac" } };
+    }
+    if (url.pathname === "/v1/reviewSubmissions/mac/items") return page([]);
+    if (url.pathname === "/v1/reviewSubmissionItems") {
+      assert.equal(body.data.relationships.reviewSubmission.data.id, "mac");
+      assert.equal(body.data.relationships.appStoreVersion.data.id, "target");
+      return { data: { id: "item" } };
+    }
+    if (url.pathname === "/v1/reviewSubmissions/mac" && method === "PATCH") {
+      assert.equal(body.data.attributes.submitted, true);
+      return { data: { id: "mac", attributes: { state: "WAITING_FOR_REVIEW" } } };
+    }
+    throw new Error(`Unexpected request: ${url.pathname}`);
+  };
+  assert.equal((await submit("target")).id, "mac");
+  assert.ok(calls.every(call => !call.url.includes("/vision")));
+});
+test("review submission checks later pages before creating a competing macOS submission", async () => {
+  handler = url => {
+    if (url.pathname.endsWith("/reviewSubmissions")) {
+      return { data: [], links: { next: "https://api.appstoreconnect.apple.com/v1/review-page-two" } };
+    }
+    assert.equal(url.pathname, "/v1/review-page-two");
+    return page([{ id: "mac", attributes: { platform: "MAC_OS", state: "IN_REVIEW" } }]);
+  };
+  await assert.rejects(submit("target"), /existing review submission is IN_REVIEW/);
+  assert.ok(calls.every(call => call.method === "GET"));
 });
 test("creates the intended version without renaming a historical public release", async () => {
   handler = (url, method, body) => {

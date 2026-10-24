@@ -36,25 +36,33 @@ to avoid creating an unselected `~/Library/Logs` folder.
 
 Use **Choose folders…** to select LaunchAgents, LaunchDaemons, Applications or
 log folders using NSOpenPanel. Command-Shift-G reaches hidden Library paths.
-Only selected inventory roots are scanned; grants last until quit and must be
-given again after reopening. Canceling changes nothing. There are no temporary
-filesystem exceptions, saved-path permission bypasses or debug entitlements.
+Only selected inventory roots are scanned. Each choice is saved as an app-scoped
+security-scoped bookmark in the app's own container and restored at the next
+launch; **Forget folders** removes them. With no saved folder the first-run card
+offers **Choose folders…** and **Retry**. Canceling changes nothing. There are no
+temporary filesystem exceptions, path-based permission bypasses or debug
+entitlements. See [sandbox-exceptions.md](../appstore/sandbox-exceptions.md).
 
 ## UI edition notice and link assessment
 
-The app says that the separately distributed standalone edition supports service
-management and administrator workflows, but does not call it a paid upgrade or
-“full version”. Its optional **Project documentation and source on GitHub** link
-opens the system browser; the destination also contains standalone releases.
-The Store app never downloads, installs, updates or unlocks another edition.
-There is no purchase, license or external payment mechanism.
+The app says that the fully functional standalone edition, which includes
+service control, enable/disable, removal and administrator access, is a separate
+download on GitHub together with the source code. The link is labelled
+**Download the standalone edition and source code on GitHub** and opens the
+system browser to the project page, which hosts both. The notice states that the
+Store app never downloads or installs it. It is not called a paid upgrade, and
+there is no purchase, license, update or external payment mechanism. The Store
+app never downloads, installs, updates or unlocks another edition.
 
 This wording documents a factual edition difference; it is not an approval
-guarantee. Guidelines 2.2 and 4.2 still require a useful finished standalone
-product, 2.3 requires accurate metadata, 2.4.5(i)/2.5.2 require sandbox boundaries,
-2.4.5(v) prohibits root escalation, and 2.4.5(iv)/(vii) prohibit alternative
-code installation/update mechanisms. If Apple objects to the edition reference,
-remove the reference instead of disguising an external unlock funnel.
+guarantee. Naming the fully functional standalone download is more explicit than
+the earlier wording and so carries more review risk under guidelines
+2.4.5(iv)/(vii) and 3.1.1 (steering). Guidelines 2.2 and 4.2 still require a
+useful finished standalone product, 2.3 requires accurate metadata,
+2.4.5(i)/2.5.2 require sandbox boundaries, 2.4.5(v) prohibits root escalation,
+and 2.4.5(iv)/(vii) prohibit alternative code installation/update mechanisms. If
+Apple objects to the edition reference, revert to a neutral
+documentation-and-source link instead of disguising an external unlock funnel.
 
 ## Verification
 

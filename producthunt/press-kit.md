@@ -58,8 +58,9 @@ configured to run; it doesn't judge whether a service is safe.
 
 A sandboxed Mac App Store edition is available now. App Store sandbox and privilege
 restrictions limit it to inspection and personal plist editing: no load, run, stop,
-restart, enable/disable, removal, or administrator mode. Inventory and log folders must
-be selected each time the app reopens. Saving a personal plist does not activate or reload
+restart, enable/disable, removal, or administrator mode. Inventory and log folders are
+chosen in the macOS picker; from version 1.4.0 they are remembered after relaunch. Saving
+a personal plist does not activate or reload
 its service. Recommend standalone for service management.
 
 Developer ID signing verifies the developer and detects changes to the signed app;

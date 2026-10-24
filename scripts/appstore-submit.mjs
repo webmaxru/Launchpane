@@ -602,16 +602,17 @@ async function uploadReviewRecording(reviewDetailId) {
   log(`uploaded App Review recording ${fileName}`);
 }
 
-async function submit(versionId) {
-  const submissions = await api("GET", `/v1/apps/${APP_ID}/reviewSubmissions?limit=20`);
-  const open = submissions.data.find((s) =>
+export async function submit(versionId) {
+  const submissions = (await list(`/v1/apps/${APP_ID}/reviewSubmissions?limit=200`))
+    .filter(s => s.attributes.platform === "MAC_OS");
+  const open = submissions.find((s) =>
     ["WAITING_FOR_REVIEW", "IN_REVIEW"].includes(s.attributes.state),
   );
   if (open) {
     throw new Error(`An existing review submission is ${open.attributes.state}; do not submit another version`);
   }
 
-  let submission = submissions.data.find(
+  let submission = submissions.find(
     (s) => s.attributes.state === "READY_FOR_REVIEW",
   );
   if (!submission) {
@@ -650,6 +651,7 @@ async function submit(versionId) {
     },
   });
   log(`submitted for review (${result.data.attributes.state})`);
+  return result.data;
 }
 
 export async function main() {

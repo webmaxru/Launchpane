@@ -18,6 +18,13 @@ REQUIRED = {
     "com.apple.security.files.user-selected.read-write":
         "Folders the user grants through the native Open panel are read and "
         "personal plists in them are created/edited.",
+    "com.apple.security.files.bookmarks.app-scope":
+        "Security-scoped bookmarks of the folders chosen in the Open panel "
+        "restore the same user-granted access after relaunch instead of "
+        "asking again. Apple documents it as required for app-scoped "
+        "security-scoped bookmarks; a local ad-hoc removal test on macOS "
+        "12.7.6 did not enforce it, so confirm on the distribution build "
+        "(see appstore/sandbox-exceptions.md).",
 }
 SIGNING = {
     "com.apple.application-identifier": "Added by distribution signing.",

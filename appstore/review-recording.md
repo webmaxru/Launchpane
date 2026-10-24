@@ -1,6 +1,94 @@
 # App Review recording and QA checklist
 
-## Current edition: 1.3.4 entitlement minimization
+## Current candidate: 1.4.0 (202610242100)
+
+The October 24 Apple API check reports 1.3.4 as `READY_FOR_SALE` and its
+macOS review submission as `COMPLETE`. This is a new update, not another
+submission of the previously rejected builds.
+
+Source `8e91403938c43f4fc1697a869f11f599b7f1e1fc` was built as a universal
+Store app, distribution-signed with the matching existing profile, packaged
+with the Mac Installer Distribution certificate, and uploaded once. Package
+SHA-256: `0e2c1ae536b3ccb8186509a79e16538f44b5014f05c5b1f00c8924284f94dff3`.
+Apple build/upload `a854303b-4d05-42de-b305-765ecf0c5233` is `VALID` and attached
+to version `0dd65534-d93d-4209-a6df-9e5c9dac81a5`, with `MANUAL` release.
+All four uploaded screenshots reached `COMPLETE`; their Apple checksums and
+the live description, release notes and review notes match the prepared files.
+The build is assigned to the existing Launchpane Internal QA group and is
+`IN_BETA_TESTING`. Local `altool` is unavailable; Apple's upload processing
+validated the package successfully.
+
+**Exact-build TestFlight QA passed on October 24.** The apparent installation
+blocker was ineffective accessibility activation: System Events' button press
+and coordinate click did not trigger TestFlight's SwiftUI action. Real
+CoreGraphics mouse-down/up events opened the replacement confirmation;
+confirming Install successfully installed the existing accepted build. No
+re-upload, receipt copying or local re-signing was involved.
+
+The installed `/Applications/Launchpane.app` reports 1.4.0 (202610242100),
+has a valid TestFlight Beta Distribution signature with team `B9FMXAW5TZ`,
+and contains an App Store receipt. Its base entitlements are `app-sandbox`,
+`network.client`, `files.user-selected.read-write` and `files.bookmarks.app-scope`,
+plus Apple's application/team identifiers and `beta-reports-active`.
+`network.server`, `get-task-allow` and temporary exceptions remain absent.
+Installed executable SHA-256:
+`bf50a72e0a61eba4cecb99a10042921d26aa45e17b4b6200d2f063302f7ef032`.
+
+On that Apple-installed build, a physical MacBook Air (M1), macOS 12.7.6
+(21H1320), passed these checks:
+
+- First-run Choose folders and Retry, with the clarified standalone/source
+  notice; picker Cancel left access unchanged.
+- Selecting the personal LaunchAgents folder showed six services. A complete
+  quit (old process gone) and relaunch into a new process restored the same six
+  services and remembered folder without another consent prompt.
+- Label search, source filtering, details and Store-only row actions worked.
+  The row menu offered only View details and Reveal in Finder. Selecting
+  Applications exposed the real Spotify helper, whose details offered only
+  Reveal, not mutation controls.
+- Creating and editing `com.launchpane.review.demo140` through the UI persisted
+  `/usr/bin/true`, Run at Load off, Keep Alive off and no schedule. A read-only
+  `launchctl print` confirmed it was not registered. The sandboxed log inspector
+  read a clearly labeled sample log inside the granted folder.
+- Light and system/dark appearance rendered. Both disposable files were
+  removed, the inventory refreshed, and the original appearance restored.
+- Forget folders returned to the first-run card. A further complete quit and
+  relaunch still showed no chosen folders, proving access was not restored.
+
+Native screenshots are preserved in the session artifacts:
+
+| Screenshot | SHA-256 |
+| --- | --- |
+| `testflight-140-first-launch.png` | `02d4a6753b94eed23688a4e91853f81f7f9e07e792db824f4f70af52f6d67210` |
+| `testflight-140-relaunch-restored.png` | `bbb9ab67bfd57288b30ef78bee1f5409cb8e8546e1a055b06032bcad5dad8463` |
+| `testflight-140-after-forget.png` | `1ed0881f4d73bc32f7b66711d97b278eb58a0ed628d37411b70eede10f5ca943` |
+
+**Submitted to App Review on October 24 at 19:38 UTC.** Review submission
+`f0ecbb74-c007-47e3-84f7-79934c8563be` and version
+`0dd65534-d93d-4209-a6df-9e5c9dac81a5` both read back as
+`WAITING_FOR_REVIEW`, with release type still `MANUAL`. This is submitted,
+not approved or publicly released. Existing public Store/GitHub 1.3.4 remains
+unchanged. The package's immutable source remains `8e91403`; later
+documentation-only commits record QA and submission evidence, not a new binary.
+The prepared `release/appstore/` folder contains the package/checksum receipt,
+current metadata, `testflight-qa.json`, QA screenshots and submission receipt.
+
+The candidate adds remembered user-selected folders, a Forget folders action,
+first-run Choose folders recovery, and a clearer source/standalone-download
+notice. All four source screenshots were recaptured on October 24 from the
+universal 1.4.0 (202610242100) local sandbox preview. Selection, cancellation,
+disposable plist creation/editing, sample-log reading, login-helper inspection,
+quit/relaunch restoration and Forget folders passed. The disposable plist
+was never registered with launchd and both it and the sample log were removed.
+The log screenshot masks personal paths; all 16 opaque RGB derivatives and
+their source fingerprint passed verification. Old
+TestFlight results below are historical only; the checks above cover the new
+exact Apple-installed build. This host still runs macOS 12.7.6; it cannot supply
+a latest-macOS recording. No such recording is claimed or attached. The earlier
+review is complete; any new Apple request for such a recording is a separate
+external gate, not evidence supplied by local previews.
+
+## Previous candidate: 1.3.4 entitlement minimization
 
 Candidate 1.3.4 removes the unused `com.apple.security.network.server`
 entitlement flagged by App Review on build `1.3.3 (202610162230)`. A sandboxed
@@ -88,7 +176,8 @@ The current physical-device recording must show native launch, missing-consent
 recovery and cancellation, explicit folder selection, inventory, search/source
 filtering, configuration/schedule inspection, selected-folder log access,
 personal plist create/edit/save without activation, absence of runtime/toggle/
-removal/admin controls, and closing/reopening with fresh consent required.
+removal/admin controls, and closing/reopening with the chosen folders restored
+without a new prompt (then **Forget folders** returning to the first-run card).
 Clean the disposable plist using Finder afterward; no Store Remove action exists.
 The neutral edition comparison and documentation/source link must not install,
 update, purchase or unlock another edition. Demonstrate light and dark appearance.
@@ -135,7 +224,8 @@ test plan for that recording; it is intentionally not a simulated recording.
 - Before inventory access, demonstrate **Choose folders…** and explicitly
   select the test user's `~/Library/LaunchAgents`, shared LaunchAgents and
   LaunchDaemons folders, and Applications when showing login helpers. Show
-  picker cancellation, successful selection, and re-selection after reopening.
+  picker cancellation, successful selection, and relaunch with the folders
+  remembered (no second prompt).
   Select a log's containing folder before demonstrating log access.
 
 ## Required flow
@@ -154,16 +244,17 @@ test plan for that recording; it is intentionally not a simulated recording.
    - Keep alive: disabled
 7. Save the agent, show it in the User Agents list, open its detail view, and
    use the available action menu.
-8. Remove the temporary agent and show the confirmation and refreshed list.
+8. Remove the disposable plist using Finder and refresh Launchpane. There is
+   no Remove action in the Store edition.
 9. Select a system agent or daemon and show that mutation controls are
    unavailable/read-only.
 10. Stop recording after the final refreshed state is visible.
 
 Login Items can be shown when the review Mac has registered helpers. They are
-not required for the main flow. Only Enable/Disable can be activated; applicable
-lifecycle controls remain visible but disabled with a Store-specific reason.
-Also show the disabled Administrator control and the edition notice's optional
-GitHub documentation/source link. Neither can unlock additional Store features.
+not required for the main flow and are inspection-only. Lifecycle,
+Enable/Disable, Remove and Administrator controls must be absent. The edition
+notice's optional GitHub link opens the source/standalone-download project
+page and cannot unlock additional Store features.
 
 ## Recording evidence gate
 
@@ -199,16 +290,17 @@ upload is not evidence that the app works.
 - [ ] The app launches without an account, login, or network connection.
 - [ ] Inventory loads without a crash on the review Mac.
 - [ ] Search and source filtering return and clear results correctly.
-- [ ] User-agent create, refresh, detail, and remove flow completes.
+- [ ] Personal plist create, edit, refresh and detail work without activation; Finder cleanup completes.
 - [ ] System Agents and System Daemons remain read-only.
-- [ ] Login Items, when present, permit only Enable/Disable; lifecycle controls show Store-specific disabled reasons.
-- [ ] Administrator is disabled with a Store-specific hint; the optional GitHub project link opens the browser and does not download/install/unlock anything.
+- [ ] Login Items, when present, are inspection-only; runtime/toggle/removal controls are absent.
+- [ ] Administrator is absent; the optional GitHub project link opens the browser and does not download/install/unlock anything.
 - [ ] Errors remain visible and provide a recovery action.
 - [ ] Light and dark macOS appearances render the main flow legibly.
 - [ ] The temporary plist is removed after the test.
 - [ ] The exact submitted build number is shown in the recording notes.
 - [ ] Initial missing consent has a clear recovery action; cancellation grants no access.
-- [ ] Only selected inventory roots are shown, and reopening asks for consent again.
+- [ ] Only selected inventory roots are shown; quitting/reopening restores access without a prompt.
+- [ ] Forget folders removes saved bookmarks and returns to the first-run card, including after relaunch.
 - [ ] The final signed app omits get-task-allow and all temporary file exceptions.
 
 ## October 15 replacement preparation

@@ -47,7 +47,7 @@ afterEach(() => {
 })
 
 describe("App action feedback", () => {
-  it("refreshes inventory only after native folder consent and reports selection failures", async () => {
+  it("refreshes inventory after native folder consent and reports selection failures", async () => {
     setFakeHandler("get_runtime_info", () => ({
       is_app_store: true, is_administrator: false,
       can_restart_as_administrator: false, review_demo: false,
@@ -59,7 +59,10 @@ describe("App action feedback", () => {
     const user = userEvent.setup()
     render(<App />)
     const button = await screen.findByRole("button", { name: "Choose folders…" })
-    expect(screen.getByText(/Access lasts until you quit/)).toBeInTheDocument()
+    expect(screen.queryByText(/Access lasts until you quit/)).not.toBeInTheDocument()
+    expect(screen.getByRole("complementary", { name: "Mac App Store edition limits" })).toHaveTextContent(
+      "remembers them after you relaunch"
+    )
     await waitFor(() => expect(list).toHaveBeenCalledOnce())
     await user.click(button)
     expect(list).toHaveBeenCalledOnce()
@@ -70,7 +73,56 @@ describe("App action feedback", () => {
     await user.click(button)
     expect(await screen.findByRole("alert")).toHaveTextContent("Folder permission denied")
     expect(button).toBeEnabled()
-    expect(list).toHaveBeenCalledTimes(2)
+    // Some folders may be granted before a failure, so the inventory is refreshed anyway.
+    await waitFor(() => expect(list).toHaveBeenCalledTimes(3))
+  })
+
+  it("lists remembered folders and forgets them on request", async () => {
+    setFakeHandler("get_runtime_info", () => ({
+      is_app_store: true, is_administrator: false,
+      can_restart_as_administrator: false, review_demo: false,
+    }))
+    let remembered = ["~/Library/LaunchAgents", "/Applications"]
+    const forget = vi.fn(() => { remembered = [] })
+    setFakeHandler("list_access_folders", () => remembered)
+    setFakeHandler("forget_access_folders", forget)
+    const user = userEvent.setup()
+    render(<App />)
+    expect(await screen.findByTestId("remembered-folders")).toHaveTextContent(
+      "~/Library/LaunchAgents, /Applications"
+    )
+    await user.click(screen.getByRole("button", { name: "Forget folders" }))
+    expect(forget).toHaveBeenCalledOnce()
+    await waitFor(() => expect(screen.queryByTestId("remembered-folders")).not.toBeInTheDocument())
+    expect(screen.queryByRole("button", { name: "Forget folders" })).not.toBeInTheDocument()
+    expect(await screen.findByRole("status")).toHaveTextContent("Saved folder access removed.")
+  })
+
+  it("offers Choose folders and Retry on the first-run folder access card", async () => {
+    setFakeHandler("get_runtime_info", () => ({
+      is_app_store: true, is_administrator: false,
+      can_restart_as_administrator: false, review_demo: false,
+    }))
+    let granted = false
+    const list = vi.fn(() => {
+      if (!granted) {
+        throw new Error("Folder access is required. Choose folders to allow access to ~/Library/LaunchAgents.")
+      }
+      return []
+    })
+    setFakeHandler("list_jobs", list)
+    setFakeHandler("choose_access_folders", () => { granted = true; return true })
+    const user = userEvent.setup()
+    render(<App />)
+    const card = await screen.findByText("Choose folders to get started")
+    expect(screen.getByText("No folders chosen yet")).toBeInTheDocument()
+    expect(screen.queryByText("Services unavailable")).not.toBeInTheDocument()
+    const region = card.closest("[role='status']") as HTMLElement
+    expect(screen.queryByText("Couldn’t load background services")).not.toBeInTheDocument()
+    expect(within(region).getByRole("button", { name: "Retry" })).toBeEnabled()
+    await user.click(within(region).getByRole("button", { name: "Choose folders…" }))
+    await waitFor(() => expect(screen.queryByText("Choose folders to get started")).not.toBeInTheDocument())
+    expect(screen.getByText("No background services found")).toBeInTheDocument()
   })
 
   it("shows Store edition limits and opens the neutral project link without requesting root", async () => {
@@ -87,11 +139,13 @@ describe("App action feedback", () => {
     const user = userEvent.setup()
     render(<App />)
     const limits = await screen.findByRole("complementary", { name: "Mac App Store edition limits" })
-    expect(limits).toHaveTextContent("Service control, enable/disable, removal and administrator access are not available")
-    expect(limits).toHaveTextContent("separately distributed standalone edition")
+    expect(limits).toHaveTextContent("Service control, enable/disable, removal and administrator access aren’t available")
+    expect(limits).toHaveTextContent("fully functional standalone edition")
+    expect(limits).toHaveTextContent("separate download on GitHub, together with the source code")
+    expect(limits).toHaveTextContent("never downloads or installs it")
     expect(screen.queryByRole("button", { name: "Open Administrator Window" })).not.toBeInTheDocument()
     expect(admin).not.toHaveBeenCalled()
-    const link = within(limits).getByRole("link", { name: "Project documentation and source on GitHub" })
+    const link = within(limits).getByRole("link", { name: "Download the standalone edition and source code on GitHub" })
     expect(link).toHaveAttribute("href", "https://github.com/webmaxru/Launchpane")
     await user.click(link)
     expect(openProject).toHaveBeenCalledOnce()
@@ -108,7 +162,7 @@ describe("App action feedback", () => {
     setFakeHandler("open_project_page", () => { throw new Error("Browser launch denied") })
     const user = userEvent.setup()
     render(<App />)
-    await user.click(await screen.findByRole("link", { name: "Project documentation and source on GitHub" }))
+    await user.click(await screen.findByRole("link", { name: "Download the standalone edition and source code on GitHub" }))
     expect(await screen.findByRole("alert")).toHaveTextContent("Browser launch denied")
   })
 

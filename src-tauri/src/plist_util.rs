@@ -24,7 +24,7 @@ fn plist_dirs() -> Result<Vec<(PathBuf, JobSource)>, AppError> {
         let selected = crate::store_access::selected_folders()?;
         if selected.is_empty() {
             return Err(AppError::Message(
-                "Folder access is required. Choose folders to allow access to ~/Library/LaunchAgents, /Library/LaunchAgents, /Library/LaunchDaemons, or Applications. Access lasts until you quit Launchpane.".into(),
+                "Folder access is required. Choose folders to allow access to ~/Library/LaunchAgents, /Library/LaunchAgents, /Library/LaunchDaemons, or Applications. Launchpane remembers them after you relaunch.".into(),
             ));
         }
         dirs.retain(|(path, _)| crate::store_access::includes_folder(&selected, path));

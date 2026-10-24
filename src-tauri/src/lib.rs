@@ -14,6 +14,8 @@ pub fn run() {
         .menu(menu::build)
         .invoke_handler(tauri::generate_handler![
             store_access::choose_access_folders,
+            store_access::list_access_folders,
+            store_access::forget_access_folders,
             commands::list_jobs,
             commands::get_job_detail,
             commands::start_job,

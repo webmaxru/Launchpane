@@ -22,7 +22,7 @@ A few boundaries I cared about:
 • After a load, unload, enable, or disable, Launchpane reads the state back from launchd and tells you if it doesn't match
 • No analytics, no accounts, no cloud backend
 
-Both editions are free and MIT-licensed. I recommend the Developer ID signed, Apple-notarized standalone download on GitHub for service control. The Mac App Store edition is also available: it inspects services and edits personal plists, but sandbox restrictions mean no service controls, removal, or administrator mode. Folder access must be granted again after reopening.
+Both editions are free and MIT-licensed. I recommend the Developer ID signed, Apple-notarized standalone download on GitHub for service control. The Mac App Store edition is also available: it inspects services and edits personal plists, but sandbox restrictions mean no service controls, removal, or administrator mode. From version 1.4.0, it remembers the folders you choose after relaunch.
 
 Launchpane builds on azu's open-source launchd-ui and its contributors. I'm grateful for that foundation.
 

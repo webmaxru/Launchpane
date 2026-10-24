@@ -23,7 +23,7 @@ Yes, it's free and MIT-licensed, with no paid tier, account, or in-app purchase.
 ```reply
 Yes: https://apps.apple.com/no/app/launchpane/id6820735995?mt=12
 
-It's a sandboxed inspector and personal plist editor. App Store restrictions mean no load, run, stop, restart, enable/disable, removal, or administrator mode. You select inventory and log folders again after reopening; saving a plist doesn't activate or reload its service. I recommend the signed, notarized standalone release on GitHub for service control.
+It's a sandboxed inspector and personal plist editor. App Store restrictions mean no load, run, stop, restart, enable/disable, removal, or administrator mode. You choose inventory and log folders in the macOS picker, and from version 1.4.0 it remembers them after relaunch; saving a plist doesn't activate or reload its service. I recommend the signed, notarized standalone release on GitHub for service control.
 ```
 
 ## Is downloading outside the App Store safe?

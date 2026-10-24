@@ -112,8 +112,9 @@ Store sandbox and privilege restrictions limit this edition's features:
   edit personal LaunchAgent plists.
 - No Load, Run now, Stop/Unload, Restart, Enable/Disable, Remove, or administrator
   mode. Shared services and login helpers are inspection-only.
-- Choose inventory and log folders in the native picker on each app launch;
-  access grants last only until quit.
+- Choose inventory and log folders in the native picker. From version 1.4.0,
+  Launchpane remembers them across relaunches (**Forget folders** clears them);
+  earlier versions ask again on each launch.
 - Saving a personal plist saves the file only: it does **not** activate or reload
   the service. Copied Terminal commands are references, not executed by the app.
 
