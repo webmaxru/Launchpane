@@ -18,7 +18,12 @@
       <h1>Support</h1>
       <p>Launchpane is maintained as an open-source project.</p>
       <h2>Get help</h2>
-      <p>Search existing reports or open a new issue in the <a href="https://github.com/webmaxru/Launchpane/issues">GitHub issue tracker</a>. Include your macOS version, Launchpane version, the affected service type, and steps to reproduce the problem.</p>
+      <p>Search existing reports or open a new issue in the <a href="https://github.com/webmaxru/Launchpane/issues">GitHub issue tracker</a>. Include your macOS version, Launchpane version, edition (standalone or Mac App Store), the affected service type, and steps to reproduce the problem.</p>
+      <h2>Which edition should I download?</h2>
+      <p>For service management, we recommend the <a href="https://github.com/webmaxru/Launchpane/releases/latest">standalone release</a>. It supports lifecycle controls, enable/disable, personal-agent removal, and an explicit administrator window. Official releases from v1.2.2 are Developer ID signed and Apple notarized. Signing verifies the developer and detects changes; notarization checks for known malware. Keep Gatekeeper enabled and do not bypass malware, damaged-app, or unverified-developer warnings. These checks are not a guarantee of safety or a substitute for App Store review. <a href="https://support.apple.com/en-us/102445">Read Apple's download security guidance</a>.</p>
+      <p>The <a href="https://apps.apple.com/no/app/launchpane/id6820735995?mt=12">Mac App Store edition</a> is available for inspection and personal LaunchAgent plist editing. App Store sandbox and privilege restrictions mean it cannot load, run, stop, restart, enable, disable, or remove services, or open an administrator window. <a href="../#download">Compare downloads</a>.</p>
+      <h2>Why is the Store inventory empty after reopening?</h2>
+      <p>Choose inventory folders using <strong>Choose folders…</strong>. Only selected roots are scanned, and folder grants last until quit. Select them again after reopening, including log folders when needed. Saving a personal plist only writes the file; it does not activate or reload the service. Shared services and login helpers remain read-only.</p>
       <h2>Permissions</h2>
       <p>User agents live in <code>~/Library/LaunchAgents</code>. System agents and daemons are protected by macOS and are shown as read-only unless an explicitly authorized operation is available.</p>
       <h2>Logs</h2>

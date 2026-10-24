@@ -36,9 +36,9 @@ These are repository settings. Nothing in this folder changes them for you.
 - [ ] Complete your Product Hunt maker profile: photo, headline, and links.
 - [ ] Download the latest release on a Mac that has never run Launchpane. Check that each DMG
       opens without Gatekeeper warnings and that `SHA256SUMS` matches.
-- [ ] Decide what the Mac App Store edition status will be on launch day. Until it's live,
-      leave the conditional sentence out of `first-comment.md` and use the "Not today"
-      answer to "Is it in the Mac App Store?" in `replies.md`.
+- [ ] Recheck the [live Mac App Store listing](https://apps.apple.com/no/app/launchpane/id6820735995?mt=12).
+      Keep the edition comparison in `first-comment.md` and `replies.md`: Store is for
+      inspection and personal plist editing; standalone is recommended for service control.
 - [ ] Regenerate and check the assets:
 
   ```sh

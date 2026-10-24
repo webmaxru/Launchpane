@@ -20,14 +20,16 @@ Yes, it's free and MIT-licensed, with no paid tier, account, or in-app purchase.
 
 ## Is it in the Mac App Store?
 
-Use the variant that matches the Store status on launch day.
-
 ```reply
-Not today. The full app is on GitHub Releases, Developer ID signed and notarized. App Store sandboxing doesn't allow an app to run launchctl or write to ~/Library/LaunchAgents the way Launchpane needs, so a Store version can't control services.
+Yes: https://apps.apple.com/no/app/launchpane/id6820735995?mt=12
+
+It's a sandboxed inspector and personal plist editor. App Store restrictions mean no load, run, stop, restart, enable/disable, removal, or administrator mode. You select inventory and log folders again after reopening; saving a plist doesn't activate or reload its service. I recommend the signed, notarized standalone release on GitHub for service control.
 ```
 
+## Is downloading outside the App Store safe?
+
 ```reply
-Yes, there's a sandboxed Mac App Store edition for inspecting services and editing your own plists. Store rules don't allow it to load, run, stop, or enable services, so the GitHub build is the one with service control.
+The official standalone releases are Developer ID signed, so macOS can verify the developer and detect changes to the signed app. Apple notarization checks the submitted software for known malware, and our release pipeline verifies Gatekeeper acceptance. These are meaningful protections, not a guarantee of safety or the same as App Store review. Standalone has more access than the sandboxed Store edition and can change services, so review actions carefully. Use our official GitHub Releases, keep Gatekeeper enabled, and don't bypass malware, damaged-app, or unverified-developer warnings. Apple's explanation: https://support.apple.com/en-us/102445
 ```
 
 ## How is it different from LaunchControl, Lingon, or other launchd tools?
@@ -63,7 +65,7 @@ No. There are no analytics, ads, accounts, or cloud backend. The privacy page ha
 ## Does it update itself?
 
 ```reply
-Not at the moment. There is no built-in updater. To hear about new versions, watch the GitHub repository and choose Custom → Releases.
+The standalone edition has no built-in updater; new versions are on GitHub Releases. To hear about them, watch the repository and choose Custom → Releases. The Mac App Store handles updates for its edition.
 ```
 
 ## Intel or Apple silicon?

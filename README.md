@@ -18,7 +18,8 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/webmaxru/Launchpane/releases/latest"><strong>Download</strong></a> ·
+  <a href="https://github.com/webmaxru/Launchpane/releases/latest"><strong>Download standalone (recommended)</strong></a> ·
+  <a href="#mac-app-store">Mac App Store</a> ·
   <a href="https://salnikov.no/projects/launchpane/">Website</a> ·
   <a href="https://salnikov.no/projects/launchpane/support/">Support</a> ·
   <a href="https://salnikov.no/projects/launchpane/privacy/">Privacy</a>
@@ -28,9 +29,11 @@
   <img src="docs/assets/launchpane-overview.png" alt="Launchpane listing launch agents, daemons, and login items" width="860">
 </p>
 
-Browse user LaunchAgents (`~/Library/LaunchAgents/`), system agents/daemons, and app login items. Start, stop, restart, view/edit plist files, and create new agents. Built with Tauri v2.
+Use the standalone edition to browse user LaunchAgents (`~/Library/LaunchAgents/`),
+system agents/daemons, and app login items; start, stop, restart, view/edit plist
+files, and create new agents. Built with Tauri v2.
 
-## Features
+## Features (standalone edition)
 
 - List User Agents (`~/Library/LaunchAgents/`), System Agents, System Daemons, and Login Items
 - Search by label and filter by source (User / Home / System / Daemon / Login Items)
@@ -58,23 +61,20 @@ action's privilege requirements, state dependencies, reasons for disabling or
 hiding it, and real-Mac verification limits. Enable does not load or start;
 Disable does not stop an already loaded service.
 
-The Mac App Store edition is an inspector and user-selected plist editor, not a
-service controller. It has no Load, Run, Stop, Restart, Enable, Disable, Remove,
-or administrator actions; Rust rejects these operations even through direct IPC.
-The standalone edition retains its service-management functionality.
-Store inventory and logs require explicit native folder selection on each launch.
-Creating or editing a user-agent plist does not load, start, stop or reload it.
-Shared services and login helpers are inspection-only.
-
-Edition-specific limits stay visible with explanations and an optional project
-documentation/source link. This is not a downloader or an external unlock flow.
-See the [App Store action and review-policy tables](docs/app-store-actions.md).
+The separate Mac App Store edition is a sandboxed inspector and personal plist
+editor, not a service controller. See the [download choices](#install) below and
+the detailed [edition comparison](docs/app-store-actions.md).
 
 ## Install
 
-Download the latest [signed release](https://github.com/webmaxru/Launchpane/releases/latest).
-Standalone builds from **v1.2.2** are signed with Developer ID and notarized
-by Apple.
+Both editions are free. **We recommend standalone for service management**:
+it includes Load, Run now, Stop/Unload, Restart, Enable/Disable, personal-agent
+removal, and explicit administrator controls that the Store edition cannot offer.
+
+### Standalone (recommended)
+
+Download the latest [signed standalone release](https://github.com/webmaxru/Launchpane/releases/latest)
+for the complete service-management workflow, subject to macOS permissions.
 
 Choose the Apple Silicon (`aarch64`), Intel (`x64`), or Universal DMG, open it,
 and drag Launchpane to Applications. Follow the normal macOS installation
@@ -85,10 +85,57 @@ Each release includes `SHA256SUMS` for all six downloads. Standalone builds
 are separate from the sandboxed Mac App Store edition. The older v1.2.1
 assets remain unsigned and are not replaced.
 
+#### Why trust the standalone download?
+
+Official standalone releases from **v1.2.2** are **Developer ID signed and Apple
+notarized**. Downloading outside the App Store does not mean bypassing macOS
+security:
+
+- **Developer ID signing** lets macOS verify the identified developer and detect
+  changes to the signed app.
+- **Apple notarization** checks the submitted software for known malware.
+  The release pipeline staples Apple's notarization tickets to the app and DMG.
+- **Gatekeeper** checks downloaded software before it runs. The release pipeline
+  verifies Gatekeeper acceptance before publishing.
+
+These are meaningful protections, not a guarantee that software is risk-free or
+the same as App Store review. Standalone is not restricted by App Sandbox and can
+change real services; review each action and grant administrator access only when
+needed. Get it from the official release page, optionally compare the download
+with `SHA256SUMS`, and keep Gatekeeper enabled. If macOS reports damaged software,
+an unverifiable developer, or malware, stop rather than bypass the warning.
+See [Apple's explanation of safely opening Mac apps](https://support.apple.com/en-us/102445).
+
+### Mac App Store
+
+<p>
+  <a href="https://apps.apple.com/no/app/launchpane/id6820735995?mt=12">
+    <img src="docs/assets/mac-app-store-badge.svg" alt="Download on the Mac App Store" height="40">
+  </a>
+</p>
+
+Now available on the Mac App Store as a **sandboxed service inspector and
+personal LaunchAgent plist editor**. App Store sandbox and privilege restrictions
+limit this edition's features:
+
+- Inspect service state, configuration, schedules, and selected logs; create and
+  edit personal LaunchAgent plists.
+- No Load, Run now, Stop/Unload, Restart, Enable/Disable, Remove, or administrator
+  mode. Shared services and login helpers are inspection-only.
+- Choose inventory and log folders in the native picker on each app launch;
+  access grants last only until quit.
+- Saving a personal plist saves the file only: it does **not** activate or reload
+  the service. Copied Terminal commands are references, not executed by the app.
+
+Choose this edition if inspection and plist editing are enough. For service
+control, use the [recommended standalone download](https://github.com/webmaxru/Launchpane/releases/latest).
+The Store app does not download, install, or unlock another edition.
+
 ## Product website
 
-The [Launchpane website](https://salnikov.no/projects/launchpane/) is hosted on
-this repository's GitHub Pages. Source pages and assets live in `docs/`.
+Source pages and assets for the [Launchpane website](https://salnikov.no/projects/launchpane/)
+live in `docs/`. Both this repository's GitHub Pages site and the canonical
+portfolio project route use that source.
 
 - `pnpm site:test` checks the dependency-free website builder.
 - `pnpm site:build` validates local links, assets, and anchors, then writes
@@ -99,10 +146,19 @@ this repository's GitHub Pages. Source pages and assets live in `docs/`.
   `branding/social/og.html`.
 
 **Publish product pages** builds website changes on pull requests without
-deploying them. Changes merged into `main` build and deploy automatically;
+deploying them. Changes merged into `main` build and deploy the repository's
+[Pages site](https://salnikov.no/Launchpane/) automatically;
 the workflow can also be run manually. GitHub Pages must be enabled with
 **GitHub Actions** as its source in repository settings. The workflow uses
 the `github-pages` environment and deploys only after the build succeeds.
+
+The canonical `/projects/launchpane/` route is published separately by
+[Deploy portfolio to GitHub Pages](https://github.com/webmaxru/webmaxru.github.io/actions/workflows/pages.yml).
+That workflow checks out Launchpane's default branch, builds this site, and copies
+it into the portfolio's `dist/projects/launchpane/`. After merging website changes
+here, rerun the portfolio workflow on `master` to update the canonical URL too.
+The portfolio workflow runs on its own pushes or manual dispatch, not automatically
+on Launchpane commits.
 
 ## GitHub release pipeline
 
@@ -270,3 +326,11 @@ screenshots, and can submit the version for review.
 
 Launchpane is released under the [MIT License](LICENSE), which is shipped inside
 the application bundle at `Contents/Resources/LICENSE`.
+
+The [Mac App Store badge](docs/assets/mac-app-store-badge.svg) is
+[unmodified artwork supplied by Apple](https://developer.apple.com/app-store/marketing/guidelines/images/badge-download-on-the-mac-app-store.svg),
+used under Apple's [marketing guidelines and artwork license](https://developer.apple.com/app-store/marketing/guidelines/),
+not the project's MIT License. Keep its proportions, a minimum height of 40 px,
+and clear space of at least one-quarter of its height.
+Apple, the Apple logo, Mac, and macOS are trademarks of Apple Inc., registered in
+the U.S. and other countries. Mac App Store is a service mark of Apple Inc.

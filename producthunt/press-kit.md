@@ -14,13 +14,13 @@ Launchpane is a free, open-source macOS app that shows launch agents, launch dae
 About 50 words:
 
 ```boilerplate
-Launchpane is a free, MIT-licensed macOS app for launch agents, launch daemons, and login items. It shows what's loaded, running, and enabled, with exit status, logs, schedules, and plists in one window. You can run, stop, edit, and create your own agents, while shared system plists stay read-only.
+Launchpane is a free, MIT-licensed macOS app for launch agents, launch daemons, and login items. The recommended standalone edition inspects and controls services, with logs, schedules, and a plist editor. The Mac App Store edition is limited to inspection and personal plist editing because of sandbox restrictions.
 ```
 
 About 100 words:
 
 ```boilerplate
-Launchpane is a free, open-source macOS app that shows what starts on your Mac. It lists launch agents, launch daemons, and the login items that apps bundle, in one window with search and a source filter. For each service, it shows whether it's loaded, running, and enabled, along with its last exit status, logs, schedule, and plist. You can load, run, stop, restart, enable, disable, edit, and create your own agents. Shared system plists stay read-only, system daemons need an explicit administrator window, and unavailable actions explain why. Launchpane builds on azu's launchd-ui and is released under the MIT License.
+Launchpane is a free, open-source macOS app that shows what starts on your Mac: launch agents, daemons, and login items in one searchable window. The recommended standalone edition controls services, shows status and logs, and creates and edits personal plists with schedule previews. It is Developer ID signed and Apple notarized. Shared plists stay read-only, and system daemons need an explicit administrator window. The Mac App Store edition is available for inspection and personal plist editing; sandbox restrictions remove service control, removal, and administrator mode. Launchpane builds on azu's launchd-ui and is released under the MIT License.
 ```
 
 ## Facts
@@ -33,15 +33,15 @@ Launchpane is a free, open-source macOS app that shows what starts on your Mac. 
 | Price | Free |
 | License | MIT |
 | Latest release | 1.3.4 (check https://github.com/webmaxru/Launchpane/releases/latest) |
-| Downloads | DMG for Apple silicon (about 4 MB), Intel (about 4 MB), and Universal (about 7 MB), plus `.app` archives and `SHA256SUMS` |
-| Signing | Developer ID signed and Apple notarized since v1.2.2 |
-| Updates | No auto-updater; new versions are published on GitHub Releases |
+| Downloads | Recommended standalone: DMG for Apple silicon (about 4 MB), Intel (about 4 MB), and Universal (about 7 MB), plus `.app` archives and `SHA256SUMS`. Mac App Store: sandboxed inspector and personal plist editor |
+| Signing | Standalone: Developer ID signed and Apple notarized since v1.2.2 |
+| Updates | Standalone: no auto-updater; new versions on GitHub Releases. Store edition: updates through the Mac App Store |
 | Privacy | No analytics, ads, accounts, or cloud backend |
 | Built with | Tauri v2, Rust, React, TypeScript |
 | Origin | Builds on azu's open-source launchd-ui |
 | Maker | Maxim Salnikov |
 
-What it covers:
+What the standalone edition covers:
 
 - Launch agents in `~/Library/LaunchAgents` and `/Library/LaunchAgents`, launch daemons in
   `/Library/LaunchDaemons`, and login item helpers bundled inside apps.
@@ -56,13 +56,22 @@ What it covers:
 What it isn't: a process monitor, a cleaner, or a security scanner. It shows what launchd is
 configured to run; it doesn't judge whether a service is safe.
 
-A sandboxed Mac App Store edition is in preparation. Because of App Sandbox rules, it
-inspects services and edits plists the user selects, but can't control services.
+A sandboxed Mac App Store edition is available now. App Store sandbox and privilege
+restrictions limit it to inspection and personal plist editing: no load, run, stop,
+restart, enable/disable, removal, or administrator mode. Inventory and log folders must
+be selected each time the app reopens. Saving a personal plist does not activate or reload
+its service. Recommend standalone for service management.
+
+Developer ID signing verifies the developer and detects changes to the signed app;
+notarization checks for known malware. The standalone release pipeline verifies
+Gatekeeper acceptance before publishing. These protections are not a guarantee of safety
+or App Store review. See [Apple's download security guidance](https://support.apple.com/en-us/102445).
 
 ## Links
 
 - Website: https://salnikov.no/projects/launchpane/
-- Download: https://github.com/webmaxru/Launchpane/releases/latest
+- Standalone download (recommended): https://github.com/webmaxru/Launchpane/releases/latest
+- Mac App Store: https://apps.apple.com/no/app/launchpane/id6820735995?mt=12
 - Source: https://github.com/webmaxru/Launchpane
 - Support: https://salnikov.no/projects/launchpane/support/
 - Privacy: https://salnikov.no/projects/launchpane/privacy/

@@ -40,11 +40,12 @@ typo can't slip through.
 | `<POST_ID>` | The numeric post ID for the Product Hunt badge | After the launch is scheduled |
 | `<NAME>`, `<PUBLICATION>` | The person or outlet you're writing to | Per message |
 
-Some copy depends on decisions that aren't made yet:
+Edition guidance and publishing notes:
 
-- **Mac App Store edition.** It isn't on the Store yet. Until it's live, leave out the Store
-  sentence in `first-comment.md` and use the "Not today" answer to "Is it in the Mac App
-  Store?" in `replies.md`.
+- **Mac App Store edition.** [Available now](https://apps.apple.com/no/app/launchpane/id6820735995?mt=12)
+  for inspection and personal plist editing, with sandbox limits. Recommend the signed,
+  notarized standalone release for service control. The listing, maker comment, and
+  replies distinguish the editions; gallery images show standalone.
 - **Article.** `social/article.md` is a researched draft, not a finished post. Rewrite it in
   your own voice before publishing; some communities reject machine-written articles.
 - **Press kit link.** Messages link to `producthunt/press-kit.md` on `main`, so merge this

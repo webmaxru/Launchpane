@@ -7,13 +7,14 @@
     "Launch agents, daemons, and login items in one window",
     "Free, open-source launchd manager for macOS"
   ],
-  "description": "Launchpane shows launch agents, daemons, and login items in one native macOS window. Load, run, stop, or disable your own agents, check exit status and logs, preview schedules, and copy the launchctl commands. Free, MIT-licensed, signed and notarized.",
+  "description": "Launchpane shows macOS launch agents, daemons, and login items in one window. The signed, notarized standalone app controls services, shows logs, and edits schedules. Free and MIT-licensed. Mac App Store edition: inspection and plist editing only.",
   "topics": ["Mac", "Developer Tools", "Open Source"],
   "pricing": "Free",
   "openSource": true,
   "links": {
     "website": "https://salnikov.no/projects/launchpane/",
     "download": "https://github.com/webmaxru/Launchpane/releases/latest",
+    "appStore": "https://apps.apple.com/no/app/launchpane/id6820735995?mt=12",
     "source": "https://github.com/webmaxru/Launchpane"
   },
   "thumbnail": {

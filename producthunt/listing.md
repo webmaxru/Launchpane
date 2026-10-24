@@ -10,7 +10,8 @@ strings for tooling; `pnpm producthunt:verify` fails if the two drift apart.
 | Name | Launchpane |
 | Tagline (28/60) | Know what starts on your Mac |
 | Website | https://salnikov.no/projects/launchpane/ |
-| Additional link: download | https://github.com/webmaxru/Launchpane/releases/latest |
+| Additional link: standalone download (recommended) | https://github.com/webmaxru/Launchpane/releases/latest |
+| Additional link: Mac App Store (inspection and plist editing) | https://apps.apple.com/no/app/launchpane/id6820735995?mt=12 |
 | Additional link: source | https://github.com/webmaxru/Launchpane |
 | Pricing | Free |
 | Open source | Yes (MIT) |
@@ -28,10 +29,10 @@ same product more literally:
 - Launch agents, daemons, and login items in one window
 - Free, open-source launchd manager for macOS
 
-## Description (251/260)
+## Description (247/260)
 
 ```text
-Launchpane shows launch agents, daemons, and login items in one native macOS window. Load, run, stop, or disable your own agents, check exit status and logs, preview schedules, and copy the launchctl commands. Free, MIT-licensed, signed and notarized.
+Launchpane shows macOS launch agents, daemons, and login items in one window. The signed, notarized standalone app controls services, shows logs, and edits schedules. Free and MIT-licensed. Mac App Store edition: inspection and plist editing only.
 ```
 
 ## Thumbnail
@@ -42,6 +43,8 @@ the GIF, use `assets/thumbnail/thumbnail-240.png`.
 ## Gallery
 
 Upload in this order. Every image is 2540×1520 (2× of 1270×760) and under 3 MB.
+These show the recommended standalone edition; Store sandbox restrictions remove service
+controls. Keep that distinction when adding the App Store link.
 
 | # | File | Caption | Alt text |
 | --- | --- | --- | --- |

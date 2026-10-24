@@ -1,6 +1,7 @@
 # Mac App Store release
 
-The 1.3.4 Store candidate is a service inspector and personal plist editor.
+Launchpane is [available on the Mac App Store](https://apps.apple.com/no/app/launchpane/id6820735995?mt=12)
+as a service inspector and personal plist editor.
 It removes all lifecycle, enable/disable, removal and administrator operations;
 the standalone edition retains them. The [edition comparison](../docs/app-store-actions.md)
 is authoritative. A sandboxed filesystem grant is not launchd-control permission.
