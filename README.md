@@ -269,4 +269,5 @@ screenshots, and can submit the version for review.
 ## License
 
 Launchpane is released under the [MIT License](LICENSE), which is shipped inside
-the application bundle at `Contents/Resources/LICENSE`.
+the application bundle at `Contents/Resources/LICENSE`. It builds on the
+open-source [launchd-ui](https://github.com/azu/launchd-ui) project.
