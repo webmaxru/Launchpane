@@ -8,6 +8,11 @@
 </p>
 
 <p align="center">
+  <a href="https://apps.apple.com/no/app/launchpane/id6820735995?mt=12"><img src="docs/assets/mac-app-store-badge.svg" alt="Download on the Mac App Store" height="40"></a><br>
+  <sub>Not sure which version to choose? <a href="#choose-your-edition">Read the explanation</a></sub>
+</p>
+
+<p align="center">
   <a href="https://github.com/webmaxru/Launchpane/releases/latest"><img alt="Latest release" src="https://img.shields.io/github/v/release/webmaxru/Launchpane?sort=semver&amp;label=release"></a>
   <img alt="macOS" src="https://img.shields.io/badge/macOS-Apple%20Silicon%20%2B%20Intel-242a9e?logo=apple&amp;logoColor=white">
   <img alt="Developer ID signed and notarized" src="https://img.shields.io/badge/Developer%20ID-signed%20%26%20notarized-2ea44f">
@@ -17,7 +22,6 @@
 
 <p align="center">
   <a href="https://github.com/webmaxru/Launchpane/releases/latest"><strong>Download standalone (recommended)</strong></a> ·
-  <a href="#mac-app-store">Mac App Store</a> ·
   <a href="https://salnikov.no/projects/launchpane/">Website</a> ·
   <a href="https://salnikov.no/projects/launchpane/support/">Support</a> ·
   <a href="https://salnikov.no/projects/launchpane/privacy/">Privacy</a>
@@ -57,7 +61,7 @@ and switch it off when you do not want it.
 Want every detail? See which actions are available for each kind of service and
 why in the [action reference](docs/native-actions.md).
 
-## Install
+## Choose your edition
 
 Both editions are free. **We recommend standalone for service management**:
 it includes Load, Run now, Stop/Unload, Restart, Enable/Disable, personal-agent
@@ -100,15 +104,9 @@ See [Apple's explanation of safely opening Mac apps](https://support.apple.com/e
 
 ### Mac App Store
 
-<p>
-  <a href="https://apps.apple.com/no/app/launchpane/id6820735995?mt=12">
-    <img src="docs/assets/mac-app-store-badge.svg" alt="Download on the Mac App Store" height="40">
-  </a>
-</p>
-
-Now available on the Mac App Store as a **sandboxed service inspector and
-personal LaunchAgent plist editor**. App Store sandbox and privilege restrictions
-limit this edition's features:
+Now available on the [Mac App Store](https://apps.apple.com/no/app/launchpane/id6820735995?mt=12)
+as a **sandboxed service inspector and personal LaunchAgent plist editor**. App
+Store sandbox and privilege restrictions limit this edition's features:
 
 - Inspect service state, configuration, schedules, and selected logs; create and
   edit personal LaunchAgent plists.
@@ -151,9 +149,11 @@ service. Read the [privacy policy](https://salnikov.no/projects/launchpane/priva
 
 ## Support
 
-Questions, bug reports, and feature ideas are welcome. See the
-[support page](https://salnikov.no/projects/launchpane/support/) for how to get
-help.
+Questions, bug reports, and feature ideas are welcome.
+[Open an issue on GitHub](https://github.com/webmaxru/Launchpane/issues) and
+include your macOS version, Launchpane version, and edition (standalone or Mac
+App Store). The [support page](https://salnikov.no/projects/launchpane/support/)
+has more ways to get help.
 
 ## For developers
 

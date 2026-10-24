@@ -118,15 +118,13 @@ code { padding: 2px 6px; border-radius: 6px; background: #e7ebf4; }
   gap: clamp(18px, 3vw, 38px);
 }
 
-.site-nav a,
-.text-link {
+.site-nav a {
   font-size: 14px;
   font-weight: 600;
   text-decoration: none;
 }
 
-.site-nav a:not(.nav-download):hover,
-.text-link:hover { color: var(--home-mint); }
+.site-nav a:not(.nav-download):hover { color: var(--home-mint); }
 
 .nav-download {
   padding: 11px 15px;
@@ -144,7 +142,7 @@ code { padding: 2px 6px; border-radius: 6px; background: #e7ebf4; }
   padding-block: 54px 68px;
 }
 
-.hero-copy { max-width: 510px; }
+.hero-copy { max-width: 510px; container-type: inline-size; }
 .home h1 {
   margin: 0 0 26px;
   color: white;
@@ -161,12 +159,52 @@ code { padding: 2px 6px; border-radius: 6px; background: #e7ebf4; }
   line-height: 1.55;
 }
 
+/* Apple's badge rules: unmodified artwork, at least 40px tall, and clear space of
+   a quarter of its height (12px at 48px) kept free by the gaps below. */
 .hero-actions {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 24px;
+  display: grid;
+  justify-items: start;
+  gap: 14px;
   margin-top: 32px;
+}
+
+.app-store-badge { display: block; border-radius: 8px; }
+.app-store-badge img { width: auto; height: 48px; }
+
+.hero .edition-help {
+  display: inline-block;
+  padding-block: 3px;
+  color: #c9d1ff;
+  font-size: 13px;
+  line-height: 1.4;
+  text-decoration: none;
+}
+
+.edition-help-action {
+  color: white;
+  font-weight: 650;
+  text-decoration: underline;
+  text-decoration-color: rgba(255,255,255,.55);
+  text-underline-offset: 3px;
+  white-space: nowrap;
+}
+
+.hero .edition-help:hover .edition-help-action { color: var(--home-mint); text-decoration-color: currentColor; }
+.hero-actions .button { margin-top: 6px; }
+
+@container (min-width: 440px) {
+  .hero-actions {
+    grid-template-columns: auto auto;
+    grid-template-areas:
+      "store standalone"
+      "help help";
+    align-items: center;
+    justify-content: start;
+    column-gap: 16px;
+  }
+  .hero-actions .app-store-badge { grid-area: store; }
+  .hero-actions .edition-help { grid-area: help; }
+  .hero-actions .button { grid-area: standalone; margin-top: 0; }
 }
 
 .button {
@@ -186,7 +224,6 @@ code { padding: 2px 6px; border-radius: 6px; background: #e7ebf4; }
 
 .button-primary { background: var(--home-mint); color: var(--home-indigo-deep) !important; }
 .button-primary:hover { background: white; }
-.text-link { color: white; }
 .hero-note { margin-top: 22px !important; color: #c9d1ff; font-size: 12px; line-height: 1.7; letter-spacing: .01em; }
 
 .hero-visual { min-width: 0; margin: 0; }
@@ -419,8 +456,8 @@ code { padding: 2px 6px; border-radius: 6px; background: #e7ebf4; }
 .download-option .download-detail { margin-top: 16px; font-size: 13px; }
 .button-light { background: white; color: var(--home-indigo-deep) !important; }
 .button-light:hover { background: var(--home-mint); }
-.app-store-badge { display: inline-flex; padding: 10px; }
-.app-store-badge img { width: auto; height: 40px; }
+.button-outline { border-color: rgba(255,255,255,.6); color: white; }
+.button-outline:hover { border-color: var(--home-mint); color: var(--home-mint); }
 .edition-details { display: block; width: fit-content; margin-top: 16px; font-size: 14px; }
 .edition-details,
 .signing-note a,
@@ -480,7 +517,6 @@ code { padding: 2px 6px; border-radius: 6px; background: #e7ebf4; }
   .home h1 { font-size: clamp(52px, 13vw, 72px); }
   .mobile-break { display: block; }
   .hero-lead { font-size: 16px; }
-  .hero-actions { align-items: flex-start; flex-direction: column; gap: 18px; }
   .hero-note { max-width: 30ch; line-height: 1.6; }
   .source-map { padding-bottom: 18px; }
   .source-nodes { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; }

@@ -3,7 +3,7 @@
 Available on the [Mac App Store](https://apps.apple.com/no/app/launchpane/id6820735995?mt=12).
 For service control and administrator workflows, we recommend the
 [signed, notarized standalone release](https://github.com/webmaxru/Launchpane/releases/latest).
-Both editions are free. See the [installation and signing explanation](../README.md#install)
+Both editions are free. See the [installation and signing explanation](../README.md#choose-your-edition)
 for the protections and limits of downloading outside the Store.
 
 The `app-store` build uses App Sandbox and is deliberately different from the

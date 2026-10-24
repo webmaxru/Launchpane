@@ -3,7 +3,7 @@
 THESIS: Bring macOS background services into one inspectable inventory, not another generic utility landing page.
 OWN-WORLD: Shipping indigo, signal mint, and amber; precise system typography, service-path linework, and authentic native app captures.
 STORY: Visitors recognize the services, see how Launchpane reveals their state and evidence, understand ownership limits, then visit the release.
-FIRST VIEWPORT: Indigo field; navigation above a concise left-side offer and release action, with four service origins routing into the real inventory capture on the right.
+FIRST VIEWPORT: Indigo field; navigation above a concise left-side offer led by the official Mac App Store badge, an edition-help link directly beneath it, and the recommended standalone release, with four service origins routing into the real inventory capture on the right.
 FORM: Candidate 7 of seven grounded structures; branching-fan staging carries the four sources into one workspace. Surface seed: 6193eb0b.
 -->
 <html lang="en">
@@ -56,8 +56,11 @@ FORM: Candidate 7 of seven grounded structures; branching-fan staging carries th
             <h1 id="hero-title">Know what<br>starts on<br class="mobile-break"> your Mac.</h1>
             <p class="hero-lead">Launchpane brings launch agents, daemons, and app login items into one native workspace—so you can see their state, inspect what they do, and act with context.</p>
             <div class="hero-actions">
+              <a class="app-store-badge" href="https://apps.apple.com/no/app/launchpane/id6820735995?mt=12">
+                <img src="assets/mac-app-store-badge.svg" width="187" height="48" alt="Download on the Mac App Store">
+              </a>
+              <a class="edition-help" href="#download">Not sure which version to choose? <span class="edition-help-action">Read the explanation <span aria-hidden="true">↓</span></span></a>
               <a class="button button-primary" href="https://github.com/webmaxru/Launchpane/releases/latest">Download standalone <span aria-hidden="true">↗</span></a>
-              <a class="text-link" href="#download">Mac App Store &amp; editions <span aria-hidden="true">↓</span></a>
             </div>
             <p class="hero-note">Standalone recommended for service control.<br>Open source · Developer ID signed · Notarized by Apple</p>
           </div>
@@ -200,9 +203,7 @@ FORM: Candidate 7 of seven grounded structures; branching-fan staging carries th
                 <li>Select inventory and log folders each time you reopen the app.</li>
                 <li>Saving a personal plist does not activate or reload its service. Shared services and login helpers are read-only.</li>
               </ul>
-              <a class="app-store-badge" href="https://apps.apple.com/no/app/launchpane/id6820735995?mt=12" aria-describedby="store-limits">
-                <img src="assets/mac-app-store-badge.svg" height="40" alt="Download on the Mac App Store">
-              </a>
+              <a class="button button-outline" href="https://apps.apple.com/no/app/launchpane/id6820735995?mt=12" aria-describedby="store-limits">Download from the Mac App Store <span aria-hidden="true">↗</span></a>
               <a class="edition-details" href="https://github.com/webmaxru/Launchpane/blob/main/docs/app-store-actions.md">Full edition comparison <span aria-hidden="true">↗</span></a>
             </div>
           </div>
@@ -210,7 +211,7 @@ FORM: Candidate 7 of seven grounded structures; branching-fan staging carries th
             <h3>Signed by the developer. Checked by Apple.</h3>
             <p>The official standalone download is Developer ID signed, so macOS can verify its developer and detect changes to the signed app. Apple notarization checks the submitted software for known malware. Notarization tickets are stapled to the app and DMG, and the release pipeline verifies Gatekeeper acceptance before publishing.</p>
             <p>These protections do not guarantee that software is risk-free or replace App Store review. Standalone is not restricted by App Sandbox and can change real services. Download from our official GitHub Releases, install using normal macOS prompts, and keep Gatekeeper enabled. If macOS reports malware, damage, or an unverifiable developer, stop rather than bypass the warning.</p>
-            <p><a href="https://support.apple.com/en-us/102445">How macOS protects downloads <span aria-hidden="true">↗</span></a> · <a href="https://github.com/webmaxru/Launchpane#install">Installation and checksum notes <span aria-hidden="true">↗</span></a></p>
+            <p><a href="https://support.apple.com/en-us/102445">How macOS protects downloads <span aria-hidden="true">↗</span></a> · <a href="https://github.com/webmaxru/Launchpane#standalone-recommended">Installation and checksum notes <span aria-hidden="true">↗</span></a></p>
           </div>
           <p class="closing-note">Screens shown are captures of the sandboxed App Store edition. <a href="https://github.com/webmaxru/Launchpane">Browse the open-source project <span aria-hidden="true">↗</span></a></p>
         </div>
