@@ -1,6 +1,6 @@
 # Mac App Store release
 
-The 1.3.4 Store candidate is a service inspector and personal plist editor.
+The 1.4.0 Store candidate is a service inspector and personal plist editor.
 It removes all lifecycle, enable/disable, removal and administrator operations;
 the standalone edition retains them. The [edition comparison](../docs/app-store-actions.md)
 is authoritative. A sandboxed filesystem grant is not launchd-control permission.
@@ -37,14 +37,15 @@ Create these items in the Apple Developer and App Store Connect portals:
 
 Mac App Store review is not guaranteed. The Store edition must obtain folder
 access using the native macOS picker; saved paths do not grant access. The
-current implementation asks again after every app restart. File access does
+current implementation restores user-granted security-scoped bookmarks after
+restart; Forget folders removes saved access. File access does
 not grant permission to control launchd. This edition deliberately has no
 service-control operations; verify inspection and selected-file editing in the
 submitted binary instead.
 
 The [App Store action table and link-policy assessment](../docs/app-store-actions.md)
-documents removed edition-specific controls, their explanations, and the neutral
-GitHub project link. A feature build or local ad-hoc signature does not replace
+documents removed edition-specific controls, their explanations, and the
+GitHub source-code/standalone-download link. A feature build or local ad-hoc signature does not replace
 exact-build sandbox QA or establish App Review approval.
 
 ## GitHub environment and secrets

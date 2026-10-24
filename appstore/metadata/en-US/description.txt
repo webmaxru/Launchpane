@@ -13,7 +13,7 @@ FEATURES
 • Follow the system appearance or choose light or dark
 
 FOLDER ACCESS
-Choose folders in the native macOS picker. Select your Library/LaunchAgents folder for personal plists, shared LaunchAgents and LaunchDaemons folders for read-only inventory, and Applications for login helpers. Only selected inventory roots are shown. Log access requires selecting the containing folder. Grants last until you quit; choose again after reopening.
+Choose folders in the native macOS picker. Select your Library/LaunchAgents folder for personal plists, shared LaunchAgents and LaunchDaemons folders for read-only inventory, and Applications for login helpers. Only selected inventory roots are shown. Log access requires selecting the containing folder. Launchpane remembers your chosen folders after you relaunch; use Forget folders to remove them.
 
 EDITION BOUNDARIES
 This Store edition does not load, run, stop, restart, enable, disable or remove services, and has no administrator mode. System/shared configuration and login helpers are read-only. Creating or editing a personal plist saves the file only; it does not activate or reload the service.

@@ -1,10 +1,8 @@
-Launchpane 1.3.4
+Launchpane 1.4.0
 
-- Sandboxed service inspection and personal LaunchAgent plist editing
-- Native folder consent for inventory and logs, with clear recovery instructions
-- Removed unsupported service control, enable/disable, removal and administrator actions from this Store edition
-- Removed temporary filesystem exceptions and corrected signing entitlements
-- Requests only the minimum entitlements: App Sandbox, outgoing network for the built-in web view, and user-selected files
-- Saving a plist does not activate it; choose folders again after quitting
-- Current native screenshots use lossless opaque RGB rendering
-- Folder-access and loading errors now wrap cleanly and no longer carry an unrelated "launchctl error" prefix
+- Folder access is now remembered across app relaunches using macOS security-scoped bookmarks.
+- See your remembered folders and remove saved access with Forget folders.
+- First launch now offers Choose folders directly beside Retry, with clear guidance.
+- The edition notice explains that GitHub hosts both the source code and the separate standalone download.
+
+The Mac App Store edition remains a sandboxed service inspector and personal plist editor. Saving a plist does not activate it.

@@ -20,6 +20,8 @@ import {
   restartAsAdministrator,
   openProjectPage,
   chooseAccessFolders,
+  listAccessFolders,
+  forgetAccessFolders,
 } from "@/lib/invoke"
 import type { JobListEntry, LaunchdJob, PlistConfig } from "@/types"
 import {
@@ -55,7 +57,7 @@ import {
   X,
 } from "lucide-react"
 import { useTheme } from "@/hooks/useTheme"
-import { errorMessage } from "@/lib/errors"
+import { errorMessage, isFolderAccessRequired } from "@/lib/errors"
 import type { JobActionKind, PendingAction } from "@/types"
 import { STORE_ADMIN_REASON } from "@/lib/job-actions"
 
@@ -204,7 +206,8 @@ function App() {
   const [isAppStore, setIsAppStore] = useState(false)
   const [canStartAdministrator, setCanStartAdministrator] = useState(false)
   const [adminLaunching, setAdminLaunching] = useState(false)
-  const [choosingFolders, setChoosingFolders] = useState(false)
+  const [folderTask, setFolderTask] = useState<"choose" | "forget" | null>(null)
+  const [accessFolders, setAccessFolders] = useState<string[]>([])
   const [reviewDemo, setReviewDemo] = useState(false)
   const [reviewDemoConfig, setReviewDemoConfig] = useState<PlistConfig | undefined>()
   const reviewDemoStartedRef = useRef(false)
@@ -380,6 +383,49 @@ function App() {
   const retryList = useCallback(() => {
     void refresh().catch(() => undefined)
   }, [refresh])
+  const reloadAccessFolders = useCallback(async () => {
+    try {
+      setAccessFolders(await listAccessFolders())
+    } catch {
+      setAccessFolders([])
+    }
+  }, [])
+  useEffect(() => {
+    if (isAppStore) void reloadAccessFolders()
+  }, [isAppStore, reloadAccessFolders])
+  const chooseFolders = useCallback(async () => {
+    setFolderTask("choose")
+    let chosen = false
+    try {
+      chosen = await chooseAccessFolders()
+    } catch (e) {
+      // Some folders may have been granted before the failure, so the list is refreshed below.
+      chosen = true
+      showActionFeedback("error", "Couldn’t access the selected folders.", errorMessage(e))
+    }
+    try {
+      if (chosen) await refresh().catch(() => undefined)
+      await reloadAccessFolders()
+    } finally {
+      setFolderTask(null)
+    }
+  }, [refresh, reloadAccessFolders, showActionFeedback])
+  const forgetFolders = useCallback(async () => {
+    setFolderTask("forget")
+    try {
+      await forgetAccessFolders()
+      showActionFeedback("success", "Saved folder access removed. Choose folders again to see services.")
+    } catch (e) {
+      showActionFeedback("error", "Couldn’t remove saved folder access.", errorMessage(e))
+    }
+    try {
+      await refresh().catch(() => undefined)
+      await reloadAccessFolders()
+    } finally {
+      setFolderTask(null)
+    }
+  }, [refresh, reloadAccessFolders, showActionFeedback])
+  const folderAccessRequired = isAppStore && isFolderAccessRequired(error)
   const clearFilters = useCallback(() => {
     setSearch("")
     setSourceFilter("All")
@@ -562,7 +608,9 @@ function App() {
                 Launchpane
               </h1>
               <p className="text-xs tabular-nums text-muted-foreground">
-                {error
+                {folderAccessRequired
+                  ? "No folders chosen yet"
+                  : error
                   ? "Services unavailable"
                   : hasActiveFilters
                     ? `${filteredJobs.length} of ${jobs.length} services`
@@ -695,43 +743,60 @@ function App() {
         {isAppStore && (
           <aside
             aria-label="Mac App Store edition limits"
-            className="mb-3 flex flex-wrap items-center justify-between gap-x-4 gap-y-2 rounded-lg border bg-muted/35 px-3 py-2.5 text-xs text-muted-foreground"
+            className="mb-3 overflow-hidden rounded-lg border bg-muted/35 text-xs text-muted-foreground"
           >
-            <p className="min-w-0 flex-1">
-              <strong className="text-foreground">Mac App Store edition.</strong>{" "}
-              Inspect services, schedules and logs; create and edit user-selected agent plists. Service control, enable/disable, removal and administrator access are not available in this sandboxed edition.
-              {" "}The separately distributed standalone edition also supports service management and administrator workflows. This app does not download, install or unlock another edition.
-              {" "}Only selected inventory folders are shown. Choose folders to grant access to LaunchAgents, LaunchDaemons, Applications, or logs. Access lasts until you quit; choose again after reopening.
+            <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-2 px-3 py-2.5">
+              <div className="min-w-0 flex-1 space-y-1">
+                <p>
+                  <strong className="text-foreground">Mac App Store edition.</strong>{" "}
+                  Inspect services, schedules and logs, and create or edit personal agent plists. Launchpane only reads the folders you choose, and remembers them after you relaunch.
+                </p>
+                {accessFolders.length > 0 && (
+                  <p data-testid="remembered-folders">
+                    Remembered folders:{" "}
+                    <span className="font-mono text-foreground [overflow-wrap:anywhere]">
+                      {accessFolders.join(", ")}
+                    </span>
+                  </p>
+                )}
+              </div>
+              <div className="flex shrink-0 gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={folderTask !== null}
+                  onClick={() => void chooseFolders()}
+                >
+                  {folderTask === "choose" ? "Choosing folders…" : "Choose folders…"}
+                </Button>
+                {accessFolders.length > 0 && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    disabled={folderTask !== null}
+                    onClick={() => void forgetFolders()}
+                  >
+                    Forget folders
+                  </Button>
+                )}
+              </div>
+            </div>
+            <p className="border-t px-3 py-2.5">
+              Service control, enable/disable, removal and administrator access aren’t available in this sandboxed edition. The fully functional standalone edition, which includes all of them, is a separate download on GitHub, together with the source code:{" "}
+              <a
+                href="https://github.com/webmaxru/Launchpane"
+                className="rounded-sm font-medium text-foreground underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-ring"
+                onClick={(event) => {
+                  event.preventDefault()
+                  void openProjectPage().catch((e) =>
+                    showActionFeedback("error", "Couldn’t open the project page.", errorMessage(e))
+                  )
+                }}
+              >
+                Download the standalone edition and source code on GitHub
+              </a>
+              . This app never downloads or installs it.
             </p>
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={choosingFolders}
-              onClick={async () => {
-                setChoosingFolders(true)
-                try {
-                  if (await chooseAccessFolders()) await refresh()
-                } catch (e) {
-                  showActionFeedback("error", "Couldn’t access the selected folders.", errorMessage(e))
-                } finally {
-                  setChoosingFolders(false)
-                }
-              }}
-            >
-              {choosingFolders ? "Choosing folders…" : "Choose folders…"}
-            </Button>
-            <a
-              href="https://github.com/webmaxru/Launchpane"
-              className="shrink-0 rounded-sm underline underline-offset-4 hover:text-foreground focus-visible:outline-2 focus-visible:outline-ring"
-              onClick={(event) => {
-                event.preventDefault()
-                void openProjectPage().catch((e) =>
-                  showActionFeedback("error", "Couldn’t open the project page.", errorMessage(e))
-                )
-              }}
-            >
-              Project documentation and source on GitHub
-            </a>
           </aside>
         )}
         <section
@@ -766,6 +831,8 @@ function App() {
             }
             isAdministrator={isAdministrator}
             isAppStore={isAppStore}
+            needsFolderAccess={folderAccessRequired}
+            choosingFolders={folderTask === "choose"}
             pendingAction={pendingAction}
             onStart={(job) =>
               handleAction("start", "load", "loaded", job, () =>
@@ -795,6 +862,7 @@ function App() {
             onSelect={handleSelect}
             onRevealInFinder={(job) => revealInFinder(job.plist_path)}
             onRetry={retryList}
+            onChooseFolders={() => void chooseFolders()}
             onCreate={openCreateForm}
             onClearFilters={clearFilters}
           />
