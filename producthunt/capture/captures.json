@@ -1,0 +1,67 @@
+{
+  "version": "1.3.4",
+  "distribution": "standalone",
+  "source": {
+    "release": "https://github.com/webmaxru/Launchpane/releases/tag/v1.3.4",
+    "asset": "Launchpane_1.3.4_universal.dmg",
+    "sha256": "3d851b8d90a601704f0f84bef732012e871f3a08b9d1a4fa8a3d88bf341b5b72",
+    "checksumVerified": true,
+    "bundleIdentifier": "com.webmaxru.launchpane",
+    "signature": "Developer ID Application (team B9FMXAW5TZ), notarized; spctl: accepted, source=Notarized Developer ID"
+  },
+  "captureMethod": "native-window",
+  "macOS": "12.7.6 (arm64)",
+  "captureSize": "2400x1500",
+  "processing": "Actual 1200x750 pt window captured at Retina resolution with `screencapture -o -l <window>`, converted from the display profile to sRGB. Services are the disposable agents created by producthunt/capture/demo-agents.sh and the list is filtered to `com.launchpane.demo` so no other services appear. Privacy masks fill the listed rectangles with the surrounding panel background. No browser rendering, fabricated service states or substituted UI.",
+  "theme": "Dark, except overview-light.png",
+  "screenshots": {
+    "overview": {
+      "file": "overview.png",
+      "sha256": "3a7f6fbe54a83b90da8258b1eb60e628f4210c9eb0aba0a723dc23fcbb5df2ea",
+      "description": "Four demo agents in four states: running (backup), loaded with a calendar schedule (cleanup), disabled and unloaded (report), loaded after a failed run (sync).",
+      "privacyRedactions": []
+    },
+    "overview-light": {
+      "file": "overview-light.png",
+      "sha256": "1f8ba23a8c58cf81bb9067b4666fc2b8e8f5bc8bcbe623a8901b33425941bb31",
+      "description": "The same overview in the Light appearance.",
+      "privacyRedactions": []
+    },
+    "actions": {
+      "file": "actions.png",
+      "sha256": "499d71e22bf6670a29fcf78aead70a85a89a95503ebf7b80c982b663d884b07c",
+      "description": "Row actions for the running backup agent. Unavailable actions stay visible and explain why (already loaded, already running, already enabled).",
+      "privacyRedactions": []
+    },
+    "sources": {
+      "file": "sources.png",
+      "sha256": "9b15aefcfba578f8039ef465d7cb5984cc7ef4cae37a3c68561b3b620d380e48",
+      "description": "Service source filter: all services, my agents, user agents, system agents, system daemons and login items.",
+      "privacyRedactions": []
+    },
+    "configuration": {
+      "file": "configuration.png",
+      "sha256": "8688f9a2a4aa5d490f356d25e9f45b46c3b1f38c384433abcec67ab3398cc5b8",
+      "description": "Sync agent details after a failed run: last exit 1, arguments, working directory, interval and log paths.",
+      "privacyRedactions": ["Full user plist path in the details header (x 1036, y 140, 1040x42 px)"]
+    },
+    "logs": {
+      "file": "logs.png",
+      "sha256": "87ad9e928d18ac34c2f3d18c1342eb1c0b65fbce99ca5e80857c174ae3445856",
+      "description": "Sync agent standard error: the demo script reports that its destination volume is not mounted.",
+      "privacyRedactions": ["Full user plist path in the details header (x 1036, y 140, 1040x42 px)"]
+    },
+    "schedule": {
+      "file": "schedule.png",
+      "sha256": "43512cac0c6819ebcaca54e861ec56b0fb3e91a7818c73558d0c72fdfc442ecf",
+      "description": "Edit form for the cleanup agent with a daily 03:30 calendar schedule and the Next runs preview. The form was cancelled without saving.",
+      "privacyRedactions": []
+    },
+    "commands": {
+      "file": "commands.png",
+      "sha256": "4f0618b1c2ace8d65b4e070e2745bfea9ee85bdd8fe1c5ee77bd1459a6034845",
+      "description": "Equivalent launchctl commands for the sync agent, scrolled past the Load row (which contains the full plist path).",
+      "privacyRedactions": ["Full user plist path in the details header (x 1036, y 140, 1040x42 px)"]
+    }
+  }
+}

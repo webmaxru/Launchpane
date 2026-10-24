@@ -3,7 +3,7 @@
 THESIS: Bring macOS background services into one inspectable inventory, not another generic utility landing page.
 OWN-WORLD: Shipping indigo, signal mint, and amber; precise system typography, service-path linework, and authentic native app captures.
 STORY: Visitors recognize the services, see how Launchpane reveals their state and evidence, understand ownership limits, then visit the release.
-FIRST VIEWPORT: Indigo field; navigation above a concise left-side offer and release action, with four service origins routing into the real inventory capture on the right.
+FIRST VIEWPORT: Indigo field; navigation above a concise left-side offer led by the official Mac App Store badge, an edition-help link directly beneath it, and the recommended standalone release, with four service origins routing into the real inventory capture on the right.
 FORM: Candidate 7 of seven grounded structures; branching-fan staging carries the four sources into one workspace. Surface seed: 6193eb0b.
 -->
 <html lang="en">
@@ -47,7 +47,7 @@ FORM: Candidate 7 of seven grounded structures; branching-fan staging carries th
           <nav class="site-nav" aria-label="Main navigation">
             <a href="#features">Inside the app</a>
             <a href="https://github.com/webmaxru/Launchpane">GitHub</a>
-            <a class="nav-download" href="https://github.com/webmaxru/Launchpane/releases/latest">Get Launchpane <span aria-hidden="true">↗</span></a>
+            <a class="nav-download" href="#download">Get Launchpane <span aria-hidden="true">↓</span></a>
           </nav>
         </div>
 
@@ -56,10 +56,13 @@ FORM: Candidate 7 of seven grounded structures; branching-fan staging carries th
             <h1 id="hero-title">Know what<br>starts on<br class="mobile-break"> your Mac.</h1>
             <p class="hero-lead">Launchpane brings launch agents, daemons, and app login items into one native workspace—so you can see their state, inspect what they do, and act with context.</p>
             <div class="hero-actions">
-              <a class="button button-primary" href="https://github.com/webmaxru/Launchpane/releases/latest">View latest release <span aria-hidden="true">↗</span></a>
-              <a class="text-link" href="https://github.com/webmaxru/Launchpane">Explore the source <span aria-hidden="true">↗</span></a>
+              <a class="app-store-badge" href="https://apps.apple.com/no/app/launchpane/id6820735995?mt=12">
+                <img src="assets/mac-app-store-badge.svg" width="187" height="48" alt="Download on the Mac App Store">
+              </a>
+              <a class="edition-help" href="#download">Not sure which version to choose? <span class="edition-help-action">Read the explanation <span aria-hidden="true">↓</span></span></a>
+              <a class="button button-primary" href="https://github.com/webmaxru/Launchpane/releases/latest">Download standalone <span aria-hidden="true">↗</span></a>
             </div>
-            <p class="hero-note">Open source · Developer ID signed · Notarized by Apple</p>
+            <p class="hero-note">Standalone recommended for service control.<br>Open source · Developer ID signed · Notarized by Apple</p>
           </div>
 
           <figure class="hero-visual">
@@ -169,21 +172,48 @@ FORM: Candidate 7 of seven grounded structures; branching-fan staging carries th
         </div>
         <div class="content-wrap ownership-note">
           These permissions describe the standalone release. The Mac App Store edition has additional sandbox limits.
-          <a href="https://github.com/webmaxru/Launchpane/blob/main/docs/app-store-actions.md">Compare edition capabilities <span aria-hidden="true">↗</span></a>
+          <a href="#download">Compare editions and downloads <span aria-hidden="true">↓</span></a>
         </div>
       </section>
 
-      <section class="closing-section">
+      <section id="download" class="closing-section" aria-labelledby="download-title">
         <div class="content-wrap closing-content">
-          <div>
-            <h2>Bring your Mac’s background into focus.</h2>
-            <p>Download a signed, Apple-notarized build for Apple Silicon, Intel, or both.</p>
+          <div class="download-intro">
+            <h2 id="download-title">Choose your edition.</h2>
+            <p>Both are free. For service management, we recommend the standalone download.</p>
           </div>
-          <div class="closing-actions">
-            <a class="button button-light" href="https://github.com/webmaxru/Launchpane/releases/latest">View latest release <span aria-hidden="true">↗</span></a>
-            <a class="closing-source" href="https://github.com/webmaxru/Launchpane">Browse the open-source project <span aria-hidden="true">↗</span></a>
+          <div class="download-options">
+            <div class="download-option">
+              <h3>Standalone — recommended</h3>
+              <p>The complete service-management workflow, with macOS permissions and protected shared plists.</p>
+              <ul>
+                <li>Load, run, stop, restart, enable, and disable services; remove your own agents.</li>
+                <li>Discover services automatically and read logs within normal filesystem permissions.</li>
+                <li>Open an administrator window explicitly when system daemons need it.</li>
+              </ul>
+              <a class="button button-light" href="https://github.com/webmaxru/Launchpane/releases/latest">Download standalone <span aria-hidden="true">↗</span></a>
+              <p class="download-detail">Apple Silicon, Intel, or Universal DMG.<br>Developer ID signed and notarized by Apple.</p>
+            </div>
+            <div id="mac-app-store" class="download-option">
+              <h3>Mac App Store</h3>
+              <p>A sandboxed service inspector and personal LaunchAgent plist editor.</p>
+              <p id="store-limits">App Store sandbox and privilege restrictions limit this edition:</p>
+              <ul>
+                <li>No load, run, stop, restart, enable/disable, removal, or administrator mode.</li>
+                <li>Select inventory and log folders in the macOS picker; from version 1.4.0 they are remembered after relaunch.</li>
+                <li>Saving a personal plist does not activate or reload its service. Shared services and login helpers are read-only.</li>
+              </ul>
+              <a class="button button-outline" href="https://apps.apple.com/no/app/launchpane/id6820735995?mt=12" aria-describedby="store-limits">Download from the Mac App Store <span aria-hidden="true">↗</span></a>
+              <a class="edition-details" href="https://github.com/webmaxru/Launchpane/blob/main/docs/app-store-actions.md">Full edition comparison <span aria-hidden="true">↗</span></a>
+            </div>
           </div>
-          <p class="closing-note">Install from the DMG using the normal macOS prompts. <a href="https://github.com/webmaxru/Launchpane#install">Read the installation notes</a>. Screens shown are captures of the sandboxed App Store edition.</p>
+          <div class="signing-note">
+            <h3>Signed by the developer. Checked by Apple.</h3>
+            <p>The official standalone download is Developer ID signed, so macOS can verify its developer and detect changes to the signed app. Apple notarization checks the submitted software for known malware. Notarization tickets are stapled to the app and DMG, and the release pipeline verifies Gatekeeper acceptance before publishing.</p>
+            <p>These protections do not guarantee that software is risk-free or replace App Store review. Standalone is not restricted by App Sandbox and can change real services. Download from our official GitHub Releases, install using normal macOS prompts, and keep Gatekeeper enabled. If macOS reports malware, damage, or an unverifiable developer, stop rather than bypass the warning.</p>
+            <p><a href="https://support.apple.com/en-us/102445">How macOS protects downloads <span aria-hidden="true">↗</span></a> · <a href="https://github.com/webmaxru/Launchpane#standalone-recommended">Installation and checksum notes <span aria-hidden="true">↗</span></a></p>
+          </div>
+          <p class="closing-note">Screens shown are captures of the sandboxed App Store edition. <a href="https://github.com/webmaxru/Launchpane">Browse the open-source project <span aria-hidden="true">↗</span></a></p>
         </div>
       </section>
     </main>
@@ -198,6 +228,7 @@ FORM: Candidate 7 of seven grounded structures; branching-fan staging carries th
           <a href="https://github.com/webmaxru/Launchpane">GitHub</a>
         </nav>
       </div>
+      <p class="content-wrap trademark-note">Apple, the Apple logo, Mac, and macOS are trademarks of Apple Inc., registered in the U.S. and other countries. Mac App Store is a service mark of Apple Inc.</p>
     </footer>
   </body>
 </html>

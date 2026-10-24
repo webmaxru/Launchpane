@@ -1,5 +1,6 @@
 # Mac App Store release
 
+Launchpane is [available on the Mac App Store](https://apps.apple.com/no/app/launchpane/id6820735995?mt=12).
 The 1.4.0 Store candidate is a service inspector and personal plist editor.
 It removes all lifecycle, enable/disable, removal and administrator operations;
 the standalone edition retains them. The [edition comparison](../docs/app-store-actions.md)

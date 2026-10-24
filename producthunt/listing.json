@@ -1,0 +1,67 @@
+{
+  "$comment": "Source of truth for the Product Hunt submission form. listing.md presents the same strings for copy and paste; pnpm producthunt:verify checks both.",
+  "name": "Launchpane",
+  "tagline": "Know what starts on your Mac",
+  "taglineAlternates": [
+    "See and control what starts on your Mac",
+    "Launch agents, daemons, and login items in one window",
+    "Free, open-source launchd manager for macOS"
+  ],
+  "description": "Launchpane shows macOS launch agents, daemons, and login items in one window. The signed, notarized standalone app controls services, shows logs, and edits schedules. Free and MIT-licensed. Mac App Store edition: inspection and plist editing only.",
+  "topics": ["Mac", "Developer Tools", "Open Source"],
+  "pricing": "Free",
+  "openSource": true,
+  "links": {
+    "website": "https://salnikov.no/projects/launchpane/",
+    "download": "https://github.com/webmaxru/Launchpane/releases/latest",
+    "appStore": "https://apps.apple.com/no/app/launchpane/id6820735995?mt=12",
+    "source": "https://github.com/webmaxru/Launchpane"
+  },
+  "thumbnail": {
+    "file": "assets/thumbnail/thumbnail-240.gif",
+    "fallback": "assets/thumbnail/thumbnail-240.png"
+  },
+  "gallery": [
+    {
+      "file": "assets/gallery/01-overview.png",
+      "caption": "Launch agents, daemons, and login items in one native window.",
+      "alt": "Launchpane in dark mode listing four demo launch agents with their source, status, enabled state, PID, last run, and a primary action for each."
+    },
+    {
+      "file": "assets/gallery/02-sources.png",
+      "caption": "Filter by source: your agents, user agents, system agents, system daemons, or login items.",
+      "alt": "The service source menu open, listing All services, My agents, User agents, System agents, System daemons, and Login items with a short description of each."
+    },
+    {
+      "file": "assets/gallery/03-actions.png",
+      "caption": "Unavailable actions stay visible and say why.",
+      "alt": "The actions menu for a running demo agent. Load, Run now, and Enable are dimmed with reasons such as Already loaded; Unload, Restart, Disable, and Reveal in Finder are available."
+    },
+    {
+      "file": "assets/gallery/04-logs.png",
+      "caption": "Last exit status and standard error for a failing agent.",
+      "alt": "Detail panel for a demo sync agent showing last exit 1 and a standard error line saying the destination volume is not mounted."
+    },
+    {
+      "file": "assets/gallery/05-schedule.png",
+      "caption": "Interval or calendar schedules with a preview of the next runs.",
+      "alt": "Edit Agent form with a daily calendar schedule and a Next runs preview listing the next three run times."
+    },
+    {
+      "file": "assets/gallery/06-commands.png",
+      "caption": "The equivalent launchctl commands, ready to copy.",
+      "alt": "Commands tab listing launchctl kickstart, bootout, enable, disable, and print commands for a demo agent, each with a copy button."
+    },
+    {
+      "file": "assets/gallery/07-download.png",
+      "caption": "Free and open source. Signed and notarized builds on GitHub.",
+      "alt": "Launchpane icon and name with the tagline Know what starts on your Mac, labels for MIT license, Developer ID signing and notarization, Apple silicon, Intel, and Universal builds, and no analytics or accounts, and the GitHub address."
+    }
+  ],
+  "video": {
+    "status": "optional",
+    "script": "video-script.md"
+  },
+  "firstComment": "first-comment.md",
+  "credits": "Launchpane builds on azu's open-source launchd-ui (https://github.com/azu/launchd-ui)."
+}

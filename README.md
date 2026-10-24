@@ -4,21 +4,24 @@
 
 <p align="center">
   <strong>Know what starts on your Mac.</strong><br>
-  A native macOS app for managing launch agents, daemons, and login items.
+  See, understand, and control the background services, launch agents, and login items on your Mac.
 </p>
 
 <p align="center">
-  <a href="https://github.com/webmaxru/Launchpane/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/webmaxru/Launchpane/actions/workflows/ci.yml/badge.svg"></a>
-  <a href="https://github.com/webmaxru/Launchpane/actions/workflows/release.yml"><img alt="Standalone release" src="https://github.com/webmaxru/Launchpane/actions/workflows/release.yml/badge.svg"></a>
-  <a href="https://github.com/webmaxru/Launchpane/actions/workflows/pages.yml"><img alt="Publish product pages" src="https://github.com/webmaxru/Launchpane/actions/workflows/pages.yml/badge.svg"></a>
+  <a href="https://apps.apple.com/no/app/launchpane/id6820735995?mt=12"><img src="docs/assets/mac-app-store-badge.svg" alt="Download on the Mac App Store" height="40"></a><br>
+  <sub>Not sure which version to choose? <a href="#choose-your-edition">Read the explanation</a></sub>
+</p>
+
+<p align="center">
   <a href="https://github.com/webmaxru/Launchpane/releases/latest"><img alt="Latest release" src="https://img.shields.io/github/v/release/webmaxru/Launchpane?sort=semver&amp;label=release"></a>
-  <a href="LICENSE"><img alt="MIT license" src="https://img.shields.io/github/license/webmaxru/Launchpane"></a>
   <img alt="macOS" src="https://img.shields.io/badge/macOS-Apple%20Silicon%20%2B%20Intel-242a9e?logo=apple&amp;logoColor=white">
   <img alt="Developer ID signed and notarized" src="https://img.shields.io/badge/Developer%20ID-signed%20%26%20notarized-2ea44f">
+  <img alt="Free" src="https://img.shields.io/badge/price-free-2ea44f">
+  <a href="LICENSE"><img alt="MIT license" src="https://img.shields.io/github/license/webmaxru/Launchpane"></a>
 </p>
 
 <p align="center">
-  <a href="https://github.com/webmaxru/Launchpane/releases/latest"><strong>Download</strong></a> ·
+  <a href="https://github.com/webmaxru/Launchpane/releases/latest"><strong>Download standalone (recommended)</strong></a> ·
   <a href="https://salnikov.no/projects/launchpane/">Website</a> ·
   <a href="https://salnikov.no/projects/launchpane/support/">Support</a> ·
   <a href="https://salnikov.no/projects/launchpane/privacy/">Privacy</a>
@@ -28,53 +31,46 @@
   <img src="docs/assets/launchpane-overview.png" alt="Launchpane listing launch agents, daemons, and login items" width="860">
 </p>
 
-Browse user LaunchAgents (`~/Library/LaunchAgents/`), system agents/daemons, and app login items. Start, stop, restart, view/edit plist files, and create new agents. Built with Tauri v2.
+Apps quietly install helpers that start at login, run on a schedule, or keep
+running in the background. macOS keeps them in several folders and only exposes
+them through the `launchctl` command line. Launchpane puts all of them in one
+native window, so you can see what is there, what it runs, whether it is working,
+and switch it off when you do not want it.
 
-## Features
+## What you can do
 
-- List User Agents (`~/Library/LaunchAgents/`), System Agents, System Daemons, and Login Items
-- Search by label and filter by source (User / Home / System / Daemon / Login Items)
-- Load / Run now / Stop (Unload) / Restart / Enable / Disable for user and shared GUI agents; administrator controls for system daemons
-- Create new agents, edit and delete existing ones
-- Schedule configuration (interval / calendar) with next run time preview
-- View stdout / stderr logs
-- Inspect plist configuration details
-- Reveal plist file in Finder
+- **See everything in one list.** Your own launch agents, shared and system
+  agents, system daemons, and app login items—searchable and filterable by source.
+- **Understand each service.** Read its program, arguments, schedule, and full
+  configuration in plain view, and reveal its file in Finder.
+- **Find out why something fails.** Open its output and error logs next to the
+  service, with its current state and last exit code.
+- **Take control.** Load, run now, stop, restart, enable, or disable services,
+  with clear reasons when an action is unavailable.
+- **Create and edit your own agents.** Build a launch agent with a form, set an
+  interval or calendar schedule, and preview the next run time—no hand-written
+  XML required.
+- **Stay safe.** Protected system files stay read-only. System daemons need an
+  explicit administrator window, and unloading a login helper asks first.
 
-In the standalone build, `/Library/LaunchAgents` can be controlled in the current
-user's GUI session without root. `/Library/LaunchDaemons` require **Open
-Administrator Window**. Shared system plist files remain protected from editing
-and removal, including in administrator mode.
+<p align="center">
+  <img src="docs/assets/launchpane-detail.png" alt="Service details showing program, schedule, and configuration" width="420">
+  <img src="docs/assets/launchpane-logs.png" alt="Output and error logs for a selected service" width="420">
+</p>
 
-Login Items are the background helpers that apps register with macOS ServiceManagement
-(`<App>.app/Contents/Library/LoginItems/<Helper>.app`). They have no plist file of their own, so the
-supported actions are Enable / Disable and, while registered, Run now / Restart /
-Unload. Load, Edit and Remove are hidden. Unloading requires confirmation because
-only the parent app can register the helper again; Enable alone does not reload
-it. A parent app may re-register its helper the next time it launches.
+Want every detail? See which actions are available for each kind of service and
+why in the [action reference](docs/native-actions.md).
 
-See the [standalone action availability tables](docs/native-actions.md) for every
-action's privilege requirements, state dependencies, reasons for disabling or
-hiding it, and real-Mac verification limits. Enable does not load or start;
-Disable does not stop an already loaded service.
+## Choose your edition
 
-The Mac App Store edition is an inspector and user-selected plist editor, not a
-service controller. It has no Load, Run, Stop, Restart, Enable, Disable, Remove,
-or administrator actions; Rust rejects these operations even through direct IPC.
-The standalone edition retains its service-management functionality.
-Store inventory and logs require explicit native folder selection once; Launchpane remembers the chosen folders across relaunches (**Forget folders** clears them).
-Creating or editing a user-agent plist does not load, start, stop or reload it.
-Shared services and login helpers are inspection-only.
+Both editions are free. **We recommend standalone for service management**:
+it includes Load, Run now, Stop/Unload, Restart, Enable/Disable, personal-agent
+removal, and explicit administrator controls that the Store edition cannot offer.
 
-Edition-specific limits stay visible with explanations and an optional project
-documentation/source link. This is not a downloader or an external unlock flow.
-See the [App Store action and review-policy tables](docs/app-store-actions.md).
+### Standalone (recommended)
 
-## Install
-
-Download the latest [signed release](https://github.com/webmaxru/Launchpane/releases/latest).
-Standalone builds from **v1.2.2** are signed with Developer ID and notarized
-by Apple.
+Download the latest [signed standalone release](https://github.com/webmaxru/Launchpane/releases/latest)
+for the complete service-management workflow, subject to macOS permissions.
 
 Choose the Apple Silicon (`aarch64`), Intel (`x64`), or Universal DMG, open it,
 and drag Launchpane to Applications. Follow the normal macOS installation
@@ -85,189 +81,98 @@ Each release includes `SHA256SUMS` for all six downloads. Standalone builds
 are separate from the sandboxed Mac App Store edition. The older v1.2.1
 assets remain unsigned and are not replaced.
 
-## Product website
+#### Why trust the standalone download?
 
-The [Launchpane website](https://salnikov.no/projects/launchpane/) is hosted on
-this repository's GitHub Pages. Source pages and assets live in `docs/`.
+Official standalone releases from **v1.2.2** are **Developer ID signed and Apple
+notarized**. Downloading outside the App Store does not mean bypassing macOS
+security:
 
-- `pnpm site:test` checks the dependency-free website builder.
-- `pnpm site:build` validates local links, assets, and anchors, then writes
-  the deployable site to `dist/site/`.
-- `pnpm site:assets` regenerates the favicon, touch/PWA icons, and the 1200×630
-  social card (`docs/assets/og-image.png`) from `branding/`. It needs macOS
-  and Google Chrome or Microsoft Edge. Edit the card in
-  `branding/social/og.html`.
+- **Developer ID signing** lets macOS verify the identified developer and detect
+  changes to the signed app.
+- **Apple notarization** checks the submitted software for known malware.
+  The release pipeline staples Apple's notarization tickets to the app and DMG.
+- **Gatekeeper** checks downloaded software before it runs. The release pipeline
+  verifies Gatekeeper acceptance before publishing.
 
-**Publish product pages** builds website changes on pull requests without
-deploying them. Changes merged into `main` build and deploy automatically;
-the workflow can also be run manually. GitHub Pages must be enabled with
-**GitHub Actions** as its source in repository settings. The workflow uses
-the `github-pages` environment and deploys only after the build succeeds.
+These are meaningful protections, not a guarantee that software is risk-free or
+the same as App Store review. Standalone is not restricted by App Sandbox and can
+change real services; review each action and grant administrator access only when
+needed. Get it from the official release page, optionally compare the download
+with `SHA256SUMS`, and keep Gatekeeper enabled. If macOS reports damaged software,
+an unverifiable developer, or malware, stop rather than bypass the warning.
+See [Apple's explanation of safely opening Mac apps](https://support.apple.com/en-us/102445).
 
-## GitHub release pipeline
+### Mac App Store
 
-The repository includes the Copilot agent skill
-[`release-up`](.github/skills/release-up/SKILL.md). Prompt **"release up"** to
-coordinate standalone and Store release preparation. It resolves patch/minor/
-major or same-version retries, pins both channels to one source/version, and
-checks credentials, native assets, signing and review gates. Store upload,
-App Review submission and public availability are separate stages; a generic
-release request does not authorize review submission or guarantee simultaneous
-availability. Creating the skill does not itself trigger a release.
+Now available on the [Mac App Store](https://apps.apple.com/no/app/launchpane/id6820735995?mt=12)
+as a **sandboxed service inspector and personal LaunchAgent plist editor**. App
+Store sandbox and privilege restrictions limit this edition's features:
 
-Pushing a `v<version>` tag runs **Standalone release**. The tag must match
-`package.json`, both Rust version records, and `src-tauri/tauri.conf.json`.
-The pipeline checks the frontend and both backend editions, then builds
-Apple Silicon, Intel, and Universal standalone apps and DMGs. It verifies
-bundle versions, CPU architectures, license inclusion, and DMG integrity,
-imports a Developer ID certificate into a temporary keychain, signs with
-Hardened Runtime, notarizes and staples the apps and DMGs, verifies
-Gatekeeper acceptance, packages the `.app` archives, and generates SHA-256
-checksums. It fails rather than silently publishing unsigned or unstapled
-artifacts.
+- Inspect service state, configuration, schedules, and selected logs; create and
+  edit personal LaunchAgent plists.
+- No Load, Run now, Stop/Unload, Restart, Enable/Disable, Remove, or administrator
+  mode. Shared services and login helpers are inspection-only.
+- Choose inventory and log folders in the native picker. From version 1.4.0,
+  Launchpane remembers them across relaunches (**Forget folders** clears them);
+  earlier versions ask again on each launch.
+- Saving a personal plist saves the file only: it does **not** activate or reload
+  the service. Copied Terminal commands are references, not executed by the app.
 
-Only after all builds succeed does it upload all seven assets to a draft
-GitHub release and publish it as latest. A failed build publishes nothing;
-a failed upload leaves a draft, never a partial public release.
+Choose this edition if inspection and plist editing are enough. For service
+control, use the [recommended standalone download](https://github.com/webmaxru/Launchpane/releases/latest).
+The Store app does not download, install, or unlock another edition.
 
-### Configure macOS distribution credentials
+## Questions
 
-Before running a signed release, create a **Developer ID Application**
-certificate in the Apple Developer account, export its certificate and private
-key as a password-protected `.p12`, and create an App Store Connect API key
-with access to submit software for notarization. The separate **Developer ID
-Installer** certificate is not needed for the app archives and DMGs.
+**Which edition should I choose?**
+Choose standalone if you want to stop, start, enable, disable, or remove
+services. Choose the Mac App Store edition if you only need to inspect services
+and edit your own launch agents. Both are free. Compare them in the
+[edition guide](docs/app-store-actions.md).
 
-In GitHub **Settings → Environments**, configure the `macos-distribution`
-environment with these secrets:
+**Can Launchpane break my Mac?**
+Protected system files cannot be edited or removed, and system daemons are only
+controlled from an administrator window that you open on purpose. Changes to
+your own agents and login items take effect immediately, so read the action
+before confirming. Disabling a service is reversible; enabling it again does
+not always start it right away.
 
-| Secret | Value |
-| --- | --- |
-| `DEVELOPER_ID_CERTIFICATE_BASE64` | Base64-encoded Developer ID Application `.p12`, including its private key |
-| `DEVELOPER_ID_CERTIFICATE_PASSWORD` | Password used when exporting the `.p12` |
-| `APPLE_SIGNING_IDENTITY` | Full `Developer ID Application: … (TEAMID)` identity shown by `security find-identity -v -p codesigning` |
-| `APPLE_API_KEY` | App Store Connect API key ID |
-| `APPLE_API_ISSUER` | App Store Connect issuer ID |
-| `APPLE_API_PRIVATE_KEY_BASE64` | Base64-encoded API `.p8` private key |
+**What are login items?**
+Background helpers that apps register with macOS
+(`<App>.app/Contents/Library/LoginItems/<Helper>.app`). They have no
+configuration file, so Launchpane offers Enable and Disable and, while they are
+registered, Run now, Restart, and Unload. Only the parent app can register an
+unloaded helper again.
 
-Protect these secrets; never commit them or paste them into source files.
-Each macOS build runner imports the certificate into a temporary keychain,
-writes the API key to a temporary file, and removes both after the build.
-The workflow checks the imported identity, signed app, notarization tickets,
-stapling, and Gatekeeper assessments before it uploads anything. A missing
-secret or failed Apple notarization stops the release before publication.
+**Does Launchpane collect data?**
+No. It works offline and has no analytics, tracking, accounts, or cloud
+service. Read the [privacy policy](https://salnikov.no/projects/launchpane/privacy/).
 
-The older **v1.2.1** release predates the signing credentials and remains
-unsigned and unnotarized; it is not silently replaced. Releases from **v1.2.2**
-onward are signed and notarized. App Store distribution continues to use its
-separate manual workflow and credentials.
+## Support
 
-To publish a subsequent version, configure the distribution secrets above,
-bump the synchronized versions, commit all intended app changes, push the
-commit, and push its matching version tag.
-The workflow also supports manual dispatch with an existing tag. If a failed
-publication left a draft, inspect and delete that draft before retrying;
-the workflow does not overwrite existing releases.
+Questions, bug reports, and feature ideas are welcome.
+[Open an issue on GitHub](https://github.com/webmaxru/Launchpane/issues) and
+include your macOS version, Launchpane version, and edition (standalone or Mac
+App Store). The [support page](https://salnikov.no/projects/launchpane/support/)
+has more ways to get help.
 
-**Publish to Mac App Store** is manual-only and is not triggered by standalone
-tags. Its signing, upload, and review requirements remain separate.
+## For developers
 
-## Tech Stack
+Launchpane is open source and built with Tauri, Rust, React, and TypeScript.
 
-- Tauri v2 (Rust backend) + React + TypeScript + Vite
-- UI: Tailwind CSS v4 + shadcn/ui
-- Lint: oxlint (TypeScript), cargo clippy + rustfmt (Rust)
-- Test: vitest (Frontend), cargo test (Rust)
-- Package manager: pnpm
-
-## Development
-
-```bash
-# Install dependencies
-pnpm install
-
-# Dev mode (launches app with hot reload)
-pnpm tauri:dev
-
-# Frontend only
-pnpm dev
-
-# Production build (DMG)
-pnpm tauri:build
-```
-
-### Building a launchable `.app`
-
-To get a double-clickable app bundle instead of the hot-reload dev window:
-
-```bash
-# Rebuild the release .app on every source change (recommended)
-pnpm app:watch
-
-# Build the release .app once
-pnpm app:build
-
-# Open the most recent release bundle
-pnpm app:open
-```
-
-`pnpm app:watch` watches `src/`, `src-tauri/src/`, `src-tauri/capabilities/`,
-`src-tauri/Cargo.toml`, `src-tauri/tauri.conf.json`, `index.html`,
-`vite.config.ts` and `tsconfig.json`. Changes are debounced, builds are
-serialized, and `*.test.*` / `*.spec.*` files are ignored. The bundle is
-written to:
-
-```
-src-tauri/target/release/bundle/macos/Launchpane.app
-```
-
-Quit and relaunch the app to pick up a new build — the bundle is replaced in
-place, so a running instance keeps the old code.
-
-The default commands above already build the optimized release bundle. For
-debug builds, use:
-
-```bash
-pnpm app:build:debug
-pnpm app:watch:debug
-```
-
-Do not run `pnpm tauri:dev` at the same time as `pnpm app:watch` — both drive
-`cargo` against `src-tauri/target`, and they will block on the same build lock.
-
-## Testing / Lint
-
-```bash
-pnpm test          # vitest (frontend)
-pnpm lint          # oxlint
-pnpm typecheck     # TypeScript type check
-
-cargo test --manifest-path src-tauri/Cargo.toml          # Rust tests
-cargo fmt --manifest-path src-tauri/Cargo.toml --check   # Rust format check
-cargo clippy --manifest-path src-tauri/Cargo.toml -- -D warnings  # Rust lint
-```
-
-## Brand & App Store assets
-
-App icon, wordmark and the Mac App Store graphics package live in [`branding/`](branding/).
-See [`branding/README.md`](branding/README.md) for the palette, deliverables and the
-submission checklist.
-
-```bash
-pnpm store:icons        # regenerate src-tauri/icons from the master artwork
-pnpm store:screenshots  # render all accepted Mac App Store screenshot sizes
-pnpm appstore:verify    # validate copy, versions, icons, and screenshots
-pnpm appstore:prepare   # assemble Fastlane metadata and graphics
-```
-
-The complete credential-driven publishing flow is documented in
-[`appstore/README.md`](appstore/README.md). The **Publish to Mac App Store**
-workflow builds a universal binary, embeds the provisioning profile, signs the
-app and installer, validates them with Apple, uploads all metadata and
-screenshots, and can submit the version for review.
+- [DEVELOPMENT.md](DEVELOPMENT.md) — build from source, run tests, and project structure.
+- [DEPLOYMENT.md](DEPLOYMENT.md) — signed releases, Mac App Store publishing, and the website.
 
 ## License
 
 Launchpane is released under the [MIT License](LICENSE), which is shipped inside
 the application bundle at `Contents/Resources/LICENSE`. It builds on the
 open-source [launchd-ui](https://github.com/azu/launchd-ui) project.
+
+The [Mac App Store badge](docs/assets/mac-app-store-badge.svg) is
+[unmodified artwork supplied by Apple](https://developer.apple.com/app-store/marketing/guidelines/images/badge-download-on-the-mac-app-store.svg),
+used under Apple's [marketing guidelines and artwork license](https://developer.apple.com/app-store/marketing/guidelines/),
+not the project's MIT License. Keep its proportions, a minimum height of 40 px,
+and clear space of at least one-quarter of its height.
+Apple, the Apple logo, Mac, and macOS are trademarks of Apple Inc., registered in
+the U.S. and other countries. Mac App Store is a service mark of Apple Inc.
