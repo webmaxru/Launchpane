@@ -22,6 +22,15 @@ clarifies that the optional GitHub link hosts the source code and a separate
 standalone download. The Store app never downloads, installs, updates,
 purchases or unlocks another edition.
 
-Local sandbox tests verified folder selection, quit/relaunch restoration and
-Forget folders. These are not exact-build TestFlight or current-macOS recording
-claims. The release checklist tracks those gates separately.
+The exact 1.4.0 (202610242100) build was installed through TestFlight on a
+physical MacBook Air (M1), macOS 12.7.6 (21H1320), and its Apple distribution
+signature, version/build and receipt were verified. Folder selection and Cancel,
+inventory/search/filtering, Store-restricted actions, real login-helper
+inspection, safe disposable plist create/edit, selected-folder sample-log
+reading and light/dark rendering passed. The disposable files were removed;
+the plist was never registered with launchd and no vendor service was changed.
+
+A full quit and relaunch restored the chosen folder and the same inventory
+without another prompt. Forget folders cleared access, including after another
+quit/relaunch. This is exact-build TestFlight evidence, not a claim of testing
+on the latest macOS. No current-macOS recording is attached.

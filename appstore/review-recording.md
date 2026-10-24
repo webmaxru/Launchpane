@@ -18,16 +18,60 @@ The build is assigned to the existing Launchpane Internal QA group and is
 `IN_BETA_TESTING`. Local `altool` is unavailable; Apple's upload processing
 validated the package successfully.
 
-**Exact-build QA blocked, not submitted to App Review.** On October 24,
-TestFlight offers 1.4.0 (202610242100), but Install does not replace the
-installed 1.3.4 (202610171400). Accessibility press and native-pointer
-installation both leave the old build installed; the Previous Builds view
-loads blank. No authentication prompt or actionable error was presented.
-The new build's persistence must be checked after successful Apple-path
-installation on a physical Mac. Do not copy receipts, re-sign a preview and
-call it TestFlight QA, or re-upload this already accepted build number.
-Resume from the existing candidate once installation is possible; the
-version remains `PREPARE_FOR_SUBMISSION`, not submitted or public.
+**Exact-build TestFlight QA passed on October 24.** The apparent installation
+blocker was ineffective accessibility activation: System Events' button press
+and coordinate click did not trigger TestFlight's SwiftUI action. Real
+CoreGraphics mouse-down/up events opened the replacement confirmation;
+confirming Install successfully installed the existing accepted build. No
+re-upload, receipt copying or local re-signing was involved.
+
+The installed `/Applications/Launchpane.app` reports 1.4.0 (202610242100),
+has a valid TestFlight Beta Distribution signature with team `B9FMXAW5TZ`,
+and contains an App Store receipt. Its base entitlements are `app-sandbox`,
+`network.client`, `files.user-selected.read-write` and `files.bookmarks.app-scope`,
+plus Apple's application/team identifiers and `beta-reports-active`.
+`network.server`, `get-task-allow` and temporary exceptions remain absent.
+Installed executable SHA-256:
+`bf50a72e0a61eba4cecb99a10042921d26aa45e17b4b6200d2f063302f7ef032`.
+
+On that Apple-installed build, a physical MacBook Air (M1), macOS 12.7.6
+(21H1320), passed these checks:
+
+- First-run Choose folders and Retry, with the clarified standalone/source
+  notice; picker Cancel left access unchanged.
+- Selecting the personal LaunchAgents folder showed six services. A complete
+  quit (old process gone) and relaunch into a new process restored the same six
+  services and remembered folder without another consent prompt.
+- Label search, source filtering, details and Store-only row actions worked.
+  The row menu offered only View details and Reveal in Finder. Selecting
+  Applications exposed the real Spotify helper, whose details offered only
+  Reveal, not mutation controls.
+- Creating and editing `com.launchpane.review.demo140` through the UI persisted
+  `/usr/bin/true`, Run at Load off, Keep Alive off and no schedule. A read-only
+  `launchctl print` confirmed it was not registered. The sandboxed log inspector
+  read a clearly labeled sample log inside the granted folder.
+- Light and system/dark appearance rendered. Both disposable files were
+  removed, the inventory refreshed, and the original appearance restored.
+- Forget folders returned to the first-run card. A further complete quit and
+  relaunch still showed no chosen folders, proving access was not restored.
+
+Native screenshots are preserved in the session artifacts:
+
+| Screenshot | SHA-256 |
+| --- | --- |
+| `testflight-140-first-launch.png` | `02d4a6753b94eed23688a4e91853f81f7f9e07e792db824f4f70af52f6d67210` |
+| `testflight-140-relaunch-restored.png` | `bbb9ab67bfd57288b30ef78bee1f5409cb8e8546e1a055b06032bcad5dad8463` |
+| `testflight-140-after-forget.png` | `1ed0881f4d73bc32f7b66711d97b278eb58a0ed628d37411b70eede10f5ca943` |
+
+**Submitted to App Review on October 24 at 19:38 UTC.** Review submission
+`f0ecbb74-c007-47e3-84f7-79934c8563be` and version
+`0dd65534-d93d-4209-a6df-9e5c9dac81a5` both read back as
+`WAITING_FOR_REVIEW`, with release type still `MANUAL`. This is submitted,
+not approved or publicly released. Existing public Store/GitHub 1.3.4 remains
+unchanged. The package's immutable source remains `8e91403`; later
+documentation-only commits record QA and submission evidence, not a new binary.
+The prepared `release/appstore/` folder contains the package/checksum receipt,
+current metadata, `testflight-qa.json`, QA screenshots and submission receipt.
 
 The candidate adds remembered user-selected folders, a Forget folders action,
 first-run Choose folders recovery, and a clearer source/standalone-download
@@ -38,11 +82,11 @@ quit/relaunch restoration and Forget folders passed. The disposable plist
 was never registered with launchd and both it and the sample log were removed.
 The log screenshot masks personal paths; all 16 opaque RGB derivatives and
 their source fingerprint passed verification. Old
-TestFlight results below are historical only. Before submitting this build,
-verify its exact Apple-installed binary, especially persistence after quit and
-relaunch, cancellation and forgetting access. This host still runs macOS 12.7.6;
-it cannot supply a latest-macOS recording. Any new Apple request for such a
-recording is a separate external gate, not evidence supplied by local previews.
+TestFlight results below are historical only; the checks above cover the new
+exact Apple-installed build. This host still runs macOS 12.7.6; it cannot supply
+a latest-macOS recording. No such recording is claimed or attached. The earlier
+review is complete; any new Apple request for such a recording is a separate
+external gate, not evidence supplied by local previews.
 
 ## Previous candidate: 1.3.4 entitlement minimization
 

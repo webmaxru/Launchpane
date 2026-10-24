@@ -21,16 +21,13 @@ All temporary filesystem exceptions remain absent. The distribution signature
 omits com.apple.security.get-task-allow entirely, not merely setting it false.
 All bundled executable architectures are checked for the permitted entitlements.
 
-There is no unsupported service control in this Store edition: there
-are no Load, Run, Stop/Unload, Restart, Enable/Disable, Remove or Administrator
-controls. Backend IPC rejects them too. The separate standalone distribution
-retains service management; this Store app is independently useful for native
-inventory, state/configuration/schedule inspection, selected logs and editing
-personal LaunchAgent plists. It never downloads/installs/updates/unlocks another
-edition. A factual edition note and optional GitHub documentation/source link
-are present; the note says the fully functional standalone edition is a
-separate download on GitHub with the source code, and that the Store app never
-downloads or installs it. There is no payment or license flow.
+The Store edition has no Load, Run, Stop/Unload, Restart, Enable/Disable, Remove
+or Administrator controls; backend IPC rejects them too. It is independently
+useful for inventory, configuration/schedule inspection, selected logs and
+personal LaunchAgent plist editing. The edition note explains that the optional
+GitHub link hosts the source and a separate fully functional standalone download.
+This app never downloads, installs, updates or unlocks another edition.
+There is no payment or license flow.
 
 No account, demo credentials, subscription or external service is required.
 Choose "Choose folders..." and use Command-Shift-G in the native picker to
@@ -40,18 +37,27 @@ shown. Select a log's containing folder for logs. Cancel changes nothing;
 chosen folders are remembered across launches and can be cleared with
 "Forget folders".
 
-Inspect rows, search/filter, read details, schedules and logs, and view/copy
-Terminal references. To exercise file editing safely, create a disposable
-personal plist for /usr/bin/true with Run at Load and Keep Alive off and no
-schedule; save and edit it, verify contents and refresh. Saving does not load
-or start it. Removal is not a Store feature; clean up the disposable file in
-Finder after the demonstration. Never change existing vendor services for QA.
+Inspect/search/filter rows, read details and logs, and view/copy Terminal
+references. For safe editing, create a disposable /usr/bin/true personal plist
+with Run at Load and Keep Alive off and no schedule. Save/edit/refresh; saving
+does not load or start it. Remove the test file in Finder afterward.
 
 All product data remains local. There are no analytics,
 ads, payments, cloud services, regulated content or regional differences.
 
-Local sandbox testing on macOS 12.7.6 verified choosing folders, quitting,
-restoring inventory without another prompt, and Forget folders. Local previews
-are not TestFlight evidence. Exact-build TestFlight verification and any
-required current-macOS recording remain release gates; no earlier build's
-QA or recording is claimed as evidence for 1.4.0.
+The exact 1.4.0 (202610242100) build was installed through TestFlight on a
+physical MacBook Air (M1) running macOS 12.7.6 (21H1320). Its TestFlight Beta
+Distribution signature, team, version/build, App Store receipt and sandbox
+entitlements were verified without re-signing.
+
+On that build, first-run selection, Cancel, inventory/search/filtering, restricted
+actions, login-helper inspection and light/dark rendering passed. A full quit
+and relaunch restored the chosen folder and same inventory without a prompt.
+Forget folders cleared access, including after another quit/relaunch. UI
+create/edit of a disposable plist and selected-folder sample-log reading passed.
+The plist was never registered with launchd; both test files were removed and
+no vendor service was changed.
+
+This is exact-build TestFlight QA, not a claim of testing on the latest macOS.
+No current-macOS screen recording is attached, and no earlier build's QA or
+recording is claimed as evidence for 1.4.0.
