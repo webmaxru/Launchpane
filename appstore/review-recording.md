@@ -88,7 +88,8 @@ The current physical-device recording must show native launch, missing-consent
 recovery and cancellation, explicit folder selection, inventory, search/source
 filtering, configuration/schedule inspection, selected-folder log access,
 personal plist create/edit/save without activation, absence of runtime/toggle/
-removal/admin controls, and closing/reopening with fresh consent required.
+removal/admin controls, and closing/reopening with the chosen folders restored
+without a new prompt (then **Forget folders** returning to the first-run card).
 Clean the disposable plist using Finder afterward; no Store Remove action exists.
 The neutral edition comparison and documentation/source link must not install,
 update, purchase or unlock another edition. Demonstrate light and dark appearance.
@@ -135,7 +136,8 @@ test plan for that recording; it is intentionally not a simulated recording.
 - Before inventory access, demonstrate **Choose folders…** and explicitly
   select the test user's `~/Library/LaunchAgents`, shared LaunchAgents and
   LaunchDaemons folders, and Applications when showing login helpers. Show
-  picker cancellation, successful selection, and re-selection after reopening.
+  picker cancellation, successful selection, and relaunch with the folders
+  remembered (no second prompt).
   Select a log's containing folder before demonstrating log access.
 
 ## Required flow

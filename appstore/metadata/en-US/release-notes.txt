@@ -1,10 +1,10 @@
 Launchpane 1.3.4
 
 - Sandboxed service inspection and personal LaunchAgent plist editing
-- Native folder consent for inventory and logs, with clear recovery instructions
+- Native folder consent for inventory and logs, remembered across relaunches, with a first-run Choose folders button and clear recovery instructions
 - Removed unsupported service control, enable/disable, removal and administrator actions from this Store edition
 - Removed temporary filesystem exceptions and corrected signing entitlements
-- Requests only the minimum entitlements: App Sandbox, outgoing network for the built-in web view, and user-selected files
-- Saving a plist does not activate it; choose folders again after quitting
+- Requests only the minimum entitlements: App Sandbox, outgoing network for the built-in web view, user-selected files and app-scoped bookmarks for remembering chosen folders
+- Saving a plist does not activate it
 - Current native screenshots use lossless opaque RGB rendering
 - Folder-access and loading errors now wrap cleanly and no longer carry an unrelated "launchctl error" prefix

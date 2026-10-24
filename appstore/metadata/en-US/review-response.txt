@@ -3,8 +3,10 @@ Hello App Review,
 We removed com.apple.security.network.server in 1.3.4. Launchpane never
 listens for incoming connections. The app now requests only App Sandbox,
 com.apple.security.network.client (the system WebKit web view that renders the
-bundled UI needs it; without it the sandboxed window is blank) and
-user-selected file read/write for folders chosen in the native Open panel.
+bundled UI needs it; without it the sandboxed window is blank),
+user-selected file read/write for folders chosen in the native Open panel, and
+app-scoped bookmarks (com.apple.security.files.bookmarks.app-scope) so those
+chosen folders are remembered across launches.
 Launchpane itself makes no network requests. Our build verifier now rejects
 any entitlement without documented, tested functionality.
 
@@ -20,8 +22,9 @@ Backend IPC rejects those operations as well.
 
 On launch, choose inventory folders in the native macOS picker; Command-Shift-G
 can reach Library folders. Only explicitly selected inventory roots are scanned.
-Logs require selecting their containing folder. Grants last until quit and
-must be given again on reopening. No account or external service is required.
+Logs require selecting their containing folder. Chosen folders are remembered
+across launches (Forget folders clears them). No account or external service is
+required.
 
 Review can inspect/search/filter service state, configuration and schedules,
 read selected logs, and create/edit a disposable personal LaunchAgent plist.
@@ -29,9 +32,10 @@ Saving only writes a configuration file; it does not activate/reload a service.
 Clean up the disposable file using Finder. Shared/system configuration and
 login helpers are inspection-only. No existing vendor service needs changing.
 
-The UI factually notes that our separate standalone distribution supports
-service management and administrator workflows. The optional GitHub link is
-for project documentation/source; the Store app never downloads, installs,
+The UI factually notes that the fully functional standalone edition, with
+service management and administrator workflows, is a separate download on
+GitHub together with the source code. The optional GitHub link goes to that
+project page; the Store app never downloads, installs,
 updates, purchases or unlocks another edition.
 
 Data stays local, with no collection, analytics, ads, payment or cloud services.

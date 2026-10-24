@@ -62,7 +62,7 @@ The Mac App Store edition is an inspector and user-selected plist editor, not a
 service controller. It has no Load, Run, Stop, Restart, Enable, Disable, Remove,
 or administrator actions; Rust rejects these operations even through direct IPC.
 The standalone edition retains its service-management functionality.
-Store inventory and logs require explicit native folder selection on each launch.
+Store inventory and logs require explicit native folder selection once; Launchpane remembers the chosen folders across relaunches (**Forget folders** clears them).
 Creating or editing a user-agent plist does not load, start, stop or reload it.
 Shared services and login helpers are inspection-only.
 

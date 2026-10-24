@@ -2,11 +2,13 @@ Launchpane 1.3.4 - sandboxed service inspector and personal plist editor
 
 Response to the October 16 notice about com.apple.security.network.server:
 The entitlement is removed. Launchpane never listens for incoming connections.
-The app now requests only com.apple.security.app-sandbox,
+The app requests only com.apple.security.app-sandbox,
 com.apple.security.network.client (required by the system WebKit web view
-that renders the bundled UI; without it the sandboxed window is blank) and
+that renders the bundled UI; without it the sandboxed window is blank),
 com.apple.security.files.user-selected.read-write (folders chosen in the
-native Open panel). Launchpane itself makes no network requests.
+native Open panel) and com.apple.security.files.bookmarks.app-scope (so those
+chosen folders are remembered across launches as app-scoped security-scoped
+bookmarks). Launchpane itself makes no network requests.
 
 Response to October 15 rejection, guideline 2.4.5(i):
 All temporary filesystem exceptions are removed. The distribution signature
@@ -20,14 +22,17 @@ retains service management; this Store app is independently useful for native
 inventory, state/configuration/schedule inspection, selected logs and editing
 personal LaunchAgent plists. It never downloads/installs/updates/unlocks another
 edition. A factual edition note and optional GitHub documentation/source link
-are present; there is no payment or license flow.
+are present; the note says the fully functional standalone edition is a
+separate download on GitHub with the source code, and that the Store app never
+downloads or installs it. There is no payment or license flow.
 
 No account, demo credentials, subscription or external service is required.
 Choose "Choose folders..." and use Command-Shift-G in the native picker to
 select ~/Library/LaunchAgents, /Library/LaunchAgents, /Library/LaunchDaemons,
 /Applications or ~/Applications as needed. Only selected inventory roots are
 shown. Select a log's containing folder for logs. Cancel changes nothing;
-grants last until quit and must be given again on reopening.
+chosen folders are remembered across launches and can be cleared with
+"Forget folders".
 
 Inspect rows, search/filter, read details, schedules and logs, and view/copy
 Terminal references. To exercise file editing safely, create a disposable

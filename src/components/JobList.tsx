@@ -17,6 +17,7 @@ import {
   ArrowUp,
   ArrowUpDown,
   Plus,
+  FolderOpen,
   RefreshCw,
   X,
 } from "lucide-react"
@@ -33,6 +34,8 @@ type JobListProps = {
   hasActiveFilters?: boolean
   isAdministrator?: boolean
   isAppStore?: boolean
+  needsFolderAccess?: boolean
+  choosingFolders?: boolean
   pendingAction?: PendingAction | null
   onStart: (job: JobListEntry) => void
   onStop: (job: JobListEntry) => void
@@ -44,6 +47,7 @@ type JobListProps = {
   onSelect: (job: JobListEntry) => void
   onRevealInFinder: (job: JobListEntry) => void
   onRetry?: () => void
+  onChooseFolders?: () => void
   onCreate?: () => void
   onClearFilters?: () => void
 }
@@ -57,6 +61,8 @@ export function JobList({
   hasActiveFilters = false,
   isAdministrator = false,
   isAppStore = false,
+  needsFolderAccess = false,
+  choosingFolders = false,
   pendingAction = null,
   onStart,
   onStop,
@@ -68,6 +74,7 @@ export function JobList({
   onSelect,
   onRevealInFinder,
   onRetry,
+  onChooseFolders,
   onCreate,
   onClearFilters,
 }: JobListProps) {
@@ -165,6 +172,44 @@ export function JobList({
                 <EnabledBadge enabled={null} pendingKind="load" />
                 <span>Loading background services…</span>
               </span>
+            </TableCell>
+          </TableRow>
+        ) : error && needsFolderAccess && onChooseFolders ? (
+          <TableRow>
+            <TableCell colSpan={7} className="h-48 whitespace-normal py-8 text-center">
+              <div
+                role="status"
+                className="mx-auto flex w-full max-w-lg flex-col items-center"
+              >
+                <FolderOpen className="h-5 w-5 text-muted-foreground" />
+                <p className="mt-2 text-sm font-semibold text-foreground">
+                  Choose folders to get started
+                </p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  The Mac App Store edition only reads the folders you choose. Pick ~/Library/LaunchAgents for your own agents, and add /Library/LaunchAgents, /Library/LaunchDaemons or Applications to see more. Launchpane remembers your choice after you relaunch.
+                </p>
+                <div className="mt-3 flex flex-wrap justify-center gap-2">
+                  <Button
+                    size="sm"
+                    disabled={choosingFolders}
+                    onClick={onChooseFolders}
+                  >
+                    <FolderOpen className="h-3.5 w-3.5" />
+                    {choosingFolders ? "Choosing folders…" : "Choose folders…"}
+                  </Button>
+                  {onRetry && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={choosingFolders}
+                      onClick={onRetry}
+                    >
+                      <RefreshCw className="h-3.5 w-3.5" />
+                      Retry
+                    </Button>
+                  )}
+                </div>
+              </div>
             </TableCell>
           </TableRow>
         ) : error ? (

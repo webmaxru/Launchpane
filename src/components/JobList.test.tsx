@@ -134,7 +134,7 @@ describe("JobList", () => {
   it("stacks retry above technical details that wrap long messages", () => {
     renderJobList([], {
       error:
-        "Folder access is required. Choose folders to allow access to ~/Library/LaunchAgents, /Library/LaunchAgents, /Library/LaunchDaemons, or Applications.",
+        "Could not read /Library/LaunchDaemons/com.example.a-very-long-service-name.plist: the operation couldn’t be completed because the file is not readable by this process.",
       onRetry: vi.fn(),
     })
 
@@ -147,6 +147,54 @@ describe("JobList", () => {
       "whitespace-pre-wrap",
       "break-words"
     )
+  })
+
+  it("replaces the first-run folder error with a Choose folders card next to Retry", async () => {
+    const user = userEvent.setup()
+    const onRetry = vi.fn()
+    const onChooseFolders = vi.fn()
+    renderJobList([], {
+      error: "Folder access is required. Choose folders to allow access to ~/Library/LaunchAgents.",
+      needsFolderAccess: true,
+      onRetry,
+      onChooseFolders,
+    })
+
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument()
+    expect(screen.queryByText("Couldn’t load background services")).not.toBeInTheDocument()
+    const status = screen.getByRole("status")
+    expect(status).toHaveTextContent("Choose folders to get started")
+    expect(status).toHaveTextContent("remembers your choice after you relaunch")
+    const choose = within(status).getByRole("button", { name: "Choose folders…" })
+    const retry = within(status).getByRole("button", { name: "Retry" })
+    expect(choose.parentElement).toBe(retry.parentElement)
+
+    await user.click(choose)
+    await user.click(retry)
+    expect(onChooseFolders).toHaveBeenCalledOnce()
+    expect(onRetry).toHaveBeenCalledOnce()
+  })
+
+  it("disables the first-run actions while the folder panel is open", () => {
+    renderJobList([], {
+      error: "Folder access is required.",
+      needsFolderAccess: true,
+      choosingFolders: true,
+      onRetry: vi.fn(),
+      onChooseFolders: vi.fn(),
+    })
+
+    expect(screen.getByRole("button", { name: "Choosing folders…" })).toBeDisabled()
+    expect(screen.getByRole("button", { name: "Retry" })).toBeDisabled()
+  })
+
+  it("keeps the generic failure card for folder errors outside the Store edition", () => {
+    renderJobList([], {
+      error: "Folder access is required.",
+      onRetry: vi.fn(),
+    })
+
+    expect(screen.getByRole("alert")).toHaveTextContent("Couldn’t load background services")
   })
 
   it("puts recovery actions in the empty state", async () => {

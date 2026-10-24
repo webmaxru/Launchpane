@@ -52,11 +52,23 @@ with open(sys.argv[2], "wb") as f:
     ["com.apple.security.network.server", "<true/>"],
     ["com.apple.security.network.client", "<false/>"],
     ["com.apple.security.files.downloads.read-write", "<true/>"],
+    ["com.apple.security.files.bookmarks.app-scope", "<false/>"],
+    ["com.apple.security.files.bookmarks.document-scope", "<true/>"],
   ]) {
     const path = join(directory, "invalid.plist");
     execFileSync("python3", ["-c", generate, source, path, key, `<plist version="1.0">${value}</plist>`]);
     assert.notEqual(spawnSync("python3", [script, path]).status, 0, key);
   }
+  const withoutBookmarks = join(directory, "without-bookmarks.plist");
+  execFileSync("python3", ["-c", `
+import plistlib, sys
+with open(sys.argv[1], "rb") as f:
+    entitlements = plistlib.load(f)
+del entitlements["com.apple.security.files.bookmarks.app-scope"]
+with open(sys.argv[2], "wb") as f:
+    plistlib.dump(entitlements, f)
+`, source, withoutBookmarks]);
+  assert.notEqual(spawnSync("python3", [script, withoutBookmarks]).status, 0, "persistent folder access requires its bookmark entitlement");
   assert.doesNotMatch(readFileSync("scripts/macos-app-store.sh", "utf8"), /Add :com.apple.security.get-task-allow/);
   assert.match(readFileSync("scripts/macos-app-store.sh", "utf8"), /--signed --app "\$APP_PATH"/);
   assert.notEqual(spawnSync("python3", [script, source, "--signed"]).status, 0, "signed identity required");
