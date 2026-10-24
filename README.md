@@ -163,15 +163,11 @@ Launchpane is open source and built with Tauri, Rust, React, and TypeScript.
 - [DEVELOPMENT.md](DEVELOPMENT.md) — build from source, run tests, and project structure.
 - [DEPLOYMENT.md](DEPLOYMENT.md) — signed releases, Mac App Store publishing, and the website.
 
-## Credits
-
-Launchpane builds on [launchd-ui](https://github.com/azu/launchd-ui) by
-[azu](https://github.com/azu) and its contributors.
-
 ## License
 
 Launchpane is released under the [MIT License](LICENSE), which is shipped inside
-the application bundle at `Contents/Resources/LICENSE`.
+the application bundle at `Contents/Resources/LICENSE`. It builds on the
+open-source [launchd-ui](https://github.com/azu/launchd-ui) project.
 
 The [Mac App Store badge](docs/assets/mac-app-store-badge.svg) is
 [unmodified artwork supplied by Apple](https://developer.apple.com/app-store/marketing/guidelines/images/badge-download-on-the-mac-app-store.svg),

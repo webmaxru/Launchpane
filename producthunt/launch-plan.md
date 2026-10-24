@@ -23,10 +23,9 @@ These are repository settings. Nothing in this folder changes them for you.
       site.
 - [ ] **Add topics** so people can find the repository from GitHub search: `macos`, `launchd`,
       `launchctl`, `launch-agents`, `login-items`, `tauri`, `rust`.
-- [ ] **Credit upstream in the README.** The LICENSE credits azu's launchd-ui, but the README
-      doesn't mention it. A sentence near the top, such as "Launchpane builds on
-      [azu/launchd-ui](https://github.com/azu/launchd-ui) and the work of its contributors",
-      matches what the launch copy says.
+- [x] **Credit upstream in the README.** Done in #21: the README License section says
+      Launchpane builds on the open-source [launchd-ui](https://github.com/azu/launchd-ui)
+      project, next to the MIT notice. Keep the launch copy consistent with it.
 
 ## T-14: prepare
 
