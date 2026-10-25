@@ -26,7 +26,6 @@ Launchpane is built on [azu/launchd-ui](https://github.com/azu/launchd-ui).
 | `docs/` | Product website source |
 | `branding/` | Icon, wordmark, screenshots, and Store graphics |
 | `appstore/`, `fastlane/` | Mac App Store metadata, policy notes, and upload tooling |
-| `producthunt/` | Product Hunt launch kit |
 
 ## Getting started
 

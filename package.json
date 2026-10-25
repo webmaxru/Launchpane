@@ -40,9 +40,7 @@
     "version:minor": "node scripts/bump-version.ts minor && git add package.json src-tauri/tauri.conf.json src-tauri/Cargo.toml src-tauri/Cargo.lock && git commit -m \"chore: bump version to $(node -p \"require('./package.json').version\")\" && git tag v$(node -p \"require('./package.json').version\")",
     "version:major": "node scripts/bump-version.ts major && git add package.json src-tauri/tauri.conf.json src-tauri/Cargo.toml src-tauri/Cargo.lock && git commit -m \"chore: bump version to $(node -p \"require('./package.json').version\")\" && git tag v$(node -p \"require('./package.json').version\")",
     "icons": "node scripts/make-icons.ts",
-    "icons:preview": "node scripts/make-icon-previews.ts",
-    "producthunt:assets": "node producthunt/render.mjs",
-    "producthunt:verify": "node producthunt/verify.mjs"
+    "icons:preview": "node scripts/make-icon-previews.ts"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.1.18",
